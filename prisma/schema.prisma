@@ -19,6 +19,8 @@ model User {
   updatedAt       DateTime @updatedAt
 
   stravaConnection StravaConnection?
+  activities       Activity[]
+  jobs             Job[]
 }
 
 model StravaConnection {
@@ -32,4 +34,54 @@ model StravaConnection {
   lastSyncAt            DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+}
+
+/// Imported Strava activity (run / swim / ride). Always queried with userId.
+model Activity {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stravaActivityId  String
+  /// `run` | `swim` | `ride`
+  sport             String
+  name              String?
+  startedAt         DateTime
+  /// moving_time when present, otherwise elapsed_time
+  durationSec       Int
+  elapsedSec        Int?
+  distanceM         Float?
+  elevationGainM    Float?
+  averageHeartrate  Float?
+  maxHeartrate      Float?
+  averageWatts      Float?
+  weightedWatts     Float?
+  averageCadence    Float?
+  averageSpeedMps   Float?
+  perceivedExertion Int?
+  splits            Json?
+  /// Original Strava payload, kept to reprocess without another API pass.
+  sourceRaw         Json
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, stravaActivityId])
+  @@index([userId, startedAt])
+}
+
+/// Lightweight async queue (backfill, later metric jobs). Status: pending/running/done/failed.
+model Job {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       String
+  status     String
+  progress   Json?
+  error      String?
+  startedAt  DateTime?
+  finishedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([userId, type])
+  @@index([status, type])
 }

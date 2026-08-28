@@ -38,14 +38,16 @@ Assunzioni Fase 1: Auth.js v5 (`next-auth@5.0.0-beta.32`) per App Router. Sessio
 
 ## Fase 2 — Import storico e sync attività
 
-- [ ] Modello `Activity` in Prisma (campi come da `PROJECT_SPEC.md` §7) + migrazione.
-- [ ] Client Strava API in `lib/strava` (fetch attività, gestione paginazione, gestione rate limit 200/15min - 2000/day con backoff).
-- [ ] Job di backfill storico iniziale alla prima connessione (coda semplice, es. tabella `Job` con stato `pending/running/done/failed`).
-- [ ] UI di stato import ("stiamo importando il tuo storico...") con indicatore di progresso.
-- [ ] Endpoint webhook Strava (`/app/api/strava/webhook`) per eventi create/update/delete attività, con verifica del token di sicurezza.
-- [ ] Cron job di fallback (polling periodico) nel caso il webhook non arrivi (Vercel Cron).
-- [ ] Test unit: parsing/normalizzazione payload Strava → modello `Activity`.
-- [ ] Test integration: webhook riceve evento → attività salvata correttamente.
+- [x] Modello `Activity` in Prisma (campi come da `PROJECT_SPEC.md` §7) + migrazione.
+- [x] Client Strava API in `lib/strava` (fetch attività, gestione paginazione, gestione rate limit 200/15min - 2000/day con backoff).
+- [x] Job di backfill storico iniziale alla prima connessione (coda semplice, es. tabella `Job` con stato `pending/running/done/failed`).
+- [x] UI di stato import ("stiamo importando il tuo storico...") con indicatore di progresso.
+- [x] Endpoint webhook Strava (`/app/api/strava/webhook`) per eventi create/update/delete attività, con verifica del token di sicurezza.
+- [x] Cron job di fallback (polling periodico) nel caso il webhook non arrivi (Vercel Cron).
+- [x] Test unit: parsing/normalizzazione payload Strava → modello `Activity`.
+- [x] Test integration: webhook riceve evento → attività salvata correttamente.
+
+Assunzioni Fase 2: il backfill usa l'elenco attività Strava (summary), non gli stream; il webhook fetcha il dettaglio della singola attività. Sport importati: run/trail/virtual run, ride/gravel/mtb/virtual, swim/open water (e-bike esclusa). Il dashboard processa i chunk di backfill così l'import non dipende dal cron. Su Vercel Hobby il cron gira 1 volta/giorno; in dashboard c'è "Sincronizza ora". Registrazione webhook Strava è manuale (vedi README).
 
 ---
 

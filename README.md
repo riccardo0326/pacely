@@ -65,8 +65,31 @@ App: [http://localhost:3000](http://localhost:3000). Health check: `/api/health`
 4. Copia Client ID e Client Secret in `.env` (`STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`).
 5. Auth.js usa il callback `http://localhost:3000/api/auth/callback/strava`.
 6. Scope richiesti dall'app: `read`, `activity:read_all`, `profile:read_all`.
+7. Genera un token casuale per `STRAVA_WEBHOOK_VERIFY_TOKEN` e uno per `CRON_SECRET`.
 
-Non committare Client Secret, `ENCRYPTION_KEY` o `NEXTAUTH_SECRET`.
+### Webhook Strava (sync incrementale)
+
+Dopo il deploy (URL pubblico HTTPS), crea la subscription:
+
+```bash
+curl -X POST https://www.strava.com/api/v3/push_subscriptions \
+  -F client_id=$STRAVA_CLIENT_ID \
+  -F client_secret=$STRAVA_CLIENT_SECRET \
+  -F callback_url=https://YOUR_DOMAIN/api/strava/webhook \
+  -F verify_token=$STRAVA_WEBHOOK_VERIFY_TOKEN
+```
+
+In locale il webhook richiede un tunnel HTTPS (es. ngrok) verso `/api/strava/webhook`. Senza webhook, usa **Sincronizza ora** in dashboard oppure il cron.
+
+### Cron di fallback
+
+`GET /api/cron/strava-sync` con header `Authorization: Bearer $CRON_SECRET`. Su Vercel il job è in `vercel.json` (una volta al giorno sul piano Hobby). In locale:
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/strava-sync
+```
+
+Non committare Client Secret, `ENCRYPTION_KEY`, `NEXTAUTH_SECRET` o `CRON_SECRET`.
 
 ## Comandi
 
