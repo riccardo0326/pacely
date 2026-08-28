@@ -68,14 +68,16 @@ Assunzioni Fase 2: il backfill usa l'elenco attività Strava (summary), non gli 
 
 ## Fase 4 — Astrazione LLM
 
-- [ ] Definire interfaccia comune `LLMProvider` in `lib/llm` (generateProgram, analyzeFeedback, analyzePerformance).
-- [ ] Implementare `DeepSeekProvider`.
-- [ ] Implementare `OpenAIProvider`.
-- [ ] Selezione provider via `LLM_PROVIDER` env var, con possibilità di override per singola chiamata.
-- [ ] Modello `LLMInteractionLog` in Prisma (tracking token usage/costo stimato) + migrazione.
-- [ ] Wrapper con validazione Zod dell'output di ogni chiamata + logica di retry (max 1-2 tentativi) su fallimento parsing.
-- [ ] Fallback esplicito e gestito (mai crash silenzioso) se il provider fallisce ripetutamente.
-- [ ] Test unit: mock dei provider, verifica che output non conforme allo schema venga gestito correttamente (retry/fallback).
+- [x] Definire interfaccia comune `LLMProvider` in `lib/llm` (generateProgram, analyzeFeedback, analyzePerformance).
+- [x] Implementare `DeepSeekProvider`.
+- [x] Implementare `OpenAIProvider`.
+- [x] Selezione provider via `LLM_PROVIDER` env var, con possibilità di override per singola chiamata.
+- [x] Modello `LLMInteractionLog` in Prisma (tracking token usage/costo stimato) + migrazione.
+- [x] Wrapper con validazione Zod dell'output di ogni chiamata + logica di retry (max 1-2 tentativi) su fallimento parsing.
+- [x] Fallback esplicito e gestito (mai crash silenzioso) se il provider fallisce ripetutamente.
+- [x] Test unit: mock dei provider, verifica che output non conforme allo schema venga gestito correttamente (retry/fallback).
+
+Assunzioni Fase 4: implementata su richiesta prima della Fase 3 (l'astrazione non dipende dal motore metriche; CTL/FTP/VDOT restano campi di input). Chat Completions via `fetch` (API compatibile OpenAI), senza SDK. Modelli: `deepseek-chat`, `gpt-4o-mini`. Retry parsing: 1 (2 tentativi totali). HTTP 429/5xx: fino a 2 retry con backoff. Fallback algoritmico esplicito (`source: "fallback"`); il feedback fallback non inventa l'RPE. Costo stimato da listini statici in `lib/llm/constants.ts`. Rate limit delle API interne che chiamano l'LLM è rimandato a Fase 5 (quando esistono gli endpoint).
 
 ---
 
