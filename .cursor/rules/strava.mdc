@@ -1,0 +1,15 @@
+---
+description: Strava OAuth, encrypted tokens, activity sync, webhooks, and rate limits
+globs: lib/strava/**/*.ts,app/api/**/*.ts,app/**/auth/**/*.ts
+alwaysApply: false
+---
+
+# Strava
+
+- Auth: OAuth 2.0 come identity provider (niente password). Scope: `read`, `activity:read_all`; `profile:read_all` se servono dati fisiologici.
+- Token access/refresh cifrati at-rest (`ENCRYPTION_KEY`). Refresh automatico: access token scade dopo 6h.
+- Solo import. Nessuna scrittura su Strava in MVP.
+- Backfill storico alla prima connessione (job asincrono). Rate limit: 200 req/15 min, 2000/giorno. Retry con backoff. Comunicare lo stato import in UI.
+- Sync incrementale: webhook create/update/delete (`/app/api/strava/webhook`, verifica `STRAVA_WEBHOOK_VERIFY_TOKEN`) + cron di fallback se il webhook manca.
+- Attività: sport, durata, distanza, dislivello, FC, potenza, passo, cadenza, RPE se presente, data/ora, split. Conservare payload raw per riprocessare.
+- Isolamento: ogni query attività filtra per `userId` di sessione.

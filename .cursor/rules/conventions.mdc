@@ -1,0 +1,46 @@
+---
+description: Code conventions, env vars, Definition of Done, and how to work TASKS.md
+alwaysApply: true
+---
+
+# Convenzioni e workflow
+
+## Codice
+
+- File: kebab-case. Componenti React: PascalCase. Funzioni/variabili: camelCase.
+- Commit: Conventional Commits (`feat:`, `fix:`, `chore:`, `refactor:`, `test:`, `docs:`). Un commit = un'unità logica di un task in `TASKS.md`.
+- Branch per task/epic (es. `feat/strava-oauth`). Merge in `main` solo a Definition of Done rispettata.
+- ESLint + Prettier: nessun commit con errori di lint.
+- Commenti solo dove la logica non è auto-esplicativa (formule metriche, matching workout↔activity).
+- Mutazioni UI: server actions. Webhook esterni e job/cron: API routes in `/app/api`.
+
+## Environment
+
+Definire in `.env.example` (mai committare `.env`):
+
+`DATABASE_URL`, `DATABASE_URL_UNPOOLED` (direct/unpooled, per Neon `env pull`; usato da Prisma `directUrl`), `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `AUTH_SECRET` (stesso valore di `NEXTAUTH_SECRET`, usato da Auth.js v5), `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `STRAVA_WEBHOOK_VERIFY_TOKEN`, `ENCRYPTION_KEY`, `LLM_PROVIDER` (`deepseek` | `openai`), `DEEPSEEK_API_KEY`, `OPENAI_API_KEY`, `WEB_PUSH_PUBLIC_KEY`, `WEB_PUSH_PRIVATE_KEY`, `SENTRY_DSN` (opzionale), `NEXT_PUBLIC_SENTRY_DSN` (opzionale, stesso valore di `SENTRY_DSN` per errori client).
+
+Aggiornare `.env.example` ogni volta che si introduce una nuova variabile.
+
+## Definition of Done
+
+Un task in `TASKS.md` è completo solo se: TypeScript e lint passano; migrazioni Prisma create e applicate; almeno un test per logica non banale; feature verificabile E2E in dev; task marcato completato; `.env.example` aggiornato se serve.
+
+## TASKS.md
+
+Esegui i task nell'ordine delle fasi. Prima di una fase, rileggi la sezione corrispondente in `PROJECT_SPEC.md`. Se un task è ambiguo, scegli la soluzione più semplice coerente con `PROJECT_SPEC.md` §2.1 e annota l'assunzione. Non anticipare le feature di §2.2.
+
+## Comandi
+
+```
+npm run dev                 # sviluppo
+npm run build               # produzione
+npm run lint
+npm run format
+npm run typecheck
+npm run test                # unit + integration (Vitest)
+npx prisma migrate dev      # nuova migrazione
+npx prisma studio
+```
+
+Aggiorna questa sezione se i comandi reali differiscono dopo il setup.

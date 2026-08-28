@@ -1,0 +1,20 @@
+---
+description: Testing conventions for Vitest unit/integration tests and external mocks
+globs: tests/**/*.{ts,tsx},**/*.{test,spec}.{ts,tsx}
+alwaysApply: false
+---
+
+# Testing
+
+Framework: **Vitest** per unit/integration. Playwright solo se servirà E2E (non prioritario in MVP).
+
+## Cosa testare
+
+- Unit: TSS/CTL/ATL/TSB, stima FTP/VDOT/soglia nuoto, validazione/parsing output LLM, matching workout↔activity.
+- Integration: OAuth Strava (mock), webhook di sync, generazione programma E2E (LLM mockato).
+
+## Obblighi
+
+- Mock di Strava, OpenAI e DeepSeek: nessun test fa chiamate reali a servizi esterni.
+- Casi limite metriche: nessuna attività, dati mancanti, un solo sport.
+- Matching: più attività nello stesso giorno, sport multipli, match errato/mancante.

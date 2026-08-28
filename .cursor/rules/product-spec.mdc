@@ -1,0 +1,28 @@
+---
+description: Pacely product spec — programs, feedback loop, data model, architecture, and risks
+alwaysApply: false
+---
+
+# Product spec (estratto operativo)
+
+Leggi `PROJECT_SPEC.md` per il testo completo. Qui i vincoli che guidano l'implementazione.
+
+## Programmi
+
+Un Program ha nome, goal, sport (1-3), durata settimane, stato `draft`/`active`/`completed`/`archived`. Goal: `race` (tipo, distanza, data) o `generic`. Week → Workout per giorno/sport. Workout a blocchi (warm-up, main set, cool-down) con target zona (FC/passo/potenza).
+
+Generazione LLM: input = metriche correnti, storico **aggregato** (non attività raw), sport, giorni/orari, obiettivo, vincoli. Output JSON Zod. Budget TSS settimanale da CTL + progressione; distribuzione tra discipline, non 3 piani indipendenti. Utente può rigenerare e editare i blocchi.
+
+## Feedback e ricalcolo
+
+Match Workout↔Activity per data/sport/durata; l'utente può correggere. Feedback testuale elaborato da LLM (RPE, fattori esterni, scostamento). Proposte di modifica **solo** nella finestra di calibrazione (2 sett. se ≤8, 3 sett. se 10-12), sempre con approvazione esplicita. Fuori finestra: feedback salvato per i report, nessuna proposta.
+
+Report periodici (2-4 settimane o on-demand): informativi, non modificano il piano.
+
+## Architettura extra
+
+Job asincroni: Vercel Cron + tabella `Job` (o Upstash QStash se discusso). Notifiche: Web Push + in-app. Sentry opzionale. Costi su free-tier + LLM variabile.
+
+## Rischi da gestire nel codice
+
+Rate limit Strava sul backfill; qualità JSON LLM (Zod + retry + fallback algoritmico); matching Workout↔Activity non 100%; costi LLM tracciati dal giorno 1; Web Push limitato su iOS Safari.

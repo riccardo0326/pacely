@@ -1,0 +1,18 @@
+---
+description: Unified TSS, CTL/ATL/TSB, FTP, VDOT, swim threshold, and intensity zones
+globs: lib/metrics/**/*.ts
+alwaysApply: false
+---
+
+# Metriche
+
+Calcolate in `/lib/metrics`, ricalcolate in background su nuove attività Strava.
+
+- **TSS unificato:** rTSS (corsa), bikeTSS (potenza, fallback FC/pace), sTSS (nuoto). Stessa scala per sommare il carico multi-sport.
+- **CTL / ATL / TSB:** EMA giornaliera, CTL 42gg, ATL 7gg, aggregati su tutti gli sport.
+- **FTP:** da attività con potenza; stima indiretta se assente.
+- **VDOT:** da performance recenti (Daniels o equivalente).
+- **Soglia nuoto:** passo/100m da nuoto a passo costante prolungato.
+- **Zone:** derivate da FTP / VDOT / soglia nuoto per sport.
+
+Tipi espliciti in ingresso/uscita. Commenta le formule, non l'ovvio. Snapshot in `PerformanceMetricSnapshot`.
