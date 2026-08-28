@@ -1,0 +1,17 @@
+---
+description: Development principles for type safety, validation, isolation, secrets, and LLM usage
+alwaysApply: true
+---
+
+# Principi di sviluppo
+
+1. **Type safety.** No `any` non giustificato. Funzioni di dominio (metriche, LLM, Strava) con tipi espliciti in ingresso/uscita.
+2. **Validazione ai confini.** Dati da Strava, LLM o form utente passano da Zod prima di essere usati o salvati.
+3. **Output LLM strutturato.** Niente parsing creativo di testo libero per dati applicativi. Retry max 1-2 se la validazione fallisce, poi fallback esplicito. Mai crash silenzioso o dati inventati lato client.
+4. **Isolamento per utente.** Ogni query filtra esplicitamente per `userId` della sessione — nessuna eccezione, anche in prototipo.
+5. **Segreti mai in chiaro.** Token Strava cifrati at-rest. Nessuna API key hardcoded: solo env vars.
+6. **Costi LLM.** Ogni chiamata passa da `/lib/llm` e logga token/costo stimato in `LLMInteractionLog`. Non chiamare i provider direttamente altrove.
+7. **Task piccoli.** Segui `TASKS.md` in ordine. Non passare al successivo finché la Definition of Done non è soddisfatta.
+8. **Niente feature extra.** Idee fuori scope MVP: annotale in `TASKS.md` sotto "Backlog futuro", non implementarle.
+9. **Migrazioni Prisma versionate.** Schema changes solo con `prisma migrate dev` e nome descrittivo. Mai edit manuali del DB.
+10. **Errori esterni espliciti.** Strava e LLM: timeout, 429, 5xx, con retry/backoff dove sensato. Messaggi chiari in UI, mai errore generico silenzioso.

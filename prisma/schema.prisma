@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  stravaAthleteId String   @unique
+  name            String
+  email           String?
+  /// MVP: `athlete`. Stored as string so a future `coach` value is additive.
+  role            String   @default("athlete")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  stravaConnection StravaConnection?
+}
+
+model StravaConnection {
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessTokenEncrypted  String
+  refreshTokenEncrypted String
+  expiresAt             DateTime
+  scope                 String
+  lastSyncAt            DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}

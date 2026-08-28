@@ -1,0 +1,22 @@
+---
+description: How to execute the Pacely MVP roadmap in TASKS.md without skipping phases or DoD
+alwaysApply: false
+---
+
+# Roadmap
+
+La checklist vive in `TASKS.md`. Non duplicarla qui. Fasi 0→10 sequenziali; dentro una fase i task senza `(dep: ...)` possono essere paralleli.
+
+0. Setup Next.js, lint, Tailwind/shadcn, Prisma/Neon, Vitest, env, Vercel
+1. Auth Strava, token cifrati, refresh, protezione dashboard
+2. Import storico, webhook, cron fallback
+3. Motore metriche + dashboard CTL/ATL/TSB
+4. Astrazione LLM + log costi
+5. Generazione programmi + editor
+6. Calendario e matching pianificato vs effettivo
+7. Feedback e proposte di ricalcolo
+8. Report performance
+9. Notifiche in-app + web push
+10. Polish, QA, deploy beta
+
+Prima di una fase: rileggi la sezione corrispondente in `PROJECT_SPEC.md`. Completa secondo la Definition of Done. Idee extra → "Backlog futuro" in `TASKS.md`, non nel codice.

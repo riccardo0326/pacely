@@ -1,0 +1,43 @@
+---
+description: Pacely product context, binding stack, and expected repo structure
+alwaysApply: true
+---
+
+# Pacely
+
+Webapp Next.js full-stack per programmi di allenamento multi-sport (corsa, nuoto, ciclismo, triathlon) collegata a Strava, con generazione piani via LLM e feedback adattivo.
+
+MVP single-role (`athlete`). Nessun coaching in questa fase. Spec completa in `PROJECT_SPEC.md`. Roadmap in `TASKS.md`.
+
+## Stack (vincolante)
+
+- Next.js 14+ (App Router), TypeScript strict
+- Auth.js (NextAuth) con provider custom Strava OAuth
+- PostgreSQL (Neon) + Prisma
+- Tailwind CSS + shadcn/ui
+- TanStack Query, Zod
+- Vercel Cron Jobs; deploy su Vercel
+- LLM: astrazione in `/lib/llm` (OpenAI + DeepSeek, switch via env)
+
+Non introdurre librerie/framework alternativi senza discuterlo. Se un task sembra richiedere una dipendenza nuova importante (queue, state manager, ecc.), fermati e segnala la scelta.
+
+## Struttura repo
+
+```
+/app/(auth)          # login/callback Strava
+/app/(dashboard)     # calendario, programmi, attività, report
+/app/api             # webhook Strava, endpoint interni
+/components/ui       # shadcn
+/components          # componenti di dominio
+/lib/llm             # provider LLM
+/lib/strava          # client Strava, token, webhook
+/lib/metrics         # TSS/CTL/ATL/TSB/FTP/VDOT/soglia nuoto
+/lib/validation      # schemi Zod condivisi
+/prisma              # schema + migrations
+/server/actions      # mutazioni UI
+/server/jobs         # cron (sync, metriche)
+/tests/unit
+/tests/integration
+```
+
+Se la struttura deve cambiare, aggiorna questa rule prima di divergere.

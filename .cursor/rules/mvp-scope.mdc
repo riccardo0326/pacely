@@ -1,0 +1,14 @@
+---
+description: MVP scope versus explicitly out-of-scope future features
+alwaysApply: true
+---
+
+# Scope MVP
+
+Incluso: solo ruolo `athlete`; login esclusivo Strava OAuth; import storico (run/swim/ride); metriche TSS/CTL/ATL/TSB/FTP/VDOT/soglia nuoto/zone; programmi multi-sport 1-3 discipline con obiettivo obbligatorio; generazione LLM + editor manuale a blocchi; calendario pianificato vs effettivo; feedback testuale post-allenamento; ricalcolo **suggerito** (mai automatico) nelle prime 2 settimane (programmi ≤8 sett.) o 3 settimane (10-12 sett.), con approvazione esplicita; report performance LLM; notifiche in-app + web push; deploy low-cost.
+
+## Escluso (non implementare)
+
+Coach / multi-atleta; auth email/password; feedback vocale; ricalcolo automatico senza approvazione; export/push verso Strava; push native / app mobile; abbonamenti; provider LLM oltre OpenAI/DeepSeek (l'astrazione può prevederli, non attivarli).
+
+Il modello dati ha `role` estendibile e relazioni pensate per il coaching futuro, senza migrazioni distruttive.

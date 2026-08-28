@@ -1,0 +1,23 @@
+---
+description: LLM provider abstraction, structured output, retry/fallback, and cost logging
+globs: lib/llm/**/*.ts,lib/validation/**/*.ts
+alwaysApply: false
+---
+
+# LLM
+
+Interfaccia unica in `/lib/llm`. Implementazioni: `OpenAIProvider`, `DeepSeekProvider`. Selezione via `LLM_PROVIDER` (default `deepseek`), override per singola chiamata se serve.
+
+```
+interface LLMProvider {
+  generateProgram(input: ProgramGenerationInput): Promise<ProgramGenerationOutput>;
+  analyzeFeedback(input: FeedbackInput): Promise<FeedbackAnalysisOutput>;
+  analyzePerformance(input: PerformanceInput): Promise<PerformanceReportOutput>;
+}
+```
+
+- Output sempre JSON strutturato, validato con Zod. Nessun testo libero come output finale applicativo.
+- Retry 1-2 se parsing/validazione fallisce, poi fallback esplicito (es. generazione algoritmica semplice per i programmi). Mai crash silenzioso.
+- Ogni chiamata logga provider, token usage e costo stimato in `LLMInteractionLog`.
+- Non chiamare OpenAI/DeepSeek fuori da `/lib/llm`.
+- Rate limit sulle API interne che invocano LLM.

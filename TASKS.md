@@ -1,6 +1,6 @@
 # TASKS.md — Roadmap Pacely (MVP)
 
-Ordine di esecuzione consigliato per fasi. Ogni task va completato secondo la "Definition of Done" descritta in `CLAUDE.md` §7. Le fasi sono sequenziali; all'interno di una fase, i task senza dipendenze esplicite possono essere paralleli.
+Ordine di esecuzione consigliato per fasi. Ogni task va completato secondo la "Definition of Done" in `.cursor/rules/conventions.mdc`. Le fasi sono sequenziali; all'interno di una fase, i task senza dipendenze esplicite possono essere paralleli.
 
 Legenda: `[ ]` da fare · `[x]` completato · `(dep: ...)` dipendenza da altro task.
 
@@ -8,27 +8,31 @@ Legenda: `[ ]` da fare · `[x]` completato · `(dep: ...)` dipendenza da altro t
 
 ## Fase 0 — Setup progetto
 
-- [ ] Inizializzare repo Next.js 14+ (App Router) con TypeScript strict.
-- [ ] Configurare ESLint + Prettier + husky (pre-commit lint).
-- [ ] Configurare Tailwind CSS + installare/inizializzare shadcn/ui.
-- [ ] Setup Prisma con connessione a Postgres su Neon (creare progetto Neon, DB dev).
-- [ ] Creare `.env.example` con tutte le variabili note (vedi `CLAUDE.md` §6).
-- [ ] Setup Vitest (unit + integration) con configurazione base e primo test smoke.
-- [ ] Setup Sentry (opzionale ma consigliato da subito) per error tracking.
+- [x] Inizializzare repo Next.js 14+ (App Router) con TypeScript strict.
+- [x] Configurare ESLint + Prettier + husky (pre-commit lint).
+- [x] Configurare Tailwind CSS + installare/inizializzare shadcn/ui.
+- [x] Setup Prisma con connessione a Postgres su Neon (creare progetto Neon, DB dev).
+- [x] Creare `.env.example` con tutte le variabili note (vedi `.cursor/rules/conventions.mdc`).
+- [x] Setup Vitest (unit + integration) con configurazione base e primo test smoke.
+- [x] Setup Sentry (opzionale ma consigliato da subito) per error tracking.
 - [ ] Configurare deploy iniziale su Vercel (progetto collegato, env vars configurate, deploy "hello world" funzionante).
+
+Assunzioni Fase 0: Prisma 6.19 (non la CLI v8 RC). Schema senza modelli di dominio — prima migrazione in Fase 1. Neon: `DATABASE_URL` (pooled) + `DIRECT_URL` (unpooled); il progetto Neon va creato sul tuo account e le URL vanno messe in `.env`. Sentry è no-op senza `SENTRY_DSN`. Deploy Vercel in attesa di `npx vercel login`.
 
 ---
 
 ## Fase 1 — Autenticazione e connessione Strava
 
-- [ ] Registrare applicazione su Strava API (client id/secret) e documentare procedura in README.
-- [ ] Implementare Auth.js con provider custom Strava OAuth (login/logout).
-- [ ] Modello `User` e `StravaConnection` in Prisma (con token cifrati at-rest) + prima migrazione.
-- [ ] Implementare cifratura/decifratura token Strava (`lib/strava` o `lib/security`).
-- [ ] Implementare refresh automatico access token Strava (gestione scadenza 6h).
-- [ ] Middleware/route protection: pagine dashboard accessibili solo autenticati.
-- [ ] Pagina di login con bottone "Connetti con Strava" (UI minima ma funzionante).
-- [ ] Test integration: flusso OAuth completo con mock delle risposte Strava.
+- [x] Registrare applicazione su Strava API (client id/secret) e documentare procedura in README.
+- [x] Implementare Auth.js con provider custom Strava OAuth (login/logout).
+- [x] Modello `User` e `StravaConnection` in Prisma (con token cifrati at-rest) + prima migrazione.
+- [x] Implementare cifratura/decifratura token Strava (`lib/strava` o `lib/security`).
+- [x] Implementare refresh automatico access token Strava (gestione scadenza 6h).
+- [x] Middleware/route protection: pagine dashboard accessibili solo autenticati.
+- [x] Pagina di login con bottone "Connetti con Strava" (UI minima ma funzionante).
+- [x] Test integration: flusso OAuth completo con mock delle risposte Strava.
+
+Assunzioni Fase 1: Auth.js v5 (`next-auth@5.0.0-beta.32`) per App Router. Sessioni JWT (niente tabelle Account/Session). `role` è stringa (`athlete`) per restare estendibile. Postgres locale via Docker Compose finché Neon non è collegato; schema identico. Callback Strava: `/api/auth/callback/strava`.
 
 ---
 
