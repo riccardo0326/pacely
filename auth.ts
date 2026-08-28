@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import { authConfig } from "@/auth.config";
 import { persistStravaSession } from "@/lib/strava/persist-session";
 import { stravaAthleteSchema } from "@/lib/strava/schemas";
+import { enqueueStravaBackfill } from "@/server/jobs/strava-backfill";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -27,6 +28,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           expiresAtUnixSeconds: account.expires_at,
           scope: account.scope ?? "",
         });
+        await enqueueStravaBackfill(user.id);
         token.sub = user.id;
         token.name = user.name;
       }

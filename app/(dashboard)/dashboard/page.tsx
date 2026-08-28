@@ -1,14 +1,12 @@
 import { Button } from "@/components/ui/button";
+import { ImportStatusCard } from "@/components/import-status";
 import { requireUser } from "@/lib/auth/require-user";
-import { prisma } from "@/lib/prisma";
 import { logout } from "@/server/actions/auth";
+import { getImportStatus } from "@/server/actions/import";
 
 export default async function DashboardPage() {
   const sessionUser = await requireUser();
-  const user = await prisma.user.findFirst({
-    where: { id: sessionUser.id },
-    select: { name: true, role: true, stravaAthleteId: true },
-  });
+  const importStatus = await getImportStatus();
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-16">
@@ -18,12 +16,11 @@ export default async function DashboardPage() {
             Dashboard
           </p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-            Ciao{user?.name ? `, ${user.name}` : ""}
+            Ciao{sessionUser.name ? `, ${sessionUser.name}` : ""}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Account collegato a Strava
-            {user?.stravaAthleteId ? ` (#${user.stravaAthleteId})` : ""}. Import
-            attività e programmi arriveranno nelle prossime fasi.
+            Account collegato a Strava. Lo storico viene importato in background
+            rispettando i limiti API.
           </p>
         </div>
         <form action={logout}>
@@ -32,6 +29,7 @@ export default async function DashboardPage() {
           </Button>
         </form>
       </div>
+      <ImportStatusCard initial={importStatus} />
     </main>
   );
 }
