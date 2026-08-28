@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ImportStatusCard } from "@/components/import-status";
 import { requireUser } from "@/lib/auth/require-user";
@@ -30,6 +31,15 @@ export default async function DashboardPage() {
         </form>
       </div>
       <ImportStatusCard initial={importStatus} />
+      <section className="rounded-xl border border-border bg-background p-4">
+        <h2 className="font-medium">Programmi di allenamento</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Crea e gestisci piani multi-sport generati con LLM.
+        </p>
+        <Button asChild className="mt-4">
+          <Link href="/dashboard/programs">Vai ai programmi</Link>
+        </Button>
+      </section>
     </main>
   );
 }

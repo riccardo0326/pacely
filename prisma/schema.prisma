@@ -22,6 +22,7 @@ model User {
   activities         Activity[]
   jobs               Job[]
   llmInteractionLogs LLMInteractionLog[]
+  programs           Program[]
 }
 
 model StravaConnection {
@@ -64,6 +65,8 @@ model Activity {
   sourceRaw         Json
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+
+  matchedWorkouts Workout[]
 
   @@unique([userId, stravaActivityId])
   @@index([userId, startedAt])
@@ -108,4 +111,79 @@ model LLMInteractionLog {
 
   @@index([userId, createdAt])
   @@index([userId, interactionType])
+}
+
+/// Multi-sport training program (Fase 5).
+model Program {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  /// `run` | `swim` | `ride`
+  sportsIncluded String[]
+  durationWeeks  Int
+  /// `draft` | `active` | `completed` | `archived`
+  status         String   @default("active")
+  startDate      DateTime
+  constraints    String?
+  /// [{ weekday: 0-6, timeOfDay?: string }]
+  availableSlots Json
+  summary        String?
+  goal           Goal?
+  weeks          Week[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId, status])
+}
+
+model Goal {
+  id          String    @id @default(cuid())
+  programId   String    @unique
+  program     Program   @relation(fields: [programId], references: [id], onDelete: Cascade)
+  /// `race` | `generic`
+  type        String
+  description String
+  raceType    String?
+  distance    String?
+  targetDate  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Week {
+  id             String    @id @default(cuid())
+  programId      String
+  program        Program   @relation(fields: [programId], references: [id], onDelete: Cascade)
+  number         Int
+  weekLoadTarget Float
+  focus          String?
+  workouts       Workout[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([programId, number])
+}
+
+model Workout {
+  id          String    @id @default(cuid())
+  weekId      String
+  week        Week      @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  sport       String
+  plannedDate DateTime
+  dayOfWeek   Int
+  name        String
+  durationMin Int
+  tss         Float
+  timeOfDay   String?
+  blocks      Json
+  /// `planned` | `completed` | `skipped`
+  status      String    @default("planned")
+  activityId  String?
+  activity    Activity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([weekId, plannedDate])
+  @@index([activityId])
 }
