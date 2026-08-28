@@ -1,6 +1,7 @@
 {
   "name": "pacely",
   "version": "0.1.0",
+  "description": "Multi-sport training web app — Next.js, Strava OAuth, PostgreSQL, LLM-assisted program generation",
   "private": true,
   "scripts": {
     "dev": "next dev",
