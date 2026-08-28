@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const REQUIRED_ENV_KEYS = [
   "DATABASE_URL",
-  "DIRECT_URL",
+  "DATABASE_URL_UNPOOLED",
   "NEXTAUTH_URL",
   "NEXTAUTH_SECRET",
   "AUTH_SECRET",
@@ -40,7 +40,7 @@ describe("project smoke", () => {
 
     expect(schema).toMatch(/provider\s+=\s+"postgresql"/);
     expect(schema).toContain('env("DATABASE_URL")');
-    expect(schema).toContain('env("DIRECT_URL")');
+    expect(schema).toContain('env("DATABASE_URL_UNPOOLED")');
     expect(schema).toContain("model User");
     expect(schema).toContain("model StravaConnection");
     expect(schema).toContain("stravaAthleteId");

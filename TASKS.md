@@ -15,9 +15,9 @@ Legenda: `[ ]` da fare · `[x]` completato · `(dep: ...)` dipendenza da altro t
 - [x] Creare `.env.example` con tutte le variabili note (vedi `.cursor/rules/conventions.mdc`).
 - [x] Setup Vitest (unit + integration) con configurazione base e primo test smoke.
 - [x] Setup Sentry (opzionale ma consigliato da subito) per error tracking.
-- [ ] Configurare deploy iniziale su Vercel (progetto collegato, env vars configurate, deploy "hello world" funzionante).
+- [x] Configurare deploy iniziale su Vercel (progetto collegato, env vars configurate, deploy "hello world" funzionante).
 
-Assunzioni Fase 0: Prisma 6.19 (non la CLI v8 RC). Schema senza modelli di dominio — prima migrazione in Fase 1. Neon: `DATABASE_URL` (pooled) + `DIRECT_URL` (unpooled); il progetto Neon va creato sul tuo account e le URL vanno messe in `.env`. Sentry è no-op senza `SENTRY_DSN`. Deploy Vercel in attesa di `npx vercel login`.
+Assunzioni Fase 0: Prisma 6.19 (non la CLI v8 RC). Neon progetto `soft-sound-52896127` (org Riccardo): `DATABASE_URL` pooled + `DATABASE_URL_UNPOOLED` per Prisma `directUrl` (`neon env pull`). Sentry è no-op senza `SENTRY_DSN`. Deploy Vercel collegato.
 
 ---
 
@@ -32,7 +32,7 @@ Assunzioni Fase 0: Prisma 6.19 (non la CLI v8 RC). Schema senza modelli di domin
 - [x] Pagina di login con bottone "Connetti con Strava" (UI minima ma funzionante).
 - [x] Test integration: flusso OAuth completo con mock delle risposte Strava.
 
-Assunzioni Fase 1: Auth.js v5 (`next-auth@5.0.0-beta.32`) per App Router. Sessioni JWT (niente tabelle Account/Session). `role` è stringa (`athlete`) per restare estendibile. Postgres locale via Docker Compose finché Neon non è collegato; schema identico. Callback Strava: `/api/auth/callback/strava`.
+Assunzioni Fase 1: Auth.js v5 (`next-auth@5.0.0-beta.32`) per App Router. Sessioni JWT (niente tabelle Account/Session). `role` è stringa (`athlete`) per restare estendibile. Callback Strava: `/api/auth/callback/strava`.
 
 ---
 

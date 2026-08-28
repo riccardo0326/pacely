@@ -20,9 +20,16 @@ cp .env.example .env
 
 ### Database
 
-**Neon (consigliato in produzione):** crea un progetto, copia la connection string pooled in `DATABASE_URL` e quella diretta in `DIRECT_URL`.
+**Neon:** il workspace è collegato al progetto `soft-sound-52896127` (org Riccardo). Dopo `npx neon auth`:
 
-**Locale con Docker:**
+```bash
+npx neon link --project-id soft-sound-52896127 -y
+npx neon env pull --file .env
+```
+
+Questo scrive `DATABASE_URL` (pooled) e `DATABASE_URL_UNPOOLED` (diretta, per Prisma migrate). Non usare Neon Auth né l'AI Gateway: l'app usa Auth.js + Strava e `/lib/llm`.
+
+**Locale con Docker** (opzionale, senza Neon):
 
 ```bash
 docker compose up -d
@@ -32,7 +39,7 @@ Poi in `.env`:
 
 ```
 DATABASE_URL="postgresql://pacely:pacely@localhost:5432/pacely"
-DIRECT_URL="postgresql://pacely:pacely@localhost:5432/pacely"
+DATABASE_URL_UNPOOLED="postgresql://pacely:pacely@localhost:5432/pacely"
 ```
 
 Genera i secret:
@@ -76,4 +83,4 @@ npx prisma studio
 
 ## Deploy Vercel
 
-Collega il repo a Vercel, imposta le env vars da `.env.example` e fai deploy. Prisma genera il client in `postinstall`. Dopo il deploy, aggiorna Authorization Callback Domain su Strava.
+Il progetto è collegato a Vercel. Imposta le env vars da `.env.example`; per il DB usa gli stessi `DATABASE_URL` e `DATABASE_URL_UNPOOLED` di `npx neon env pull`. Prisma genera il client in `postinstall`. Dopo il deploy, aggiorna Authorization Callback Domain su Strava.
