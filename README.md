@@ -89,7 +89,13 @@ In locale il webhook richiede un tunnel HTTPS (es. ngrok) verso `/api/strava/web
 curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/strava-sync
 ```
 
-Non committare Client Secret, `ENCRYPTION_KEY`, `NEXTAUTH_SECRET` o `CRON_SECRET`.
+Non committare Client Secret, `ENCRYPTION_KEY`, `NEXTAUTH_SECRET`, `CRON_SECRET` o le API key LLM.
+
+## LLM
+
+Le chiamate a OpenAI e DeepSeek passano solo da `/lib/llm`. Provider di default: `deepseek` (`LLM_PROVIDER`). Override per singola chiamata: `getLLMProvider({ provider: "openai" })`.
+
+Imposta `DEEPSEEK_API_KEY` e/o `OPENAI_API_KEY`. Output sempre JSON validato con Zod; se il parsing fallisce (max 2 tentativi) l'app usa un fallback algoritmico esplicito. Ogni chiamata registra token e costo stimato in `LLMInteractionLog`.
 
 ## Comandi
 

@@ -18,9 +18,10 @@ model User {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  stravaConnection StravaConnection?
-  activities       Activity[]
-  jobs             Job[]
+  stravaConnection   StravaConnection?
+  activities         Activity[]
+  jobs               Job[]
+  llmInteractionLogs LLMInteractionLog[]
 }
 
 model StravaConnection {
@@ -84,4 +85,27 @@ model Job {
 
   @@index([userId, type])
   @@index([status, type])
+}
+
+/// Token usage and estimated USD cost for every LLM call (Fase 4).
+model LLMInteractionLog {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// `generate_program` | `analyze_feedback` | `analyze_performance`
+  interactionType  String
+  provider         String
+  model            String
+  promptTokens     Int?
+  completionTokens Int?
+  totalTokens      Int?
+  /// Estimated USD from published list prices, not a billed invoice.
+  estimatedCostUsd Decimal? @db.Decimal(12, 6)
+  success          Boolean
+  usedFallback     Boolean  @default(false)
+  error            String?
+  createdAt        DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, interactionType])
 }
