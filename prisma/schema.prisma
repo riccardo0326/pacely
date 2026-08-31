@@ -201,11 +201,13 @@ model Workout {
   blocks      Json
   /// `planned` | `completed` | `skipped`
   status      String    @default("planned")
-  activityId  String?
+  /// `auto` | `manual`. Null until a match or a user override.
+  matchSource String?
+  activityId  String?   @unique
   activity    Activity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@index([weekId, plannedDate])
-  @@index([activityId])
+  @@index([plannedDate])
 }

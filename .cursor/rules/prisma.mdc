@@ -14,7 +14,7 @@ Entità MVP (dettaglio in `PROJECT_SPEC.md` §7):
 - **StravaConnection** — token cifrati, `expiresAt`, `lastSyncAt`
 - **Activity** — `stravaActivityId`, sport `run`/`swim`/`ride`, metriche, `sourceRaw`
 - **PerformanceMetricSnapshot** — CTL/ATL/TSB, FTP, VDOT, soglia nuoto
-- **Program / Goal / Week / Workout** — goal `race`|`generic`; workout a blocchi JSON; stato `planned`/`completed`/`skipped`; `activityId` se matched
+- **Program / Goal / Week / Workout** — goal `race`|`generic`; workout a blocchi JSON; stato `planned`/`completed`/`skipped`; `activityId` se matched; `matchSource` `auto`|`manual`
 - **WorkoutFeedback** — testo libero + sentiment JSON da LLM
 - **RecalcProposal** — diff JSON, stato `pending`/`approved`/`rejected`
 - **PerformanceReport**, **Notification**, **LLMInteractionLog**

@@ -28,6 +28,7 @@ import {
   updateWorkoutFormSchema,
   type CreateProgramForm,
 } from "@/lib/validation/program";
+import { tryMatchUserWorkouts } from "@/server/jobs/match-workouts";
 
 export type ProgramListItem = {
   id: string;
@@ -257,6 +258,7 @@ async function persistGeneratedProgram(
     return savedProgram;
   });
 
+  await tryMatchUserWorkouts(userId);
   return created.id;
 }
 
@@ -356,6 +358,7 @@ export async function generateProgram(
 
     revalidatePath(routes.programs);
     revalidatePath(routes.program(programId));
+    revalidatePath(routes.calendar);
     return { ok: true, programId, usedFallback: result.usedFallback };
   } catch (error) {
     if (error instanceof LlmQuotaExceededError) {
@@ -442,8 +445,11 @@ export async function regenerateProgram(
       }
     });
 
+    await tryMatchUserWorkouts(user.id);
+
     revalidatePath(routes.programs);
     revalidatePath(routes.program(programId));
+    revalidatePath(routes.calendar);
     return { ok: true, programId, usedFallback: result.usedFallback };
   } catch (error) {
     if (error instanceof LlmQuotaExceededError) {
@@ -508,6 +514,7 @@ export async function updateWorkout(
   });
 
   revalidatePath(routes.program(workout.week.programId));
+  revalidatePath(routes.calendar);
   return { ok: true };
 }
 

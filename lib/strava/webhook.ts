@@ -10,6 +10,7 @@ import {
 import { stravaWebhookEventSchema } from "@/lib/strava/schemas";
 import { getValidAccessToken } from "@/lib/strava/tokens";
 import { tryRecalculateUserMetrics } from "@/server/jobs/metrics-recalc";
+import { tryMatchUserWorkouts } from "@/server/jobs/match-workouts";
 
 export function verifyStravaSubscription(input: {
   mode: string | null;
@@ -35,6 +36,7 @@ export type WebhookDeps = {
   deleteActivity: typeof deleteUserActivity;
   touchLastSync: typeof touchLastSync;
   recalculateMetrics?: (userId: string) => Promise<void>;
+  matchWorkouts?: (userId: string) => Promise<void>;
 };
 
 export const prismaWebhookDeps: WebhookDeps = {
@@ -51,6 +53,7 @@ export const prismaWebhookDeps: WebhookDeps = {
   deleteActivity: deleteUserActivity,
   touchLastSync,
   recalculateMetrics: tryRecalculateUserMetrics,
+  matchWorkouts: tryMatchUserWorkouts,
 };
 
 export async function handleStravaWebhookEvent(
@@ -72,6 +75,7 @@ export async function handleStravaWebhookEvent(
     await deps.deleteActivity(user.id, event.object_id);
     await deps.touchLastSync(user.id);
     await deps.recalculateMetrics?.(user.id);
+    await deps.matchWorkouts?.(user.id);
     return { ignored: false };
   }
 
@@ -84,6 +88,7 @@ export async function handleStravaWebhookEvent(
     await deps.upsertActivity(user.id, activity);
     await deps.touchLastSync(user.id);
     await deps.recalculateMetrics?.(user.id);
+    await deps.matchWorkouts?.(user.id);
     return { ignored: false };
   } catch (error) {
     if (error instanceof StravaApiError && error.status === 404) {

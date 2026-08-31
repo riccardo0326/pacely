@@ -8,6 +8,7 @@ import {
   toStoredWorkoutBlocks,
   type EditableBlock,
 } from "@/lib/programs/blocks";
+import { WORKOUT_STATUS } from "@/lib/matching/constants";
 import { updateWorkout } from "@/server/actions/programs";
 import type { ProgramDetail } from "@/server/actions/programs";
 
@@ -15,6 +16,12 @@ const SPORT_LABEL: Record<string, string> = {
   run: "Corsa",
   swim: "Nuoto",
   ride: "Ciclismo",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  [WORKOUT_STATUS.planned]: "Pianificato",
+  [WORKOUT_STATUS.completed]: "Completato",
+  [WORKOUT_STATUS.skipped]: "Saltato",
 };
 
 const WEEKDAY_LABEL = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
@@ -94,6 +101,8 @@ function WorkoutEditor({
           <p className="mt-1 text-sm text-muted-foreground">
             {workout.durationMin} min · TSS {workout.tss.toFixed(0)}
             {workout.timeOfDay ? ` · ${workout.timeOfDay}` : ""}
+            {" · "}
+            {STATUS_LABEL[workout.status] ?? workout.status}
           </p>
         </div>
         <Button

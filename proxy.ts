@@ -22,7 +22,10 @@ export const proxy = auth((req) => {
 
   if (isProtectedAppPath(pathname) && !isLoggedIn) {
     const loginUrl = new URL(routes.login, req.nextUrl.origin);
-    loginUrl.searchParams.set("callbackUrl", pathname);
+    loginUrl.searchParams.set(
+      "callbackUrl",
+      `${pathname}${req.nextUrl.search}`,
+    );
     return Response.redirect(loginUrl);
   }
 
@@ -32,5 +35,10 @@ export const proxy = auth((req) => {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/programs/:path*", "/login"],
+  matcher: [
+    "/dashboard/:path*",
+    "/programs/:path*",
+    "/calendar/:path*",
+    "/login",
+  ],
 };
