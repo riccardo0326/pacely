@@ -39,6 +39,44 @@ describe("program generation integration (mocked LLM)", () => {
     expect(parsed.success).toBe(false);
   });
 
+  it("rejects a race date before the program ends", () => {
+    const parsed = createProgramFormSchema.safeParse({
+      sports: ["run", "swim", "ride"],
+      durationWeeks: 8,
+      startDate: "2026-09-07",
+      goalType: "race",
+      goalDescription: "Finire un mezzo Ironman in salute",
+      raceType: "mezzo ironman",
+      raceDistance: "70.3",
+      raceDate: "2026-08-11",
+      slots: [
+        { weekday: 1, timeOfDay: "07:00" },
+        { weekday: 3, timeOfDay: "07:00" },
+        { weekday: 5, timeOfDay: "07:00" },
+      ],
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it("accepts a race date after the last program week", () => {
+    const parsed = createProgramFormSchema.safeParse({
+      sports: ["run", "swim", "ride"],
+      durationWeeks: 8,
+      startDate: "2026-09-07",
+      goalType: "race",
+      goalDescription: "Finire un mezzo Ironman in salute",
+      raceType: "mezzo ironman",
+      raceDistance: "70.3",
+      raceDate: "2026-11-08",
+      slots: [
+        { weekday: 1, timeOfDay: "07:00" },
+        { weekday: 3, timeOfDay: "07:00" },
+        { weekday: 5, timeOfDay: "07:00" },
+      ],
+    });
+    expect(parsed.success).toBe(true);
+  });
+
   it("balances load across sports in generated JSON", async () => {
     const mockGenerate = vi.fn().mockResolvedValue({
       data: validProgram,

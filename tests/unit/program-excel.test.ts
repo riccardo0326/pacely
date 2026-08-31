@@ -71,6 +71,7 @@ describe("buildProgramXlsx", () => {
     expect(asText).toContain("Riscaldamento");
     expect(asText).toContain("Ginocchio sensibile");
     expect(asText).toContain("Attivo");
+    expect(asText).toContain("6 apr 2026");
   });
 
   it("escapes xml in cell values", () => {

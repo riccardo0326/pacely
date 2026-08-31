@@ -49,15 +49,7 @@ export function scrubForbiddenText(
   if (!textContainsForbidden(text, terms)) {
     return text;
   }
-  let next = text;
-  for (const term of terms) {
-    next = next.replace(new RegExp(escapeRegExp(term), "gi"), "");
-  }
-  next = next
-    .replace(/\s{2,}/g, " ")
-    .replace(/\s+([.,;:])/g, "$1")
-    .trim();
-  return next.length >= 8 ? next : fallback;
+  return fallback;
 }
 
 export function looksLikeTriathlonGoal(text: string): boolean {
@@ -68,8 +60,4 @@ export function looksLikeTriathlonGoal(text: string): boolean {
 
 export function missingTriathlonSports(sports: string[]): Sport[] {
   return TRIATHLON_SPORTS.filter((sport) => !sports.includes(sport));
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

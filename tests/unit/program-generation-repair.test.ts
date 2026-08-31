@@ -112,6 +112,10 @@ describe("repairGeneratedProgram", () => {
     const blob = JSON.stringify(repaired).toLowerCase();
     expect(blob).not.toContain("salita");
     expect(blob).not.toContain("02:33");
+    expect(repaired.summary).toBe(
+      "Piano di 8 settimane (corsa) che rispetta i vincoli dichiarati.",
+    );
+    expect(repaired.summary).not.toMatch(/in e l/i);
   });
 });
 

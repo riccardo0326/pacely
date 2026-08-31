@@ -10,6 +10,12 @@ import {
   textContainsForbidden,
 } from "@/lib/programs/constraints";
 
+const SPORT_LABEL: Record<Sport, string> = {
+  run: "corsa",
+  swim: "nuoto",
+  ride: "ciclismo",
+};
+
 function defaultName(sport: Sport): string {
   if (sport === "run") {
     return "Corsa aerobica";
@@ -18,6 +24,11 @@ function defaultName(sport: Sport): string {
     return "Nuoto tecnica";
   }
   return "Uscita endurance";
+}
+
+function constraintSafeSummary(input: ProgramGenerationInput): string {
+  const sports = input.sports.map((sport) => SPORT_LABEL[sport]).join(", ");
+  return `Piano di ${input.durationWeeks} settimane (${sports}) che rispetta i vincoli dichiarati.`;
 }
 
 /**
@@ -34,7 +45,7 @@ export function repairGeneratedProgram(
   const safeSummary = scrubForbiddenText(
     generated.summary,
     terms,
-    fallback.summary,
+    constraintSafeSummary(input),
   );
 
   const weeks = fallback.weeks.map((fallbackWeek) => {
