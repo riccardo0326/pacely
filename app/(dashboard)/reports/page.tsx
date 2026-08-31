@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EmptyState } from "@/components/empty-state";
 import { GenerateReportButton } from "@/components/generate-report-button";
 import { Button } from "@/components/ui/button";
 import { formatItalianDate } from "@/lib/programs/dates";
@@ -31,12 +32,10 @@ export default async function ReportsPage() {
       </div>
 
       {reports.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-8 text-center">
-          <p className="text-muted-foreground">
-            Non hai ancora un report. Viene generato in automatico ogni{" "}
-            {defaultPeriodDays} giorni, oppure creane uno ora.
-          </p>
-        </div>
+        <EmptyState
+          title="Nessun report ancora"
+          description={`Viene generato in automatico ogni ${defaultPeriodDays} giorni, oppure creane uno ora dalle metriche e dai feedback del periodo.`}
+        />
       ) : (
         <ul className="flex flex-col gap-3">
           {reports.map((report) => (

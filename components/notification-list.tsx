@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import {
   markAllNotificationsRead,
@@ -57,12 +58,10 @@ export function NotificationList({
 
   if (notifications.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border p-8 text-center">
-        <p className="text-muted-foreground">
-          Nessuna notifica. Ti avviseremo per l&apos;allenamento del giorno e
-          per le proposte di ricalcolo.
-        </p>
-      </div>
+      <EmptyState
+        title="Nessuna notifica"
+        description="Ti avviseremo per l'allenamento del giorno e per le proposte di ricalcolo."
+      />
     );
   }
 

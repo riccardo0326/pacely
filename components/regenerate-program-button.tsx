@@ -15,6 +15,7 @@ export function RegenerateProgramButton({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   async function handleRegenerate() {
     if (
@@ -27,6 +28,7 @@ export function RegenerateProgramButton({
 
     setLoading(true);
     setError(null);
+    setNotice(null);
     const result = await regenerateProgram(programId);
     setLoading(false);
 
@@ -35,6 +37,11 @@ export function RegenerateProgramButton({
       return;
     }
 
+    if (result.usedFallback) {
+      setNotice(
+        "Programma rigenerato con il fallback algoritmico. Puoi modificarlo a mano.",
+      );
+    }
     router.refresh();
   }
 
@@ -48,6 +55,9 @@ export function RegenerateProgramButton({
       >
         {loading ? "Rigenerazione..." : "Rigenera programma"}
       </Button>
+      {notice ? (
+        <p className="text-sm text-muted-foreground">{notice}</p>
+      ) : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </div>
   );

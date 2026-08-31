@@ -101,6 +101,7 @@ export type CalendarData = {
   rangeStart: string;
   rangeEnd: string;
   monthKey: string;
+  hasActiveProgram: boolean;
   days: CalendarDay[];
   totals: PlannedActualTotals;
 };
@@ -156,41 +157,45 @@ export async function getCalendarData(
   const today = utcToday();
   const monthKey = utcDateKey(focus).slice(0, 7);
 
-  const [workouts, activities, snapshot] = await Promise.all([
-    prisma.workout.findMany({
-      where: {
-        plannedDate: { gte: range.start, lt: range.end },
-        week: { program: { userId, status: "active" } },
-      },
-      include: {
-        activity: { select: ACTIVITY_SELECT },
-        feedback: { select: { id: true, analysis: true } },
-        week: {
-          select: {
-            program: { select: { id: true, name: true } },
+  const [workouts, activities, snapshot, activeProgramCount] =
+    await Promise.all([
+      prisma.workout.findMany({
+        where: {
+          plannedDate: { gte: range.start, lt: range.end },
+          week: { program: { userId, status: "active" } },
+        },
+        include: {
+          activity: { select: ACTIVITY_SELECT },
+          feedback: { select: { id: true, analysis: true } },
+          week: {
+            select: {
+              program: { select: { id: true, name: true } },
+            },
           },
         },
-      },
-      orderBy: [{ plannedDate: "asc" }, { timeOfDay: "asc" }],
-    }),
-    prisma.activity.findMany({
-      where: {
-        userId,
-        startedAt: { gte: range.start, lt: range.end },
-      },
-      select: ACTIVITY_SELECT,
-      orderBy: { startedAt: "asc" },
-    }),
-    prisma.performanceMetricSnapshot.findFirst({
-      where: { userId },
-      orderBy: { date: "desc" },
-      select: {
-        ftp: true,
-        vdot: true,
-        swimThresholdPaceSecPer100m: true,
-      },
-    }),
-  ]);
+        orderBy: [{ plannedDate: "asc" }, { timeOfDay: "asc" }],
+      }),
+      prisma.activity.findMany({
+        where: {
+          userId,
+          startedAt: { gte: range.start, lt: range.end },
+        },
+        select: ACTIVITY_SELECT,
+        orderBy: { startedAt: "asc" },
+      }),
+      prisma.performanceMetricSnapshot.findFirst({
+        where: { userId },
+        orderBy: { date: "desc" },
+        select: {
+          ftp: true,
+          vdot: true,
+          swimThresholdPaceSecPer100m: true,
+        },
+      }),
+      prisma.program.count({
+        where: { userId, status: "active" },
+      }),
+    ]);
 
   const thresholds = thresholdsFromSnapshot(snapshot);
   const activityCards = new Map<string, CalendarActivityCard>();
@@ -295,6 +300,7 @@ export async function getCalendarData(
     rangeStart: range.startKey,
     rangeEnd: range.endKey,
     monthKey,
+    hasActiveProgram: activeProgramCount > 0,
     days,
     totals,
   };

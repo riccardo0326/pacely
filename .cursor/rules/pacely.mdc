@@ -25,7 +25,7 @@ Non introdurre librerie/framework alternativi senza discuterlo. Se un task sembr
 
 ```
 /app/(auth)          # login/callback Strava
-/app/(dashboard)     # calendario, programmi, attività, report, notifiche
+/app/(dashboard)     # calendario, programmi, attività, report, notifiche, feedback beta
 /app/api             # webhook Strava, endpoint interni
 /components/ui       # shadcn
 /components          # componenti di dominio

@@ -1,6 +1,6 @@
 # Pacely
 
-**Multi-sport training web application** — Next.js full-stack app that connects to Strava, imports activity history, computes training load metrics, and (roadmap) generates LLM-assisted training programs with adaptive feedback for running, cycling, swimming, and triathlon.
+**Multi-sport training web application** — Next.js full-stack app that connects to Strava, imports activity history, computes training load metrics, generates LLM-assisted training programs, and adapts with post-workout feedback for running, cycling, swimming, and triathlon.
 
 |                  |                                                                                                                     |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -11,19 +11,19 @@
 
 ## Current implementation status
 
-| Phase | Scope                                                             | Status  |
-| ----- | ----------------------------------------------------------------- | ------- |
-| 0     | Project setup, CI, Vercel deploy                                  | Done    |
-| 1     | Strava OAuth, encrypted tokens, route protection                  | Done    |
-| 2     | Activity import (backfill + webhook + cron fallback)              | Done    |
-| 3     | Metrics engine (TSS, CTL/ATL/TSB, FTP, VDOT, swim threshold)      | Done    |
-| 4     | LLM abstraction (DeepSeek + OpenAI, Zod validation, cost logging) | Done    |
-| 5     | Program generation and workout editor                             | Done    |
-| 6     | Calendar and planned vs actual matching                           | Done    |
-| 7     | Feedback and suggested recalc                                     | Done    |
-| 8     | Performance reports                                               | Done    |
-| 9     | In-app notifications + Web Push                                   | Done    |
-| 10    | Polish, QA, beta deploy                                           | Planned |
+| Phase | Scope                                                             | Status |
+| ----- | ----------------------------------------------------------------- | ------ |
+| 0     | Project setup, CI, Vercel deploy                                  | Done   |
+| 1     | Strava OAuth, encrypted tokens, route protection                  | Done   |
+| 2     | Activity import (backfill + webhook + cron fallback)              | Done   |
+| 3     | Metrics engine (TSS, CTL/ATL/TSB, FTP, VDOT, swim threshold)      | Done   |
+| 4     | LLM abstraction (DeepSeek + OpenAI, Zod validation, cost logging) | Done   |
+| 5     | Program generation and workout editor                             | Done   |
+| 6     | Calendar and planned vs actual matching                           | Done   |
+| 7     | Feedback and suggested recalc                                     | Done   |
+| 8     | Performance reports                                               | Done   |
+| 9     | In-app notifications + Web Push                                   | Done   |
+| 10    | Polish, QA, beta deploy                                           | Done   |
 
 MVP scope and exclusions are defined in [`PROJECT_SPEC.md`](./PROJECT_SPEC.md). Task-level progress is tracked in [`TASKS.md`](./TASKS.md).
 
@@ -39,7 +39,7 @@ Browser → Next.js App Router → Server Actions / API Routes
     Strava API · OpenAI / DeepSeek
 ```
 
-Every database query is scoped to the authenticated user's `userId`. Strava tokens are AES-256-GCM encrypted at rest. LLM responses are JSON-only, Zod-validated, with retry and explicit algorithmic fallback.
+Every database query is scoped to the authenticated user's `userId`. Strava tokens are AES-256-GCM encrypted at rest. LLM responses are JSON-only, Zod-validated, with retry and explicit algorithmic fallback. Failed pages render an error boundary (never a blank screen); LLM and import failures use Italian copy in `lib/errors/user-facing.ts`.
 
 See **[TECHNICAL.md](./TECHNICAL.md)** for data model, API routes, sync flow, security model, and development conventions.
 
@@ -173,6 +173,7 @@ All LLM calls are centralized in `/lib/llm`. Do not invoke OpenAI or DeepSeek di
 - **Override per call:** `getLLMProvider({ provider: "openai" })`
 - **Output:** JSON validated with Zod schemas; max 2 parse attempts, then explicit algorithmic fallback
 - **Observability:** Token usage and estimated USD cost logged to `LLMInteractionLog`
+- **Monthly estimate (DeepSeek, amateur athlete):** ~**$0.025 / user / month** for 2 program generations, 16 feedback analyses, and 2 performance reports. Ten beta testers ≈ **$0.25 / month**. Figures come from list prices in `lib/llm/constants.ts` and the conservative token scenario in `lib/llm/usage-scenario.ts` (a ceiling, not an invoice). Live totals stay in `LLMInteractionLog`.
 
 ## Commands
 
@@ -191,11 +192,26 @@ npx prisma studio    # Database GUI
 
 ## Deployment (Vercel)
 
+Production URL (share with beta testers): **[https://pacely-rouge.vercel.app](https://pacely-rouge.vercel.app)**. Set `NEXTAUTH_URL` to that origin.
+
 1. Import the repository into Vercel.
 2. Set environment variables from `.env.example`.
 3. Use Neon `DATABASE_URL` and `DATABASE_URL_UNPOOLED` from `npx neon env pull`.
-4. Prisma client is generated on `postinstall`.
-5. After deploy, update Strava Authorization Callback Domain and register the webhook.
+4. Prisma client is generated on `postinstall`. Apply migrations (`npx prisma migrate deploy`) on the production database.
+5. After deploy, update Strava **Authorization Callback Domain** to the production hostname and register the webhook.
+6. Point Strava **Website** to the production URL.
+
+### Beta testers
+
+1. Open the production URL → **Connetti con Strava**.
+2. Wait for the historical import (or use **Sincronizza ora**).
+3. Create a program → follow it on **Calendario** → leave feedback after a completed workout → open **Report**.
+4. Optional: enable browser push on **Notifiche**. On iPhone, add the site to the Home Screen first.
+5. Send structured notes from **Feedback** in the header (`/feedback`).
+
+**Known MVP limits:** matching Workout↔Activity is heuristic (correct it on the calendar); recalc proposals only in the calibration window and never auto-applied; Web Push on iOS Safari requires PWA-on-Home; only run/swim/ride are imported.
+
+**Two-account isolation check:** log in with Strava A, create a program, copy its URL, log out, log in with Strava B — the URL must 404 / “contenuto non trovato”, never A’s data. Automated coverage: `tests/unit/user-isolation.test.ts`.
 
 ## Testing
 
@@ -203,7 +219,7 @@ npx prisma studio    # Database GUI
 npm run test
 ```
 
-- **Unit tests** — Strava payload normalization, LLM schema validation, encryption helpers, notification copy
+- **Unit tests** — Strava payload normalization, LLM schema validation, encryption helpers, notification copy, user isolation, LLM monthly cost scenario
 - **Integration tests** — OAuth flow (mocked Strava), webhook → activity persistence, daily notification job (mocked push)
 
 Pre-commit hooks (Husky) run ESLint and Prettier on staged files.
