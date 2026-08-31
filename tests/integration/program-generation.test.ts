@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { validProgram, programInput } from "@/tests/unit/llm-fixtures";
 import {
+  buildProgramCreateData,
   sportBalanceRatio,
   summarizeSportBalance,
 } from "@/lib/programs/persist";
@@ -66,6 +67,24 @@ describe("program generation integration (mocked LLM)", () => {
     const ratio = sportBalanceRatio(totals, ["run", "ride"]);
     expect(ratio).not.toBeNull();
     expect(ratio!).toBeLessThan(3);
+
+    const persisted = buildProgramCreateData(
+      "user-1",
+      {
+        sports: ["run", "ride"],
+        durationWeeks: 8,
+        startDate: "2026-04-06",
+        goalType: "generic",
+        goalDescription: "Migliorare la base aerobica",
+        slots: [{ weekday: 1, timeOfDay: "07:00" }, { weekday: 3 }],
+      },
+      result.data,
+    );
+    expect(persisted.weeks).toHaveLength(result.data.weeks.length);
+    expect(persisted.weeks[0]?.workouts[0]?.blocks).toEqual(
+      result.data.weeks[0]?.workouts[0]?.blocks,
+    );
+    expect(persisted.weeks[0]?.workouts[0]?.status).toBe("planned");
   });
 
   it("aggregates weekly history from activities", () => {

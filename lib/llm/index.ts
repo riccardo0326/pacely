@@ -65,3 +65,9 @@ export {
   LLMRateLimitError,
   LLMTimeoutError,
 } from "@/lib/llm/errors";
+export {
+  assertGenerateProgramQuota,
+  isLlmQuotaExceeded,
+  LlmQuotaExceededError,
+  LLM_GENERATE_PROGRAM_MAX_PER_HOUR,
+} from "@/lib/llm/quota";

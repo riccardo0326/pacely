@@ -65,6 +65,7 @@ export const workoutBlockSchema = z.object({
     .optional(),
   repetitions: z.number().int().positive().optional(),
 });
+export type WorkoutBlock = z.infer<typeof workoutBlockSchema>;
 
 export const plannedWorkoutSchema = z.object({
   dayOfWeek: z.number().int().min(0).max(6),
