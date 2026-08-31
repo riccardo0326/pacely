@@ -10,7 +10,7 @@ const DEFAULT_WEEKLY_TSS = 200;
 const MIN_WEEKLY_TSS = 120;
 const MAX_WEEKLY_TSS = 600;
 
-/** Rough TSS/min by sport when power/pace data is unavailable (pre–Fase 3). */
+/** Rough TSS/min by sport when CTL/ATL snapshots are not yet available. */
 const TSS_PER_MINUTE: Record<Sport, number> = {
   run: 1.1,
   ride: 0.9,

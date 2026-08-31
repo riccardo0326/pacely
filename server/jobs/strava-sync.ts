@@ -8,6 +8,7 @@ import {
   upsertNormalizedActivity,
 } from "@/lib/strava/persist-activity";
 import { getValidAccessToken } from "@/lib/strava/tokens";
+import { tryRecalculateUserMetrics } from "@/server/jobs/metrics-recalc";
 import { processPendingBackfills } from "@/server/jobs/strava-backfill";
 
 const INCREMENTAL_OVERLAP_SEC = 60;
@@ -55,6 +56,9 @@ export async function pollRecentActivitiesForUser(
       }
     }
     await touchLastSync(userId);
+    if (imported > 0) {
+      await tryRecalculateUserMetrics(userId);
+    }
     return { imported, paused: false };
   } catch (error) {
     if (error instanceof StravaRateLimitError) {

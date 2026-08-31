@@ -8,12 +8,12 @@ import { LLM_INTERACTION_TYPE } from "@/lib/llm/constants";
 import type { ProgramGenerationInput } from "@/lib/llm/schemas";
 import { programGenerationInputSchema } from "@/lib/llm/schemas";
 import { buildAggregatedHistory } from "@/lib/programs/history";
+import { prisma } from "@/lib/prisma";
 import {
   buildProgramCreateData,
   type ProgramWithDetails,
 } from "@/lib/programs/persist";
 import { calculateWeeklyTssBudget } from "@/lib/programs/tss-budget";
-import { prisma } from "@/lib/prisma";
 import {
   createProgramFormSchema,
   updateWorkoutFormSchema,
@@ -132,14 +132,30 @@ async function buildGenerationInput(
   userId: string,
   form: CreateProgramForm,
 ): Promise<ProgramGenerationInput> {
-  const activities = await prisma.activity.findMany({
-    where: { userId },
-    orderBy: { startedAt: "desc" },
-    take: 200,
-    select: { sport: true, durationSec: true, startedAt: true },
-  });
+  const [activities, latestSnapshot] = await Promise.all([
+    prisma.activity.findMany({
+      where: { userId },
+      orderBy: { startedAt: "desc" },
+      take: 200,
+      select: { sport: true, durationSec: true, startedAt: true },
+    }),
+    prisma.performanceMetricSnapshot.findFirst({
+      where: { userId },
+      orderBy: { date: "desc" },
+      select: {
+        ctl: true,
+        atl: true,
+        tsb: true,
+        ftp: true,
+        vdot: true,
+        swimThresholdPaceSecPer100m: true,
+      },
+    }),
+  ]);
 
   const weeklyTssBudget = calculateWeeklyTssBudget({
+    ctl: latestSnapshot?.ctl,
+    atl: latestSnapshot?.atl,
     activities: activities.map((activity) => ({
       sport: activity.sport as "run" | "swim" | "ride",
       durationSec: activity.durationSec,
@@ -164,7 +180,15 @@ async function buildGenerationInput(
     },
     constraints: form.constraints?.trim() || undefined,
     weeklyTssBudget,
-    currentMetrics: {},
+    currentMetrics: {
+      ctl: latestSnapshot?.ctl,
+      atl: latestSnapshot?.atl,
+      tsb: latestSnapshot?.tsb,
+      ftp: latestSnapshot?.ftp ?? undefined,
+      vdot: latestSnapshot?.vdot ?? undefined,
+      swimThresholdPaceSecPer100m:
+        latestSnapshot?.swimThresholdPaceSecPer100m ?? undefined,
+    },
     aggregatedHistory: buildAggregatedHistory(
       activities.map((activity) => ({
         sport: activity.sport as "run" | "swim" | "ride",

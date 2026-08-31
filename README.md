@@ -2,23 +2,24 @@
 
 **Multi-sport training web application** — Next.js full-stack app that connects to Strava, imports activity history, computes training load metrics, and (roadmap) generates LLM-assisted training programs with adaptive feedback for running, cycling, swimming, and triathlon.
 
-| | |
-|---|---|
-| **Stack** | Next.js 16 · React 19 · TypeScript · Prisma · PostgreSQL (Neon) · Auth.js · TanStack Query · Tailwind 4 · shadcn/ui |
-| **Integrations** | Strava OAuth + Webhooks · OpenAI / DeepSeek (via `/lib/llm`) |
-| **Deploy** | Vercel (Cron Jobs for fallback sync) |
-| **Docs** | [TECHNICAL.md](./TECHNICAL.md) · [PROJECT_SPEC.md](./PROJECT_SPEC.md) · [TASKS.md](./TASKS.md) |
+|                  |                                                                                                                     |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Stack**        | Next.js 16 · React 19 · TypeScript · Prisma · PostgreSQL (Neon) · Auth.js · TanStack Query · Tailwind 4 · shadcn/ui |
+| **Integrations** | Strava OAuth + Webhooks · OpenAI / DeepSeek (via `/lib/llm`)                                                        |
+| **Deploy**       | Vercel (Cron Jobs for fallback sync)                                                                                |
+| **Docs**         | [TECHNICAL.md](./TECHNICAL.md) · [PROJECT_SPEC.md](./PROJECT_SPEC.md) · [TASKS.md](./TASKS.md)                      |
 
 ## Current implementation status
 
-| Phase | Scope | Status |
-|---|---|---|
-| 0 | Project setup, CI, Vercel deploy | Done |
-| 1 | Strava OAuth, encrypted tokens, route protection | Done |
-| 2 | Activity import (backfill + webhook + cron fallback) | Done |
-| 3 | Metrics engine (TSS, CTL/ATL/TSB, FTP, VDOT, swim threshold) | In progress |
-| 4 | LLM abstraction (DeepSeek + OpenAI, Zod validation, cost logging) | Done |
-| 5+ | Programs, calendar, feedback loop, performance reports | Planned |
+| Phase | Scope                                                             | Status  |
+| ----- | ----------------------------------------------------------------- | ------- |
+| 0     | Project setup, CI, Vercel deploy                                  | Done    |
+| 1     | Strava OAuth, encrypted tokens, route protection                  | Done    |
+| 2     | Activity import (backfill + webhook + cron fallback)              | Done    |
+| 3     | Metrics engine (TSS, CTL/ATL/TSB, FTP, VDOT, swim threshold)      | Done    |
+| 4     | LLM abstraction (DeepSeek + OpenAI, Zod validation, cost logging) | Done    |
+| 5     | Program generation and workout editor                             | Done    |
+| 6+    | Calendar, feedback loop, performance reports                      | Planned |
 
 MVP scope and exclusions are defined in [`PROJECT_SPEC.md`](./PROJECT_SPEC.md). Task-level progress is tracked in [`TASKS.md`](./TASKS.md).
 
@@ -59,13 +60,13 @@ cp .env.example .env
 
 Copy [`.env.example`](./.env.example) and fill in the required values. Key groups:
 
-| Group | Variables |
-|---|---|
-| Database | `DATABASE_URL`, `DATABASE_URL_UNPOOLED` |
-| Auth | `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `AUTH_SECRET` |
-| Strava | `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `STRAVA_WEBHOOK_VERIFY_TOKEN` |
-| Security | `ENCRYPTION_KEY` (32-byte hex), `CRON_SECRET` |
-| LLM | `LLM_PROVIDER`, `DEEPSEEK_API_KEY`, `OPENAI_API_KEY` |
+| Group    | Variables                                                                 |
+| -------- | ------------------------------------------------------------------------- |
+| Database | `DATABASE_URL`, `DATABASE_URL_UNPOOLED`                                   |
+| Auth     | `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `AUTH_SECRET`                          |
+| Strava   | `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `STRAVA_WEBHOOK_VERIFY_TOKEN` |
+| Security | `ENCRYPTION_KEY` (32-byte hex), `CRON_SECRET`                             |
+| LLM      | `LLM_PROVIDER`, `DEEPSEEK_API_KEY`, `OPENAI_API_KEY`                      |
 
 Generate secrets:
 

@@ -2,7 +2,7 @@
 
 Multi-sport training platform built on Next.js. Strava is the sole identity provider and activity source. LLM-backed program generation, adaptive feedback, and performance reports are planned; the current codebase implements auth, activity sync, and the LLM abstraction layer.
 
-**Status (August 2026):** Phases 0–2 and 4 complete (setup, Strava OAuth, activity import/sync, LLM abstraction). Phase 3 (metrics engine) and Phase 5+ (programs, calendar, feedback) are in progress or pending. See [`TASKS.md`](./TASKS.md) for the full roadmap.
+**Status (August 2026):** Phases 0–5 complete (metrics, LLM, programs). Phase 6+ (calendar, feedback, reports) are pending. See [`TASKS.md`](./TASKS.md) for the full roadmap.
 
 ---
 
@@ -19,7 +19,7 @@ Multi-sport training platform built on Next.js. Strava is the sole identity prov
 │                    Next.js 16 App Router (Node.js ≥20)                  │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌─────────────┐  │
 │  │ Auth.js v5   │  │ /lib/strava  │  │ /lib/llm     │  │ /lib/metrics│  │
-│  │ JWT sessions │  │ OAuth client │  │ OpenAI/      │  │ (planned)   │  │
+│  │ JWT sessions │  │ OAuth client │  │ OpenAI/      │  │ TSS/CTL/FTP │  │
 │  │ Strava prov. │  │ webhook sync │  │ DeepSeek     │  │ TSS/CTL/…   │  │
 │  └──────────────┘  └──────────────┘  └──────────────┘  └─────────────┘  │
 │  /server/actions   /server/jobs      /lib/security (AES token encryption) │
@@ -47,21 +47,21 @@ All activity queries are scoped by `userId` from the authenticated session — n
 
 ## Stack
 
-| Layer | Technology | Notes |
-|---|---|---|
-| Runtime | Node.js ≥20 | Enforced in `package.json` engines |
-| Framework | Next.js 16 (App Router) | Server Components, Route Handlers, Server Actions |
-| Language | TypeScript (strict) | `tsc --noEmit` in CI |
-| Auth | Auth.js v5 (`next-auth@5.0.0-beta.32`) | Custom Strava OAuth provider; JWT sessions (no Account/Session tables) |
-| Database | PostgreSQL on [Neon](https://neon.tech) | Pooled `DATABASE_URL` + direct `DATABASE_URL_UNPOOLED` for migrations |
-| ORM | Prisma 6.19 | Versioned migrations under `prisma/migrations/` |
-| UI | Tailwind CSS 4 + shadcn/ui | Radix primitives, Lucide icons |
-| Client state | TanStack Query v5 | Server-state cache and invalidation |
-| Validation | Zod 4 | Boundary validation for Strava payloads, LLM output, forms |
-| LLM | `/lib/llm` abstraction | DeepSeek (default) and OpenAI via OpenAI-compatible Chat Completions API |
-| Testing | Vitest + Testing Library | Unit tests in `tests/unit/`, integration in `tests/integration/` |
-| Observability | Sentry (optional) | No-op without `SENTRY_DSN` |
-| Deploy | Vercel | Cron jobs defined in `vercel.json` |
+| Layer         | Technology                              | Notes                                                                    |
+| ------------- | --------------------------------------- | ------------------------------------------------------------------------ |
+| Runtime       | Node.js ≥20                             | Enforced in `package.json` engines                                       |
+| Framework     | Next.js 16 (App Router)                 | Server Components, Route Handlers, Server Actions                        |
+| Language      | TypeScript (strict)                     | `tsc --noEmit` in CI                                                     |
+| Auth          | Auth.js v5 (`next-auth@5.0.0-beta.32`)  | Custom Strava OAuth provider; JWT sessions (no Account/Session tables)   |
+| Database      | PostgreSQL on [Neon](https://neon.tech) | Pooled `DATABASE_URL` + direct `DATABASE_URL_UNPOOLED` for migrations    |
+| ORM           | Prisma 6.19                             | Versioned migrations under `prisma/migrations/`                          |
+| UI            | Tailwind CSS 4 + shadcn/ui              | Radix primitives, Lucide icons                                           |
+| Client state  | TanStack Query v5                       | Server-state cache and invalidation                                      |
+| Validation    | Zod 4                                   | Boundary validation for Strava payloads, LLM output, forms               |
+| LLM           | `/lib/llm` abstraction                  | DeepSeek (default) and OpenAI via OpenAI-compatible Chat Completions API |
+| Testing       | Vitest + Testing Library                | Unit tests in `tests/unit/`, integration in `tests/integration/`         |
+| Observability | Sentry (optional)                       | No-op without `SENTRY_DSN`                                               |
+| Deploy        | Vercel                                  | Cron jobs defined in `vercel.json`                                       |
 
 ---
 
@@ -81,7 +81,7 @@ All activity queries are scoped by `userId` from the authenticated session — n
   auth/                      # Session helpers (requireUser)
   strava/                    # OAuth provider, API client, normalization, webhook
   llm/                       # Provider abstraction, Zod schemas, cost logging
-  metrics/                   # TSS/CTL/ATL/TSB (Phase 3, in progress)
+  metrics/                   # TSS/CTL/ATL/TSB, FTP, VDOT, swim CSS, zones
   security/                  # AES encryption for Strava tokens at rest
   validation/                # Shared Zod schemas
 /server
@@ -96,15 +96,17 @@ All activity queries are scoped by `userId` from the authenticated session — n
 
 ## Data model (implemented)
 
-| Model | Purpose |
-|---|---|
-| `User` | Athlete identity keyed by `stravaAthleteId`; `role` defaults to `"athlete"` (extensible to `"coach"`) |
-| `StravaConnection` | Encrypted access/refresh tokens, OAuth scope, `lastSyncAt` |
-| `Activity` | Normalized Strava activity (`run` \| `swim` \| `ride`); stores `sourceRaw` JSON for reprocessing |
-| `Job` | Lightweight async queue (`pending` → `running` → `done` \| `failed`); used for historical backfill |
-| `LLMInteractionLog` | Per-call token usage, estimated USD cost, success/fallback flags |
+| Model                                   | Purpose                                                                                                               |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `User`                                  | Athlete identity keyed by `stravaAthleteId`; `role` defaults to `"athlete"` (extensible to `"coach"`)                 |
+| `StravaConnection`                      | Encrypted access/refresh tokens, OAuth scope, `lastSyncAt`                                                            |
+| `Activity`                              | Normalized Strava activity (`run` \| `swim` \| `ride`); stores `sourceRaw` JSON for reprocessing                      |
+| `Job`                                   | Lightweight async queue (`pending` → `running` → `done` \| `failed`); used for historical backfill and metrics recalc |
+| `LLMInteractionLog`                     | Per-call token usage, estimated USD cost, success/fallback flags                                                      |
+| `PerformanceMetricSnapshot`             | Daily CTL/ATL/TSB plus current FTP, VDOT, swim CSS, and per-sport TSS breakdown                                       |
+| `Program` / `Goal` / `Week` / `Workout` | LLM-generated training plan with block-structured workouts                                                            |
 
-**Planned entities** (see `PROJECT_SPEC.md` §7): `PerformanceMetricSnapshot`, `Program`, `Goal`, `Week`, `Workout`, `WorkoutFeedback`, `RecalcProposal`, `PerformanceReport`, `Notification`.
+**Planned entities** (see `PROJECT_SPEC.md` §7): `WorkoutFeedback`, `RecalcProposal`, `PerformanceReport`, `Notification`.
 
 ### Activity normalization
 
@@ -165,18 +167,24 @@ All LLM calls go through `/lib/llm` — direct provider SDK usage elsewhere is f
 
 ```typescript
 interface LLMProvider {
-  generateProgram(input: ProgramGenerationInput): Promise<ProgramGenerationOutput>;
-  analyzeFeedback(input: FeedbackAnalysisInput): Promise<FeedbackAnalysisOutput>;
-  analyzePerformance(input: PerformanceAnalysisInput): Promise<PerformanceReportOutput>;
+  generateProgram(
+    input: ProgramGenerationInput,
+  ): Promise<ProgramGenerationOutput>;
+  analyzeFeedback(
+    input: FeedbackAnalysisInput,
+  ): Promise<FeedbackAnalysisOutput>;
+  analyzePerformance(
+    input: PerformanceAnalysisInput,
+  ): Promise<PerformanceReportOutput>;
 }
 ```
 
 ### Providers
 
-| Provider | Model | Selection |
-|---|---|---|
-| DeepSeek | `deepseek-chat` | Default (`LLM_PROVIDER=deepseek`) |
-| OpenAI | `gpt-4o-mini` | `LLM_PROVIDER=openai` or per-call override |
+| Provider | Model           | Selection                                  |
+| -------- | --------------- | ------------------------------------------ |
+| DeepSeek | `deepseek-chat` | Default (`LLM_PROVIDER=deepseek`)          |
+| OpenAI   | `gpt-4o-mini`   | `LLM_PROVIDER=openai` or per-call override |
 
 ### Structured output pipeline
 
@@ -193,12 +201,12 @@ HTTP 429/5xx responses trigger up to 2 retries with exponential backoff.
 
 ## API routes
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `GET/POST` | `/api/auth/[...nextauth]` | Public | Auth.js OAuth flow |
-| `GET` | `/api/health` | Public | Health check |
-| `GET/POST` | `/api/strava/webhook` | Verify token | Strava webhook validation + events |
-| `GET` | `/api/cron/strava-sync` | `Bearer $CRON_SECRET` | Daily fallback activity sync |
+| Method     | Path                      | Auth                  | Description                        |
+| ---------- | ------------------------- | --------------------- | ---------------------------------- |
+| `GET/POST` | `/api/auth/[...nextauth]` | Public                | Auth.js OAuth flow                 |
+| `GET`      | `/api/health`             | Public                | Health check                       |
+| `GET/POST` | `/api/strava/webhook`     | Verify token          | Strava webhook validation + events |
+| `GET`      | `/api/cron/strava-sync`   | `Bearer $CRON_SECRET` | Daily fallback activity sync       |
 
 Future program/feedback endpoints will follow the same pattern: Route Handlers for webhooks/cron, Server Actions for UI mutations.
 
@@ -208,10 +216,10 @@ Future program/feedback endpoints will follow the same pattern: Route Handlers f
 
 Pacely uses a **database-backed job queue** (`Job` table) instead of Redis or dedicated workers:
 
-| Job type | Trigger | Behavior |
-|---|---|---|
-| `strava_backfill` | First OAuth connection | Paginated historical import; progress stored in `Job.progress` JSON |
-| *(planned)* `recalculate_metrics` | Webhook after new activity | Recompute TSS/CTL/ATL/TSB snapshots |
+| Job type          | Trigger                                      | Behavior                                                            |
+| ----------------- | -------------------------------------------- | ------------------------------------------------------------------- |
+| `strava_backfill` | First OAuth connection                       | Paginated historical import; progress stored in `Job.progress` JSON |
+| `metrics_recalc`  | After webhook/sync/backfill activity changes | Recompute TSS/CTL/ATL/TSB snapshots                                 |
 
 Job processing is triggered from dashboard Server Actions (backfill chunks) and cron/webhook handlers (incremental sync). Vercel Hobby cron runs once daily; interactive dashboard actions provide lower-latency processing.
 
