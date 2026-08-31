@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/require-user";
+import { USER_FACING_ERROR, toUserFacingError } from "@/lib/errors/user-facing";
 import { getLLMProvider } from "@/lib/llm";
 import { LLM_INTERACTION_TYPE } from "@/lib/llm/constants";
 import type { ProgramGenerationInput } from "@/lib/llm/schemas";
@@ -376,8 +377,7 @@ export async function generateProgram(
     if (error instanceof LlmQuotaExceededError) {
       return { ok: false, error: error.message };
     }
-    const message =
-      error instanceof Error ? error.message : "Generazione programma fallita";
+    const message = toUserFacingError(error, USER_FACING_ERROR.generateProgram);
     return { ok: false, error: message };
   }
 }
@@ -470,8 +470,10 @@ export async function regenerateProgram(
     if (error instanceof LlmQuotaExceededError) {
       return { ok: false, error: error.message };
     }
-    const message =
-      error instanceof Error ? error.message : "Rigenerazione fallita";
+    const message = toUserFacingError(
+      error,
+      USER_FACING_ERROR.regenerateProgram,
+    );
     return { ok: false, error: message };
   }
 }
@@ -540,7 +542,8 @@ export async function createProgramAndRedirect(
   if (!result.ok) {
     redirect(`${routes.programNew}?error=${encodeURIComponent(result.error)}`);
   }
-  redirect(routes.program(result.programId));
+  const suffix = result.usedFallback ? "?generated=fallback" : "";
+  redirect(`${routes.program(result.programId)}${suffix}`);
 }
 
 function parseSlotsFromForm(formData: FormData) {

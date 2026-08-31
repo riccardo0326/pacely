@@ -2,7 +2,7 @@
 
 Multi-sport training platform built on Next.js. Strava is the sole identity provider and activity source. LLM-backed program generation, adaptive feedback, performance reports, and notifications are implemented through Phase 9.
 
-**Status (August 2026):** Phases 0–9 complete (metrics, LLM, programs, calendar matching, feedback, suggested recalc, performance reports, in-app + Web Push notifications). Phase 10 (polish / beta) is pending. See [`TASKS.md`](./TASKS.md) for the full roadmap.
+**Status (August 2026):** Phases 0–10 complete (metrics, LLM, programs, calendar matching, feedback, suggested recalc, performance reports, in-app + Web Push, polish/QA/beta). See [`TASKS.md`](./TASKS.md) for the full roadmap.
 
 ---
 
@@ -73,6 +73,7 @@ All activity queries are scoped by `userId` from the authenticated session — n
   (dashboard)/dashboard/     # Protected athlete dashboard
   (dashboard)/calendar/      # Weekly/monthly planned vs actual
   (dashboard)/programs/      # Program list, create, detail + editor
+  (dashboard)/feedback/      # Beta tester structured notes
   api/
     auth/[...nextauth]/      # Auth.js route handler
     strava/webhook/          # Strava push subscription endpoint
@@ -119,6 +120,7 @@ All activity queries are scoped by `userId` from the authenticated session — n
 | `PerformanceReport`                     | Periodic LLM summary (`content` JSON: strengths / improvements / suggestions); `source` `scheduled` \| `on_demand`    |
 | `Notification`                          | In-app item (`workout_today` \| `recalc_proposal`); `readAt` null = unread; `dedupeKey` for idempotency               |
 | `PushSubscription`                      | Browser Web Push endpoint + VAPID keys (`p256dh`, `auth`) per user                                                    |
+| `BetaFeedback`                          | Structured beta-tester notes (`bug` \| `ux` \| `idea` \| `other`); scoped by `userId`                                 |
 
 **Planned entities** (see `PROJECT_SPEC.md` §7): none remaining for MVP.
 
@@ -262,6 +264,10 @@ HTTP 429/5xx responses trigger up to 2 retries with exponential backoff.
 
 Generate/regenerate program: 5 LLM calls per user per hour. Feedback analysis: 20 per user per hour. Performance reports: 5 per user per hour (`LLMInteractionLog` counts).
 
+### Cost (beta scenario)
+
+Conservative amateur month on DeepSeek (`lib/llm/usage-scenario.ts`): 2× generate program, 16× analyze feedback, 2× analyze performance ≈ **$0.025 / user / month** at list prices in `lib/llm/constants.ts`. Ten concurrent friends ≈ **$0.25 / month**. Query `LLMInteractionLog` for live totals.
+
 ---
 
 ## API routes
@@ -341,7 +347,7 @@ These constraints apply to all new code:
 1. **Type safety** — Explicit input/output types for domain functions; no unjustified `any`.
 2. **Validation at boundaries** — Strava, LLM, and user input validated with Zod before use or persistence.
 3. **Structured LLM output** — No free-text parsing for application data; retry then fallback.
-4. **Per-user isolation** — Every query filters by session `userId`.
+4. **Per-user isolation** — Every query filters by session `userId`. Regression tests in `tests/unit/user-isolation.test.ts`.
 5. **Encrypted secrets** — Strava tokens encrypted at rest; API keys only in env vars.
 6. **Centralized LLM** — All provider calls through `/lib/llm` with cost logging.
 7. **Versioned migrations** — Schema changes only via `prisma migrate dev`.

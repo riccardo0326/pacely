@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { USER_FACING_ERROR } from "@/lib/errors/user-facing";
 import { JOB_STATUS } from "@/lib/strava/constants";
 import {
   getImportStatus,
@@ -153,8 +154,8 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
       {job?.status === JOB_STATUS.failed ? (
         <div className="mt-4 space-y-3">
           <p className="text-sm text-destructive">
-            Import non riuscito
-            {job.error ? `: ${job.error}` : "."}
+            Import non riuscito. Riprova: se succede di nuovo, segnalalo dal
+            form beta.
           </p>
           <Button
             type="button"
@@ -165,6 +166,28 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
             Riprova import
           </Button>
         </div>
+      ) : null}
+
+      {data.actionError ||
+      processMutation.isError ||
+      retryMutation.isError ||
+      syncMutation.isError ? (
+        <p className="mt-4 text-sm text-destructive">
+          {data.actionError ??
+            (processMutation.isError
+              ? USER_FACING_ERROR.importProcess
+              : retryMutation.isError
+                ? USER_FACING_ERROR.importRetry
+                : USER_FACING_ERROR.importSync)}
+        </p>
+      ) : null}
+
+      {job?.status === JOB_STATUS.done && data.activityCount === 0 ? (
+        <p className="mt-4 text-sm text-muted-foreground">
+          Import completato, ma non ci sono attività di corsa, nuoto o ciclismo.
+          Pacely ignora gli altri sport (es. e-bike). Puoi comunque creare un
+          programma.
+        </p>
       ) : null}
 
       {job?.status === JOB_STATUS.done || data.lastSyncAt ? (

@@ -1,4 +1,5 @@
 import { MetricsPmcChart } from "@/components/metrics-pmc-chart";
+import { EmptyState } from "@/components/empty-state";
 import { formatPace, formatZoneBound } from "@/lib/metrics/format";
 import type { IntensityZone, PmcPoint, SportZones } from "@/lib/metrics/types";
 
@@ -57,13 +58,11 @@ export type MetricsPanelData = {
 export function MetricsPanel({ data }: { data: MetricsPanelData }) {
   if (!data.latest) {
     return (
-      <section className="rounded-xl border border-border bg-background p-4">
-        <h2 className="font-medium">Carico e forma</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Le metriche appariranno quando avrai almeno un&apos;attività importata
-          da Strava.
-        </p>
-      </section>
+      <EmptyState
+        className="text-left"
+        title="Carico e forma"
+        description="Le metriche appariranno quando avrai almeno un'attività importata da Strava (corsa, nuoto o ciclismo)."
+      />
     );
   }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { nextMonday } from "@/lib/programs/dates";
 import {
@@ -295,9 +296,23 @@ export function ProgramCreateForm({
         />
       </label>
 
-      <Button type="submit" className="self-start">
-        Genera programma
-      </Button>
+      <GenerateSubmitButton />
     </form>
+  );
+}
+
+function GenerateSubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <div className="flex flex-col items-start gap-2">
+      <Button type="submit" disabled={pending}>
+        {pending ? "Generazione in corso…" : "Genera programma"}
+      </Button>
+      {pending ? (
+        <p className="text-sm text-muted-foreground">
+          Può richiedere fino a un minuto. Non chiudere la pagina.
+        </p>
+      ) : null}
+    </div>
   );
 }

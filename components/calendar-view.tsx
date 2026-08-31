@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { CalendarNav } from "@/components/calendar-nav";
+import { EmptyState } from "@/components/empty-state";
 import {
   PlannedVsActualSummary,
   WorkoutComparison,
 } from "@/components/planned-vs-actual";
 import { WorkoutFeedbackForm } from "@/components/workout-feedback-form";
 import { WorkoutMatchControls } from "@/components/workout-match-controls";
+import { Button } from "@/components/ui/button";
 import { MATCH_SOURCE, WORKOUT_STATUS } from "@/lib/matching/constants";
 import { routes } from "@/lib/routes";
 import { SPORT_LABELS, type Sport } from "@/lib/strava/constants";
@@ -194,7 +196,19 @@ export function CalendarView({ data }: { data: CalendarData }) {
         rangeStart={data.rangeStart}
         rangeEnd={data.rangeEnd}
       />
-      <PlannedVsActualSummary totals={data.totals} />
+      {!data.hasActiveProgram ? (
+        <EmptyState
+          title="Nessun programma attivo"
+          description="Il calendario mostra gli allenamenti dei programmi attivi. Crea un piano oppure apri un programma esistente."
+          action={
+            <Button asChild>
+              <Link href={routes.programNew}>Crea un programma</Link>
+            </Button>
+          }
+        />
+      ) : (
+        <PlannedVsActualSummary totals={data.totals} />
+      )}
       {data.view === "week" ? (
         <div className="grid gap-3 sm:grid-cols-7">
           {data.days.map((day) => (

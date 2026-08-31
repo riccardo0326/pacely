@@ -12,13 +12,16 @@ import { getProgram } from "@/server/actions/programs";
 
 type ProgramDetailPageProps = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ generated?: string }>;
 };
 
 export default async function ProgramDetailPage({
   params,
+  searchParams,
 }: ProgramDetailPageProps) {
   await requireUser();
   const { id } = await params;
+  const { generated } = await searchParams;
   const [program, proposal] = await Promise.all([
     getProgram(id),
     getPendingRecalcProposalForProgram(id),
@@ -29,6 +32,12 @@ export default async function ProgramDetailPage({
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-16">
+      {generated === "fallback" ? (
+        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
+          Il piano è stato creato con il fallback algoritmico (l&apos;LLM non ha
+          prodotto un JSON valido). Puoi modificarlo a mano o rigenerarlo.
+        </p>
+      ) : null}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">

@@ -155,14 +155,16 @@ Assunzioni Fase 9: `Notification` ha `title`/`body`/`href`/`readAt`/`dedupeKey` 
 
 ## Fase 10 — Polish, QA, deploy per test con amici
 
-- [ ] Revisione UX end-to-end del flusso completo: login → import → dashboard → creazione programma → calendario → feedback → report.
-- [ ] Gestione stati vuoti (nessuna attività, nessun programma ancora creato, ecc.).
-- [ ] Gestione errori visibile all'utente (import fallito, generazione LLM fallita, ecc.) — mai schermate bianche o errori generici.
-- [ ] Verifica isolamento dati tra utenti diversi (test manuale con più account demo).
-- [ ] Controllo consumo/costo LLM stimato su uno scenario d'uso realistico (via `LLMInteractionLog`), documentare risultato.
-- [ ] README con istruzioni setup locale, variabili ambiente, procedura registrazione app Strava.
-- [ ] Deploy finale su Vercel con dominio/URL condivisibile con gli amici beta tester.
-- [ ] Raccolta feedback iniziale strutturata (anche solo un form o un canale dedicato) per iterazioni successive.
+- [x] Revisione UX end-to-end del flusso completo: login → import → dashboard → creazione programma → calendario → feedback → report.
+- [x] Gestione stati vuoti (nessuna attività, nessun programma ancora creato, ecc.).
+- [x] Gestione errori visibile all'utente (import fallito, generazione LLM fallita, ecc.) — mai schermate bianche o errori generici.
+- [x] Verifica isolamento dati tra utenti diversi (test manuale con più account demo).
+- [x] Controllo consumo/costo LLM stimato su uno scenario d'uso realistico (via `LLMInteractionLog`), documentare risultato.
+- [x] README con istruzioni setup locale, variabili ambiente, procedura registrazione app Strava.
+- [x] Deploy finale su Vercel con dominio/URL condivisibile con gli amici beta tester.
+- [x] Raccolta feedback iniziale strutturata (anche solo un form o un canale dedicato) per iterazioni successive.
+
+Assunzioni Fase 10: error boundary `app/error.tsx` + `global-error.tsx` + `not-found.tsx` (niente schermata bianca). Errori LLM/import mappati a copy italiana in `lib/errors/user-facing.ts` (niente leak di messaggi interni). Isolamento verificato con test automatici che assertano `where.userId` della sessione su program/report/notification/workout/proposta/feedback (`tests/unit/user-isolation.test.ts`); un test manuale a due account Strava resta la checklist beta. Costo LLM documentato da scenario conservativo DeepSeek in `lib/llm/usage-scenario.ts` (~$0.025/atleta/mese). Feedback beta in tabella `BetaFeedback` + pagina `/feedback`. URL produzione: [https://pacely-rouge.vercel.app](https://pacely-rouge.vercel.app) (aggiornare Strava Authorization Callback Domain su `pacely-rouge.vercel.app`). Il polish di questa fase va in produzione al prossimo deploy da `main`.
 
 ---
 

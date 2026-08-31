@@ -9,7 +9,7 @@ export function NotificationBell({ unreadCount }: { unreadCount: number }) {
   return (
     <Link
       href={routes.notifications}
-      className="relative ml-auto inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+      className="relative inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
       aria-label={label}
     >
       <Bell className="size-4" aria-hidden />

@@ -27,6 +27,7 @@ model User {
   performanceReports         PerformanceReport[]
   notifications              Notification[]
   pushSubscriptions          PushSubscription[]
+  betaFeedbacks              BetaFeedback[]
 }
 
 model StravaConnection {
@@ -303,4 +304,17 @@ model PushSubscription {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+}
+
+/// Structured beta-tester notes (Fase 10). Scoped to the submitting athlete.
+model BetaFeedback {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// `bug` | `ux` | `idea` | `other`
+  category  String
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }

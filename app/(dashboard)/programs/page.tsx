@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/require-user";
 import { routes } from "@/lib/routes";
@@ -35,14 +36,15 @@ export default async function ProgramsPage() {
       </div>
 
       {programs.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-8 text-center">
-          <p className="text-muted-foreground">
-            Non hai ancora creato un programma.
-          </p>
-          <Button asChild className="mt-4">
-            <Link href={routes.programNew}>Crea il primo programma</Link>
-          </Button>
-        </div>
+        <EmptyState
+          title="Nessun programma"
+          description="Crea un piano multi-sport con obiettivo (gara o generico). La generazione usa le tue metriche Strava e un budget TSS settimanale."
+          action={
+            <Button asChild>
+              <Link href={routes.programNew}>Crea il primo programma</Link>
+            </Button>
+          }
+        />
       ) : (
         <ul className="flex flex-col gap-3">
           {programs.map((program) => (
