@@ -53,16 +53,18 @@ Assunzioni Fase 2: il backfill usa l'elenco attività Strava (summary), non gli 
 
 ## Fase 3 — Motore metriche
 
-- [ ] Implementare calcolo TSS unificato per sport (`lib/metrics`): rTSS (corsa), bikeTSS (potenza o stima FC/pace), sTSS (nuoto).
-- [ ] Implementare calcolo CTL/ATL/TSB (media mobile esponenziale, 42gg/7gg) aggregato multi-sport.
-- [ ] Implementare stima FTP (da attività con potenza; fallback se assente).
-- [ ] Implementare stima VDOT (corsa) da performance recenti.
-- [ ] Implementare stima soglia di nuoto (passo/100m).
-- [ ] Implementare calcolo zone di intensità derivate (FC/passo/potenza) per ciascuno sport.
-- [ ] Modello `PerformanceMetricSnapshot` in Prisma + migrazione.
-- [ ] Job di ricalcolo metriche triggerato da nuova attività sincronizzata (collegato al webhook/job di Fase 2).
-- [ ] Dashboard base: grafico CTL/ATL/TSB nel tempo, metriche correnti (FTP/VDOT/soglia nuoto).
-- [ ] Test unit estesi su tutte le formule di calcolo (casi limite: nessuna attività, dati mancanti, un solo sport praticato).
+- [x] Implementare calcolo TSS unificato per sport (`lib/metrics`): rTSS (corsa), bikeTSS (potenza o stima FC/pace), sTSS (nuoto).
+- [x] Implementare calcolo CTL/ATL/TSB (media mobile esponenziale, 42gg/7gg) aggregato multi-sport.
+- [x] Implementare stima FTP (da attività con potenza; fallback se assente).
+- [x] Implementare stima VDOT (corsa) da performance recenti.
+- [x] Implementare stima soglia di nuoto (passo/100m).
+- [x] Implementare calcolo zone di intensità derivate (FC/passo/potenza) per ciascuno sport.
+- [x] Modello `PerformanceMetricSnapshot` in Prisma + migrazione.
+- [x] Job di ricalcolo metriche triggerato da nuova attività sincronizzata (collegato al webhook/job di Fase 2).
+- [x] Dashboard base: grafico CTL/ATL/TSB nel tempo, metriche correnti (FTP/VDOT/soglia nuoto).
+- [x] Test unit estesi su tutte le formule di calcolo (casi limite: nessuna attività, dati mancanti, un solo sport praticato).
+
+Assunzioni Fase 3: solo summary Strava (niente stream). bikeTSS da NP/`weighted_average_watts` o `average_watts` vs FTP (95% del miglior NP su sforzi ≥20 min, 90gg); senza potenza: FC vs LTHR (85% max HR osservato), poi RPE, poi IF fisso 0.75. rTSS: IF = velocità grade-adjusted (8 m extra per metro di dislivello) / T-pace da VDOT Daniels. sTSS vs CSS (passo più veloce su nuoti ≥400 m e ≥8 min). FTP assente se non c'è potenza (niente stima watt da FC). PMC con giorni di riposo (TSS 0) da prima attività a oggi. Grafico SVG senza libreria chart. Ricalcolo sincrono dopo webhook/sync/chunk backfill; errori di recalc non fanno fallire lo sync.
 
 ---
 

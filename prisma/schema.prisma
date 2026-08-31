@@ -18,11 +18,12 @@ model User {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  stravaConnection   StravaConnection?
-  activities         Activity[]
-  jobs               Job[]
-  llmInteractionLogs LLMInteractionLog[]
-  programs           Program[]
+  stravaConnection             StravaConnection?
+  activities                   Activity[]
+  jobs                         Job[]
+  llmInteractionLogs           LLMInteractionLog[]
+  programs                     Program[]
+  performanceMetricSnapshots   PerformanceMetricSnapshot[]
 }
 
 model StravaConnection {
@@ -111,6 +112,27 @@ model LLMInteractionLog {
 
   @@index([userId, createdAt])
   @@index([userId, interactionType])
+}
+
+/// Daily PMC + current thresholds. Recalculated when activities change.
+model PerformanceMetricSnapshot {
+  id                              String   @id @default(cuid())
+  userId                          String
+  user                            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date                            DateTime @db.Date
+  ctl                             Float
+  atl                             Float
+  tsb                             Float
+  ftp                             Float?
+  vdot                            Float?
+  swimThresholdPaceSecPer100m     Float?
+  /// `{ run?: { tss, durationSec, activityCount }, swim?: ..., ride?: ... }`
+  sportBreakdown                  Json
+  createdAt                       DateTime @default(now())
+  updatedAt                       DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId, date])
 }
 
 /// Multi-sport training program (Fase 5).

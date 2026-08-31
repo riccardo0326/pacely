@@ -83,6 +83,46 @@ describe("Strava webhook event handling", () => {
     expect(touchLastSync).toHaveBeenCalledWith("user-1");
   });
 
+  it("recalculates metrics after create and delete", async () => {
+    const recalculateMetrics = vi.fn();
+    await handleStravaWebhookEvent(
+      {
+        object_type: "activity",
+        object_id: 555,
+        aspect_type: "create",
+        owner_id: 42,
+      },
+      {
+        findUserByStravaAthleteId: async () => ({ id: "user-1" }),
+        fetchActivity: async () => runPayload,
+        upsertActivity: vi.fn(),
+        deleteActivity: vi.fn(),
+        touchLastSync: vi.fn(),
+        recalculateMetrics,
+      },
+    );
+    expect(recalculateMetrics).toHaveBeenCalledWith("user-1");
+
+    recalculateMetrics.mockClear();
+    await handleStravaWebhookEvent(
+      {
+        object_type: "activity",
+        object_id: 555,
+        aspect_type: "delete",
+        owner_id: 42,
+      },
+      {
+        findUserByStravaAthleteId: async () => ({ id: "user-1" }),
+        fetchActivity: vi.fn(),
+        upsertActivity: vi.fn(),
+        deleteActivity: vi.fn(),
+        touchLastSync: vi.fn(),
+        recalculateMetrics,
+      },
+    );
+    expect(recalculateMetrics).toHaveBeenCalledWith("user-1");
+  });
+
   it("deletes on aspect_type=delete", async () => {
     const deleteActivity = vi.fn();
     await handleStravaWebhookEvent(

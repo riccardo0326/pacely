@@ -28,7 +28,7 @@ function weekKey(date: Date): string {
 
 /**
  * Aggregates Strava activities into weekly summaries for LLM context.
- * TSS is approximated from duration until Fase 3 metrics are available.
+ * TSS is approximated from duration when snapshots are not passed in.
  */
 export function buildAggregatedHistory(
   activities: ActivityHistoryRow[],
