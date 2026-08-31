@@ -18,4 +18,9 @@ describe("isLlmQuotaExceeded", () => {
       true,
     );
   });
+
+  it("accepts a custom cap for feedback analysis", () => {
+    expect(isLlmQuotaExceeded(19, 20)).toBe(false);
+    expect(isLlmQuotaExceeded(20, 20)).toBe(true);
+  });
 });

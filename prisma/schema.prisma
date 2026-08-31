@@ -18,12 +18,12 @@ model User {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  stravaConnection             StravaConnection?
-  activities                   Activity[]
-  jobs                         Job[]
-  llmInteractionLogs           LLMInteractionLog[]
-  programs                     Program[]
-  performanceMetricSnapshots   PerformanceMetricSnapshot[]
+  stravaConnection           StravaConnection?
+  activities                 Activity[]
+  jobs                       Job[]
+  llmInteractionLogs         LLMInteractionLog[]
+  programs                   Program[]
+  performanceMetricSnapshots PerformanceMetricSnapshot[]
 }
 
 model StravaConnection {
@@ -116,20 +116,20 @@ model LLMInteractionLog {
 
 /// Daily PMC + current thresholds. Recalculated when activities change.
 model PerformanceMetricSnapshot {
-  id                              String   @id @default(cuid())
-  userId                          String
-  user                            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date                            DateTime @db.Date
-  ctl                             Float
-  atl                             Float
-  tsb                             Float
-  ftp                             Float?
-  vdot                            Float?
-  swimThresholdPaceSecPer100m     Float?
+  id                          String   @id @default(cuid())
+  userId                      String
+  user                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date                        DateTime @db.Date
+  ctl                         Float
+  atl                         Float
+  tsb                         Float
+  ftp                         Float?
+  vdot                        Float?
+  swimThresholdPaceSecPer100m Float?
   /// `{ run?: { tss, durationSec, activityCount }, swim?: ..., ride?: ... }`
-  sportBreakdown                  Json
-  createdAt                       DateTime @default(now())
-  updatedAt                       DateTime @updatedAt
+  sportBreakdown              Json
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
 
   @@unique([userId, date])
   @@index([userId, date])
@@ -137,24 +137,25 @@ model PerformanceMetricSnapshot {
 
 /// Multi-sport training program (Fase 5).
 model Program {
-  id             String   @id @default(cuid())
-  userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name           String
+  id              String           @id @default(cuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
   /// `run` | `swim` | `ride`
-  sportsIncluded String[]
-  durationWeeks  Int
+  sportsIncluded  String[]
+  durationWeeks   Int
   /// `draft` | `active` | `completed` | `archived`
-  status         String   @default("active")
-  startDate      DateTime
-  constraints    String?
+  status          String           @default("active")
+  startDate       DateTime
+  constraints     String?
   /// [{ weekday: 0-6, timeOfDay?: string }]
-  availableSlots Json
-  summary        String?
-  goal           Goal?
-  weeks          Week[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  availableSlots  Json
+  summary         String?
+  goal            Goal?
+  weeks           Week[]
+  recalcProposals RecalcProposal[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   @@index([userId, status])
 }
@@ -174,23 +175,24 @@ model Goal {
 }
 
 model Week {
-  id             String    @id @default(cuid())
-  programId      String
-  program        Program   @relation(fields: [programId], references: [id], onDelete: Cascade)
-  number         Int
-  weekLoadTarget Float
-  focus          String?
-  workouts       Workout[]
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id              String           @id @default(cuid())
+  programId       String
+  program         Program          @relation(fields: [programId], references: [id], onDelete: Cascade)
+  number          Int
+  weekLoadTarget  Float
+  focus           String?
+  workouts        Workout[]
+  recalcProposals RecalcProposal[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   @@unique([programId, number])
 }
 
 model Workout {
-  id          String    @id @default(cuid())
+  id          String           @id @default(cuid())
   weekId      String
-  week        Week      @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  week        Week             @relation(fields: [weekId], references: [id], onDelete: Cascade)
   sport       String
   plannedDate DateTime
   dayOfWeek   Int
@@ -200,14 +202,48 @@ model Workout {
   timeOfDay   String?
   blocks      Json
   /// `planned` | `completed` | `skipped`
-  status      String    @default("planned")
+  status      String           @default("planned")
   /// `auto` | `manual`. Null until a match or a user override.
   matchSource String?
-  activityId  String?   @unique
-  activity    Activity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  activityId  String?          @unique
+  activity    Activity?        @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  feedback    WorkoutFeedback?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   @@index([weekId, plannedDate])
   @@index([plannedDate])
+}
+
+/// Free-text post-workout note plus structured LLM extraction (Fase 7).
+model WorkoutFeedback {
+  id        String   @id @default(cuid())
+  workoutId String   @unique
+  workout   Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  freeText  String
+  /// `FeedbackAnalysisOutput` JSON (RPE, factors, planDeviation, suggestedAction).
+  analysis  Json
+  createdAt DateTime @default(now())
+
+  proposal RecalcProposal?
+}
+
+/// Suggested plan edits; never applied until the athlete approves (Fase 7).
+model RecalcProposal {
+  id         String           @id @default(cuid())
+  programId  String
+  program    Program          @relation(fields: [programId], references: [id], onDelete: Cascade)
+  weekId     String?
+  week       Week?            @relation(fields: [weekId], references: [id], onDelete: SetNull)
+  feedbackId String?          @unique
+  feedback   WorkoutFeedback? @relation(fields: [feedbackId], references: [id], onDelete: SetNull)
+  rationale  String
+  /// `RecalcChanges` JSON: action + per-workout from/to patches.
+  changes    Json
+  /// `pending` | `approved` | `rejected`
+  status     String           @default("pending")
+  createdAt  DateTime         @default(now())
+  resolvedAt DateTime?
+
+  @@index([programId, status])
 }

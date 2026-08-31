@@ -10,7 +10,10 @@ export type ProgramWithDetails = Prisma.ProgramGetPayload<{
     weeks: {
       orderBy: { number: "asc" };
       include: {
-        workouts: { orderBy: { plannedDate: "asc" } };
+        workouts: {
+          orderBy: { plannedDate: "asc" };
+          include: { feedback: true };
+        };
       };
     };
   };

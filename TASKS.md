@@ -114,15 +114,17 @@ Assunzioni Fase 6: matching solo sullo stesso giorno UTC (stesso sport, durata e
 
 ## Fase 7 — Feedback e ricalcolo adattivo
 
-- [ ] Modello `WorkoutFeedback` in Prisma + migrazione.
-- [ ] UI per inserire feedback testuale libero dopo un workout completato.
-- [ ] Chiamata `LLMProvider.analyzeFeedback` per estrarre dati strutturati (RPE percepito, fattori esterni, scostamento dal piano).
-- [ ] Logica finestra di calibrazione: 2 settimane se programma ≤8 settimane, 3 settimane se 10-12 settimane (parametrizzata, non hardcoded per ogni caso).
-- [ ] Modello `RecalcProposal` in Prisma + migrazione.
-- [ ] Generazione proposta di modifica (diff sui workout futuri) quando il feedback, all'interno della finestra di calibrazione, indica scostamento significativo.
-- [ ] UI di approvazione/rifiuto della proposta di ricalcolo (mai applicata automaticamente).
-- [ ] Applicazione delle modifiche approvate ai `Workout` futuri interessati.
-- [ ] Test integration: feedback con scostamento forte dentro la finestra → proposta generata; stesso scenario fuori finestra → nessuna proposta, solo salvataggio feedback.
+- [x] Modello `WorkoutFeedback` in Prisma + migrazione.
+- [x] UI per inserire feedback testuale libero dopo un workout completato.
+- [x] Chiamata `LLMProvider.analyzeFeedback` per estrarre dati strutturati (RPE percepito, fattori esterni, scostamento dal piano).
+- [x] Logica finestra di calibrazione: 2 settimane se programma ≤8 settimane, 3 settimane se 10-12 settimane (parametrizzata, non hardcoded per ogni caso).
+- [x] Modello `RecalcProposal` in Prisma + migrazione.
+- [x] Generazione proposta di modifica (diff sui workout futuri) quando il feedback, all'interno della finestra di calibrazione, indica scostamento significativo.
+- [x] UI di approvazione/rifiuto della proposta di ricalcolo (mai applicata automaticamente).
+- [x] Applicazione delle modifiche approvate ai `Workout` futuri interessati.
+- [x] Test integration: feedback con scostamento forte dentro la finestra → proposta generata; stesso scenario fuori finestra → nessuna proposta, solo salvataggio feedback.
+
+Assunzioni Fase 7: un feedback per workout. Finestra di calibrazione sulla data pianificata del workout rispetto a `program.startDate` (programmi di 9 settimane usano 2 settimane). Proposta solo se `planDeviation === "significant"`; il diff è algoritmico da `suggestedAction` (non una seconda chiamata LLM). Al massimo una proposta `pending` per programma. Quota 20 analisi feedback/utente/ora. Rigenerare un programma elimina le proposte esistenti.
 
 ---
 

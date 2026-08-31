@@ -28,6 +28,8 @@ import {
   updateWorkoutFormSchema,
   type CreateProgramForm,
 } from "@/lib/validation/program";
+import { feedbackSummaryFromRow } from "@/lib/feedback/summary";
+import type { FeedbackSummary } from "@/lib/feedback/summary";
 import { tryMatchUserWorkouts } from "@/server/jobs/match-workouts";
 
 export type ProgramListItem = {
@@ -72,6 +74,7 @@ export type ProgramDetail = {
       timeOfDay: string | null;
       blocks: unknown;
       status: string;
+      feedback: FeedbackSummary | null;
     }>;
   }>;
 };
@@ -115,6 +118,12 @@ function serializeProgram(program: ProgramWithDetails): ProgramDetail {
         timeOfDay: workout.timeOfDay,
         blocks: workout.blocks,
         status: workout.status,
+        feedback: workout.feedback
+          ? feedbackSummaryFromRow(
+              workout.feedback.id,
+              workout.feedback.analysis,
+            )
+          : null,
       })),
     })),
   };
@@ -131,7 +140,10 @@ async function loadProgramForUser(
       weeks: {
         orderBy: { number: "asc" },
         include: {
-          workouts: { orderBy: { plannedDate: "asc" } },
+          workouts: {
+            orderBy: { plannedDate: "asc" },
+            include: { feedback: true },
+          },
         },
       },
     },
@@ -419,6 +431,9 @@ export async function regenerateProgram(
     const result = await provider.generateProgram(input);
 
     await prisma.$transaction(async (tx) => {
+      await tx.recalcProposal.deleteMany({
+        where: { programId: existing.id },
+      });
       await tx.workout.deleteMany({
         where: { week: { programId: existing.id } },
       });

@@ -4,6 +4,7 @@ import {
   PlannedVsActualSummary,
   WorkoutComparison,
 } from "@/components/planned-vs-actual";
+import { WorkoutFeedbackForm } from "@/components/workout-feedback-form";
 import { WorkoutMatchControls } from "@/components/workout-match-controls";
 import { MATCH_SOURCE, WORKOUT_STATUS } from "@/lib/matching/constants";
 import { routes } from "@/lib/routes";
@@ -92,6 +93,11 @@ function WorkoutCard({ workout }: { workout: CalendarWorkoutCard }) {
         </p>
       ) : null}
       <WorkoutMatchControls workout={workout} />
+      <WorkoutFeedbackForm
+        workoutId={workout.id}
+        status={workout.status}
+        feedback={workout.feedback}
+      />
     </article>
   );
 }

@@ -35,6 +35,7 @@ const program: ProgramDetail = {
           tss: 100,
           timeOfDay: "07:00",
           status: "planned",
+          feedback: null,
           blocks: [
             {
               type: "warm-up",

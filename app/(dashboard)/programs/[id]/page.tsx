@@ -2,10 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExportProgramExcelButton } from "@/components/export-program-excel-button";
 import { ProgramTimeline } from "@/components/program-timeline";
+import { RecalcProposalCard } from "@/components/recalc-proposal-card";
 import { RegenerateProgramButton } from "@/components/regenerate-program-button";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/require-user";
 import { routes } from "@/lib/routes";
+import { getPendingRecalcProposalForProgram } from "@/server/actions/feedback";
 import { getProgram } from "@/server/actions/programs";
 
 type ProgramDetailPageProps = {
@@ -17,7 +19,10 @@ export default async function ProgramDetailPage({
 }: ProgramDetailPageProps) {
   await requireUser();
   const { id } = await params;
-  const program = await getProgram(id);
+  const [program, proposal] = await Promise.all([
+    getProgram(id),
+    getPendingRecalcProposalForProgram(id),
+  ]);
   if (!program) {
     notFound();
   }
@@ -46,6 +51,8 @@ export default async function ProgramDetailPage({
           <RegenerateProgramButton programId={program.id} />
         </div>
       </div>
+
+      {proposal ? <RecalcProposalCard proposal={proposal} /> : null}
 
       <ProgramTimeline program={program} />
 
