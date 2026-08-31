@@ -1,7 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  parseEditableBlocks,
+  toStoredWorkoutBlocks,
+  type EditableBlock,
+} from "@/lib/programs/blocks";
 import { updateWorkout } from "@/server/actions/programs";
 import type { ProgramDetail } from "@/server/actions/programs";
 
@@ -13,16 +19,50 @@ const SPORT_LABEL: Record<string, string> = {
 
 const WEEKDAY_LABEL = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
 
-type WorkoutEditorProps = {
-  workout: ProgramDetail["weeks"][number]["workouts"][number];
-};
+const BLOCK_TYPES = [
+  { value: "warm-up", label: "Riscaldamento" },
+  { value: "main-set", label: "Parte principale" },
+  { value: "cool-down", label: "Defaticamento" },
+] as const;
 
-export function WorkoutEditor({ workout }: WorkoutEditorProps) {
+const METRIC_OPTIONS = [
+  { value: "", label: "Nessuna" },
+  { value: "hr", label: "FC" },
+  { value: "pace", label: "Passo" },
+  { value: "power", label: "Potenza" },
+] as const;
+
+function WorkoutEditor({
+  workout,
+}: {
+  workout: ProgramDetail["weeks"][number]["workouts"][number];
+}) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [blocks, setBlocks] = useState<EditableBlock[]>(() =>
+    parseEditableBlocks(workout.blocks),
+  );
 
-  const blocks = Array.isArray(workout.blocks) ? workout.blocks : [];
+  function addBlock() {
+    setBlocks((current) => [
+      ...current,
+      {
+        type: "main-set",
+        durationMin: 10,
+        description: "",
+        zone: "",
+        metric: "",
+      },
+    ]);
+  }
+
+  function removeBlock(index: number) {
+    setBlocks((current) =>
+      current.length > 1 ? current.filter((_, i) => i !== index) : current,
+    );
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -30,7 +70,7 @@ export function WorkoutEditor({ workout }: WorkoutEditorProps) {
     setError(null);
     const formData = new FormData(event.currentTarget);
     formData.set("workoutId", workout.id);
-    formData.set("blocks", JSON.stringify(blocks));
+    formData.set("blocks", JSON.stringify(toStoredWorkoutBlocks(blocks)));
     const result = await updateWorkout(formData);
     setSaving(false);
     if (!result.ok) {
@@ -38,6 +78,7 @@ export function WorkoutEditor({ workout }: WorkoutEditorProps) {
       return;
     }
     setOpen(false);
+    router.refresh();
   }
 
   return (
@@ -59,25 +100,23 @@ export function WorkoutEditor({ workout }: WorkoutEditorProps) {
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => setOpen((value) => !value)}
+          onClick={() => {
+            setBlocks(parseEditableBlocks(workout.blocks));
+            setOpen((value) => !value);
+          }}
         >
           {open ? "Chiudi" : "Modifica"}
         </Button>
       </div>
 
       <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
-        {blocks.map((block, index) => {
-          const row = block as {
-            type?: string;
-            durationMin?: number;
-            description?: string;
-          };
-          return (
-            <li key={index}>
-              {row.type}: {row.durationMin} min — {row.description}
-            </li>
-          );
-        })}
+        {parseEditableBlocks(workout.blocks).map((block, index) => (
+          <li key={index}>
+            {block.type}: {block.durationMin} min — {block.description || "—"}
+            {block.zone ? ` · Z${block.zone}` : ""}
+            {block.metric ? ` · ${block.metric}` : ""}
+          </li>
+        ))}
       </ul>
 
       {open ? (
@@ -129,6 +168,141 @@ export function WorkoutEditor({ workout }: WorkoutEditorProps) {
               />
             </label>
           </div>
+
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-sm font-medium">Blocchi</h4>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addBlock}
+            >
+              Aggiungi blocco
+            </Button>
+          </div>
+          <div className="flex flex-col gap-3">
+            {blocks.map((block, index) => (
+              <div
+                key={index}
+                className="grid gap-2 rounded-lg border border-border p-3 sm:grid-cols-2"
+              >
+                <label className="flex flex-col gap-1 text-sm">
+                  <span>Tipo</span>
+                  <select
+                    value={block.type}
+                    onChange={(event) =>
+                      setBlocks((current) =>
+                        current.map((row, i) =>
+                          i === index
+                            ? {
+                                ...row,
+                                type: event.target
+                                  .value as EditableBlock["type"],
+                              }
+                            : row,
+                        ),
+                      )
+                    }
+                    className="rounded-lg border border-border bg-background px-3 py-2"
+                  >
+                    {BLOCK_TYPES.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span>Durata (min)</span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={block.durationMin}
+                    onChange={(event) =>
+                      setBlocks((current) =>
+                        current.map((row, i) =>
+                          i === index
+                            ? {
+                                ...row,
+                                durationMin: Number(event.target.value),
+                              }
+                            : row,
+                        ),
+                      )
+                    }
+                    className="rounded-lg border border-border bg-background px-3 py-2"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm sm:col-span-2">
+                  <span>Descrizione</span>
+                  <input
+                    value={block.description}
+                    onChange={(event) =>
+                      setBlocks((current) =>
+                        current.map((row, i) =>
+                          i === index
+                            ? { ...row, description: event.target.value }
+                            : row,
+                        ),
+                      )
+                    }
+                    className="rounded-lg border border-border bg-background px-3 py-2"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span>Zona (1–5)</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={block.zone}
+                    onChange={(event) =>
+                      setBlocks((current) =>
+                        current.map((row, i) =>
+                          i === index
+                            ? { ...row, zone: event.target.value }
+                            : row,
+                        ),
+                      )
+                    }
+                    className="rounded-lg border border-border bg-background px-3 py-2"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span>Metrica</span>
+                  <select
+                    value={block.metric}
+                    onChange={(event) =>
+                      setBlocks((current) =>
+                        current.map((row, i) =>
+                          i === index
+                            ? { ...row, metric: event.target.value }
+                            : row,
+                        ),
+                      )
+                    }
+                    className="rounded-lg border border-border bg-background px-3 py-2"
+                  >
+                    {METRIC_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="sm:col-span-2 self-start"
+                  onClick={() => removeBlock(index)}
+                >
+                  Rimuovi blocco
+                </Button>
+              </div>
+            ))}
+          </div>
+
           <Button
             type="submit"
             size="sm"
@@ -143,11 +317,7 @@ export function WorkoutEditor({ workout }: WorkoutEditorProps) {
   );
 }
 
-type ProgramTimelineProps = {
-  program: ProgramDetail;
-};
-
-export function ProgramTimeline({ program }: ProgramTimelineProps) {
+export function ProgramTimeline({ program }: { program: ProgramDetail }) {
   return (
     <div className="flex flex-col gap-8">
       {program.weeks.map((week) => (

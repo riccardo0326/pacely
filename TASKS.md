@@ -79,21 +79,23 @@ Assunzioni Fase 3: solo summary Strava (niente stream). bikeTSS da NP/`weighted_
 - [x] Fallback esplicito e gestito (mai crash silenzioso) se il provider fallisce ripetutamente.
 - [x] Test unit: mock dei provider, verifica che output non conforme allo schema venga gestito correttamente (retry/fallback).
 
-Assunzioni Fase 4: implementata su richiesta prima della Fase 3 (l'astrazione non dipende dal motore metriche; CTL/FTP/VDOT restano campi di input). Chat Completions via `fetch` (API compatibile OpenAI), senza SDK. Modelli: `deepseek-chat`, `gpt-4o-mini`. Retry parsing: 1 (2 tentativi totali). HTTP 429/5xx: fino a 2 retry con backoff. Fallback algoritmico esplicito (`source: "fallback"`); il feedback fallback non inventa l'RPE. Costo stimato da listini statici in `lib/llm/constants.ts`. Rate limit delle API interne che chiamano l'LLM è rimandato a Fase 5 (quando esistono gli endpoint).
+Assunzioni Fase 4: implementata su richiesta prima della Fase 3 (l'astrazione non dipende dal motore metriche; CTL/FTP/VDOT restano campi di input). Chat Completions via `fetch` (API compatibile OpenAI), senza SDK. Modelli: `deepseek-chat`, `gpt-4o-mini`. Retry parsing: 1 (2 tentativi totali). HTTP 429/5xx: fino a 2 retry con backoff. Fallback algoritmico esplicito (`source: "fallback"`); il feedback fallback non inventa l'RPE. Costo stimato da listini statici in `lib/llm/constants.ts`. Rate limit generate/regenerate: 5 chiamate/utente/ora (Fase 5, `lib/llm/quota.ts`).
 
 ---
 
 ## Fase 5 — Creazione programmi (generazione + editor manuale)
 
-- [ ] Modelli Prisma: `Program`, `Goal`, `Week`, `Workout` (struttura a blocchi in JSON) + migrazioni.
-- [ ] Form di creazione programma: sport inclusi (1-3), obiettivo (`race` con data/distanza o `generic`), durata settimane, giorni/orari disponibili, vincoli testuali liberi (es. infortuni).
-- [ ] Endpoint/server action `generateProgram`: raccoglie input utente + metriche correnti + storico aggregato, chiama `LLMProvider.generateProgram`.
-- [ ] Logica di calcolo del "budget di carico settimanale" (TSS target) da passare come vincolo al generatore, basata su CTL attuale e progressione ragionevole.
-- [ ] Parsing e validazione Zod dell'output LLM → salvataggio in `Program`/`Week`/`Workout`.
-- [ ] UI di visualizzazione programma generato (timeline settimane, workout per giorno).
-- [ ] Editor manuale del singolo workout (modifica blocchi: warm-up/main set/cool-down, target zona).
-- [ ] Funzione "rigenera programma" (nuova chiamata LLM con eventuali input aggiornati).
-- [ ] Test integration: creazione programma end-to-end con provider LLM mockato, verifica bilanciamento carico tra sport nel JSON generato.
+- [x] Modelli Prisma: `Program`, `Goal`, `Week`, `Workout` (struttura a blocchi in JSON) + migrazioni.
+- [x] Form di creazione programma: sport inclusi (1-3), obiettivo (`race` con data/distanza o `generic`), durata settimane, giorni/orari disponibili, vincoli testuali liberi (es. infortuni).
+- [x] Endpoint/server action `generateProgram`: raccoglie input utente + metriche correnti + storico aggregato, chiama `LLMProvider.generateProgram`.
+- [x] Logica di calcolo del "budget di carico settimanale" (TSS target) da passare come vincolo al generatore, basata su CTL attuale e progressione ragionevole.
+- [x] Parsing e validazione Zod dell'output LLM → salvataggio in `Program`/`Week`/`Workout`.
+- [x] UI di visualizzazione programma generato (timeline settimane, workout per giorno).
+- [x] Editor manuale del singolo workout (modifica blocchi: warm-up/main set/cool-down, target zona).
+- [x] Funzione "rigenera programma" (nuova chiamata LLM con eventuali input aggiornati).
+- [x] Test integration: creazione programma end-to-end con provider LLM mockato, verifica bilanciamento carico tra sport nel JSON generato.
+
+Assunzioni Fase 5: generazione via server action (non API route pubblica). Budget TSS = CTL×1.05 (cap 120–600). Storico settimanale da `PerformanceMetricSnapshot.sportBreakdown` se presente, altrimenti stima durata×60. Quota 5 generate/regenerate LLM per utente/ora (`LLMInteractionLog`). Editor blocchi: tipo, durata, descrizione, zona 1–5, metrica hr/pace/power; persistenza Zod. Rigenera riusa sport/goal/slot del programma esistente.
 
 ---
 

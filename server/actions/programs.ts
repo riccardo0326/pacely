@@ -1,5 +1,6 @@
 "use server";
 
+import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/require-user";
@@ -7,7 +8,14 @@ import { getLLMProvider } from "@/lib/llm";
 import { LLM_INTERACTION_TYPE } from "@/lib/llm/constants";
 import type { ProgramGenerationInput } from "@/lib/llm/schemas";
 import { programGenerationInputSchema } from "@/lib/llm/schemas";
-import { buildAggregatedHistory } from "@/lib/programs/history";
+import {
+  assertGenerateProgramQuota,
+  LlmQuotaExceededError,
+} from "@/lib/llm/quota";
+import {
+  buildAggregatedHistory,
+  buildAggregatedHistoryFromSnapshots,
+} from "@/lib/programs/history";
 import { prisma } from "@/lib/prisma";
 import {
   buildProgramCreateData,
@@ -132,7 +140,10 @@ async function buildGenerationInput(
   userId: string,
   form: CreateProgramForm,
 ): Promise<ProgramGenerationInput> {
-  const [activities, latestSnapshot] = await Promise.all([
+  const eightWeeksAgo = new Date();
+  eightWeeksAgo.setUTCDate(eightWeeksAgo.getUTCDate() - 56);
+
+  const [activities, latestSnapshot, snapshots] = await Promise.all([
     prisma.activity.findMany({
       where: { userId },
       orderBy: { startedAt: "desc" },
@@ -151,6 +162,11 @@ async function buildGenerationInput(
         swimThresholdPaceSecPer100m: true,
       },
     }),
+    prisma.performanceMetricSnapshot.findMany({
+      where: { userId, date: { gte: eightWeeksAgo } },
+      orderBy: { date: "asc" },
+      select: { date: true, sportBreakdown: true },
+    }),
   ]);
 
   const weeklyTssBudget = calculateWeeklyTssBudget({
@@ -162,6 +178,18 @@ async function buildGenerationInput(
       startedAt: activity.startedAt,
     })),
   });
+
+  const snapshotHistory = buildAggregatedHistoryFromSnapshots(snapshots);
+  const aggregatedHistory =
+    snapshotHistory.weeklySummaries.length > 0
+      ? snapshotHistory
+      : buildAggregatedHistory(
+          activities.map((activity) => ({
+            sport: activity.sport as "run" | "swim" | "ride",
+            durationSec: activity.durationSec,
+            startedAt: activity.startedAt,
+          })),
+        );
 
   const input: ProgramGenerationInput = {
     userId,
@@ -189,13 +217,7 @@ async function buildGenerationInput(
       swimThresholdPaceSecPer100m:
         latestSnapshot?.swimThresholdPaceSecPer100m ?? undefined,
     },
-    aggregatedHistory: buildAggregatedHistory(
-      activities.map((activity) => ({
-        sport: activity.sport as "run" | "swim" | "ride",
-        durationSec: activity.durationSec,
-        startedAt: activity.startedAt,
-      })),
-    ),
+    aggregatedHistory,
   };
 
   return programGenerationInputSchema.parse(input);
@@ -302,6 +324,7 @@ export async function generateProgram(
   }
 
   try {
+    await assertGenerateProgramQuota(user.id);
     const input = await buildGenerationInput(user.id, parsed.data);
     const provider = getLLMProvider({
       logUsage: async (entry) => {
@@ -334,6 +357,9 @@ export async function generateProgram(
     revalidatePath(`/dashboard/programs/${programId}`);
     return { ok: true, programId, usedFallback: result.usedFallback };
   } catch (error) {
+    if (error instanceof LlmQuotaExceededError) {
+      return { ok: false, error: error.message };
+    }
     const message =
       error instanceof Error ? error.message : "Generazione programma fallita";
     return { ok: false, error: message };
@@ -364,6 +390,7 @@ export async function regenerateProgram(
   };
 
   try {
+    await assertGenerateProgramQuota(user.id);
     const input = await buildGenerationInput(user.id, form);
     const provider = getLLMProvider({
       logUsage: async (entry) => {
@@ -418,6 +445,9 @@ export async function regenerateProgram(
     revalidatePath(`/dashboard/programs/${programId}`);
     return { ok: true, programId, usedFallback: result.usedFallback };
   } catch (error) {
+    if (error instanceof LlmQuotaExceededError) {
+      return { ok: false, error: error.message };
+    }
     const message =
       error instanceof Error ? error.message : "Rigenerazione fallita";
     return { ok: false, error: message };
@@ -429,13 +459,20 @@ export async function updateWorkout(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const user = await requireUser();
 
+  let blocks: unknown = [];
+  try {
+    blocks = JSON.parse(String(formData.get("blocks") ?? "[]"));
+  } catch {
+    return { ok: false, error: "Struttura dei blocchi non valida" };
+  }
+
   const raw = {
     workoutId: formData.get("workoutId"),
     name: formData.get("name"),
     durationMin: formData.get("durationMin"),
     tss: formData.get("tss"),
     timeOfDay: formData.get("timeOfDay") || undefined,
-    blocks: JSON.parse(String(formData.get("blocks") ?? "[]")),
+    blocks,
   };
 
   const parsed = updateWorkoutFormSchema.safeParse(raw);
@@ -465,7 +502,7 @@ export async function updateWorkout(
       durationMin: parsed.data.durationMin,
       tss: parsed.data.tss,
       timeOfDay: parsed.data.timeOfDay ?? null,
-      blocks: parsed.data.blocks,
+      blocks: parsed.data.blocks as Prisma.InputJsonValue,
     },
   });
 
