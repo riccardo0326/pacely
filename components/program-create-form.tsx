@@ -212,6 +212,10 @@ export function ProgramCreateForm({
                 name="raceDate"
                 className="rounded-lg border border-border bg-background px-3 py-2"
               />
+              <span className="text-xs text-muted-foreground">
+                Dopo l&apos;ultima settimana del piano. Controlla mese e giorno
+                nel calendario (es. 8 novembre, non 11 agosto).
+              </span>
             </label>
           </div>
         ) : null}

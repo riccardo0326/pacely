@@ -1,4 +1,5 @@
 import { parseEditableBlocks } from "@/lib/programs/blocks";
+import { formatItalianDate } from "@/lib/programs/dates";
 import type { ProgramDetail } from "@/server/actions/programs";
 
 const SPORT_LABEL: Record<string, string> = {
@@ -198,11 +199,7 @@ function num(value: number): Cell {
 }
 
 function formatDate(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) {
-    return iso;
-  }
-  return date.toLocaleDateString("it-IT", { timeZone: "UTC" });
+  return formatItalianDate(iso);
 }
 
 function colLetter(index: number): string {

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { plannedDateForWorkout, nextMonday } from "@/lib/programs/dates";
+import {
+  plannedDateForWorkout,
+  nextMonday,
+  programEndDate,
+} from "@/lib/programs/dates";
 import {
   calculateWeeklyTssBudget,
   distributeTssAcrossSports,
@@ -63,5 +67,12 @@ describe("nextMonday", () => {
     const monday = nextMonday(new Date("2026-04-08T10:00:00Z"));
     expect(monday.getUTCDay()).toBe(1);
     expect(monday.toISOString().slice(0, 10)).toBe("2026-04-13");
+  });
+});
+
+describe("programEndDate", () => {
+  it("is the first day after the last full week", () => {
+    const end = programEndDate("2026-09-07", 8);
+    expect(end?.toISOString().slice(0, 10)).toBe("2026-11-02");
   });
 });

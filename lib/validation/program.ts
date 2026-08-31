@@ -4,6 +4,7 @@ import {
   sportSchema,
   workoutBlockSchema,
 } from "@/lib/llm/schemas";
+import { programEndDate, toIsoDateUtc } from "@/lib/programs/dates";
 
 export const programStatusSchema = z.enum([
   "draft",
@@ -52,6 +53,16 @@ export const createProgramFormSchema = z
           message: "La distanza è obbligatoria per un obiettivo gara",
           path: ["raceDistance"],
         });
+      }
+      if (value.raceDate) {
+        const end = programEndDate(value.startDate, value.durationWeeks);
+        if (end && value.raceDate < toIsoDateUtc(end)) {
+          ctx.addIssue({
+            code: "custom",
+            message: `La data gara deve essere dal ${toIsoDateUtc(end)} in poi (fine delle ${value.durationWeeks} settimane)`,
+            path: ["raceDate"],
+          });
+        }
       }
     }
   });
