@@ -39,6 +39,8 @@ export const config = {
     "/dashboard/:path*",
     "/programs/:path*",
     "/calendar/:path*",
+    "/reports/:path*",
+    "/notifications/:path*",
     "/login",
   ],
 };

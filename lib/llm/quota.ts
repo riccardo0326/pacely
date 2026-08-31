@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export const LLM_GENERATE_PROGRAM_MAX_PER_HOUR = 5;
 export const LLM_ANALYZE_FEEDBACK_MAX_PER_HOUR = 20;
+export const LLM_ANALYZE_PERFORMANCE_MAX_PER_HOUR = 5;
 
 export class LlmQuotaExceededError extends Error {
   constructor(message = "Limite di generazioni raggiunto. Riprova più tardi.") {
@@ -57,6 +58,20 @@ export async function assertAnalyzeFeedbackQuota(
   if (isLlmQuotaExceeded(recentCount, LLM_ANALYZE_FEEDBACK_MAX_PER_HOUR)) {
     throw new LlmQuotaExceededError(
       "Hai già analizzato troppi feedback nell'ultima ora. Riprova più tardi.",
+    );
+  }
+}
+
+export async function assertAnalyzePerformanceQuota(
+  userId: string,
+): Promise<void> {
+  const recentCount = await countRecentInteractions(
+    userId,
+    LLM_INTERACTION_TYPE.analyzePerformance,
+  );
+  if (isLlmQuotaExceeded(recentCount, LLM_ANALYZE_PERFORMANCE_MAX_PER_HOUR)) {
+    throw new LlmQuotaExceededError(
+      "Hai già generato troppi report nell'ultima ora. Riprova più tardi.",
     );
   }
 }

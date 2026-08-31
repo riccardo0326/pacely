@@ -24,6 +24,9 @@ model User {
   llmInteractionLogs         LLMInteractionLog[]
   programs                   Program[]
   performanceMetricSnapshots PerformanceMetricSnapshot[]
+  performanceReports         PerformanceReport[]
+  notifications              Notification[]
+  pushSubscriptions          PushSubscription[]
 }
 
 model StravaConnection {
@@ -246,4 +249,58 @@ model RecalcProposal {
   resolvedAt DateTime?
 
   @@index([programId, status])
+}
+
+/// Periodic LLM performance summary (Fase 8). Informational only — does not change the plan.
+model PerformanceReport {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  periodStart DateTime @db.Date
+  periodEnd   DateTime @db.Date
+  /// `PerformanceReportOutput` JSON: summary, strengths, improvements, suggestions.
+  content     Json
+  /// `scheduled` | `on_demand`
+  source      String
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, periodEnd])
+}
+
+/// In-app notification (Fase 9). `readAt` null = unread.
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// `workout_today` | `recalc_proposal`
+  type        String
+  title       String
+  body        String
+  /// Internal path, e.g. `/calendar`
+  href        String?
+  readAt      DateTime?
+  /// UTC midnight for scheduled daily items; null for event-driven.
+  scheduledAt DateTime?
+  /// Idempotency key, e.g. `workout_today:2026-08-31` or `recalc_proposal:<id>`.
+  dedupeKey   String
+  createdAt   DateTime  @default(now())
+
+  @@unique([userId, dedupeKey])
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+}
+
+/// Web Push subscription for a browser (VAPID). One row per endpoint.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }

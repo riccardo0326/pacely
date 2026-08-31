@@ -67,9 +67,11 @@ export {
 } from "@/lib/llm/errors";
 export {
   assertAnalyzeFeedbackQuota,
+  assertAnalyzePerformanceQuota,
   assertGenerateProgramQuota,
   isLlmQuotaExceeded,
   LlmQuotaExceededError,
   LLM_ANALYZE_FEEDBACK_MAX_PER_HOUR,
+  LLM_ANALYZE_PERFORMANCE_MAX_PER_HOUR,
   LLM_GENERATE_PROGRAM_MAX_PER_HOUR,
 } from "@/lib/llm/quota";

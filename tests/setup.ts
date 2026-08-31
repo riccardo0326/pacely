@@ -11,3 +11,4 @@ process.env.DATABASE_URL_UNPOOLED ??= process.env.DATABASE_URL;
 process.env.LLM_PROVIDER ??= "deepseek";
 process.env.DEEPSEEK_API_KEY ??= "test-deepseek-key";
 process.env.OPENAI_API_KEY ??= "test-openai-key";
+process.env.REPORT_PERIOD_DAYS ??= "14";

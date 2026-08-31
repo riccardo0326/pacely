@@ -23,4 +23,9 @@ describe("isLlmQuotaExceeded", () => {
     expect(isLlmQuotaExceeded(19, 20)).toBe(false);
     expect(isLlmQuotaExceeded(20, 20)).toBe(true);
   });
+
+  it("accepts a custom cap for performance reports", () => {
+    expect(isLlmQuotaExceeded(4, 5)).toBe(false);
+    expect(isLlmQuotaExceeded(5, 5)).toBe(true);
+  });
 });

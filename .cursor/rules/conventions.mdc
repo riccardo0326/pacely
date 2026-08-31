@@ -18,7 +18,7 @@ alwaysApply: true
 
 Definire in `.env.example` (mai committare `.env`):
 
-`DATABASE_URL`, `DATABASE_URL_UNPOOLED` (direct/unpooled, per Neon `env pull`; usato da Prisma `directUrl`), `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `AUTH_SECRET` (stesso valore di `NEXTAUTH_SECRET`, usato da Auth.js v5), `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `STRAVA_WEBHOOK_VERIFY_TOKEN`, `CRON_SECRET` (Bearer per `/api/cron/strava-sync`; Vercel lo invia in automatico se impostato), `ENCRYPTION_KEY`, `LLM_PROVIDER` (`deepseek` | `openai`), `DEEPSEEK_API_KEY`, `OPENAI_API_KEY`, `WEB_PUSH_PUBLIC_KEY`, `WEB_PUSH_PRIVATE_KEY`, `SENTRY_DSN` (opzionale), `NEXT_PUBLIC_SENTRY_DSN` (opzionale, stesso valore di `SENTRY_DSN` per errori client).
+`DATABASE_URL`, `DATABASE_URL_UNPOOLED` (direct/unpooled, per Neon `env pull`; usato da Prisma `directUrl`), `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `AUTH_SECRET` (stesso valore di `NEXTAUTH_SECRET`, usato da Auth.js v5), `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `STRAVA_WEBHOOK_VERIFY_TOKEN`, `CRON_SECRET` (Bearer per `/api/cron/strava-sync`, `/api/cron/performance-reports` e `/api/cron/notifications`; Vercel lo invia in automatico se impostato), `ENCRYPTION_KEY`, `LLM_PROVIDER` (`deepseek` | `openai`), `DEEPSEEK_API_KEY`, `OPENAI_API_KEY`, `REPORT_PERIOD_DAYS` (14–28, default 14; finestra dei report performance automatici), `WEB_PUSH_PUBLIC_KEY`, `WEB_PUSH_PRIVATE_KEY`, `SENTRY_DSN` (opzionale), `NEXT_PUBLIC_SENTRY_DSN` (opzionale, stesso valore di `SENTRY_DSN` per errori client).
 
 Aggiornare `.env.example` ogni volta che si introduce una nuova variabile.
 
