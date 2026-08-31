@@ -19,7 +19,9 @@
 | 3     | Metrics engine (TSS, CTL/ATL/TSB, FTP, VDOT, swim threshold)      | Done    |
 | 4     | LLM abstraction (DeepSeek + OpenAI, Zod validation, cost logging) | Done    |
 | 5     | Program generation and workout editor                             | Done    |
-| 6+    | Calendar, feedback loop, performance reports                      | Planned |
+| 6     | Calendar and planned vs actual matching                           | Done    |
+| 7     | Feedback and suggested recalc                                     | Done    |
+| 8+    | Performance reports, notifications                                | Planned |
 
 MVP scope and exclusions are defined in [`PROJECT_SPEC.md`](./PROJECT_SPEC.md). Task-level progress is tracked in [`TASKS.md`](./TASKS.md).
 

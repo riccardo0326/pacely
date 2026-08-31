@@ -3,12 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { WorkoutFeedbackForm } from "@/components/workout-feedback-form";
+import { WORKOUT_STATUS } from "@/lib/matching/constants";
 import {
   parseEditableBlocks,
   toStoredWorkoutBlocks,
   type EditableBlock,
 } from "@/lib/programs/blocks";
-import { WORKOUT_STATUS } from "@/lib/matching/constants";
 import { updateWorkout } from "@/server/actions/programs";
 import type { ProgramDetail } from "@/server/actions/programs";
 
@@ -127,6 +128,12 @@ function WorkoutEditor({
           </li>
         ))}
       </ul>
+
+      <WorkoutFeedbackForm
+        workoutId={workout.id}
+        status={workout.status}
+        feedback={workout.feedback}
+      />
 
       {open ? (
         <form

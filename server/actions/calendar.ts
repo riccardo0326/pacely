@@ -14,6 +14,8 @@ import {
   type CalendarView,
 } from "@/lib/calendar/range";
 import { activityTssFromRow, thresholdsFromSnapshot } from "@/lib/calendar/tss";
+import { feedbackSummaryFromRow } from "@/lib/feedback/summary";
+import type { FeedbackSummary } from "@/lib/feedback/summary";
 import { utcDateKey, utcToday } from "@/lib/metrics/dates";
 import { MATCH_SOURCE, WORKOUT_STATUS } from "@/lib/matching/constants";
 import { prisma } from "@/lib/prisma";
@@ -82,6 +84,7 @@ export type CalendarWorkoutCard = {
   programName: string;
   activity: CalendarActivityCard | null;
   candidates: CalendarActivityCard[];
+  feedback: FeedbackSummary | null;
 };
 
 export type CalendarDay = {
@@ -161,6 +164,7 @@ export async function getCalendarData(
       },
       include: {
         activity: { select: ACTIVITY_SELECT },
+        feedback: { select: { id: true, analysis: true } },
         week: {
           select: {
             program: { select: { id: true, name: true } },
@@ -238,6 +242,9 @@ export async function getCalendarData(
       programName: workout.week.program.name,
       activity,
       candidates,
+      feedback: workout.feedback
+        ? feedbackSummaryFromRow(workout.feedback.id, workout.feedback.analysis)
+        : null,
     };
     const list = workoutsByDay.get(dateKey) ?? [];
     list.push(card);

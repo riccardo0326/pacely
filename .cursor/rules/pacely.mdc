@@ -32,6 +32,7 @@ Non introdurre librerie/framework alternativi senza discuterlo. Se un task sembr
 /lib/llm             # provider LLM
 /lib/strava          # client Strava, token, webhook
 /lib/metrics         # TSS/CTL/ATL/TSB/FTP/VDOT/soglia nuoto
+/lib/feedback        # finestra calibrazione, proposte ricalcolo
 /lib/validation      # schemi Zod condivisi
 /prisma              # schema + migrations
 /server/actions      # mutazioni UI

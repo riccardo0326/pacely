@@ -2,7 +2,7 @@
 
 Multi-sport training platform built on Next.js. Strava is the sole identity provider and activity source. LLM-backed program generation, adaptive feedback, and performance reports are planned; the current codebase implements auth, activity sync, and the LLM abstraction layer.
 
-**Status (August 2026):** Phases 0–6 complete (metrics, LLM, programs, calendar matching). Phase 7+ (feedback, reports, notifications) are pending. See [`TASKS.md`](./TASKS.md) for the full roadmap.
+**Status (August 2026):** Phases 0–7 complete (metrics, LLM, programs, calendar matching, feedback and suggested recalc). Phase 8+ (reports, notifications) are pending. See [`TASKS.md`](./TASKS.md) for the full roadmap.
 
 ---
 
@@ -86,6 +86,7 @@ All activity queries are scoped by `userId` from the authenticated session — n
   metrics/                   # TSS/CTL/ATL/TSB, FTP, VDOT, swim CSS, zones
   matching/                  # Workout ↔ Activity heuristic
   calendar/                  # Week/month ranges, planned vs actual totals
+  feedback/                  # Calibration window, suggested recalc diffs
   security/                  # AES encryption for Strava tokens at rest
   validation/                # Shared Zod schemas
 /server
@@ -109,8 +110,10 @@ All activity queries are scoped by `userId` from the authenticated session — n
 | `LLMInteractionLog`                     | Per-call token usage, estimated USD cost, success/fallback flags                                                      |
 | `PerformanceMetricSnapshot`             | Daily CTL/ATL/TSB plus current FTP, VDOT, swim CSS, and per-sport TSS breakdown                                       |
 | `Program` / `Goal` / `Week` / `Workout` | LLM-generated training plan with block-structured workouts; `activityId` + `matchSource` when linked to Strava        |
+| `WorkoutFeedback`                       | Free-text note after a completed workout plus structured LLM analysis (RPE, factors, plan deviation)                  |
+| `RecalcProposal`                        | Suggested future-workout diff; `pending` until the athlete approves or rejects — never auto-applied                   |
 
-**Planned entities** (see `PROJECT_SPEC.md` §7): `WorkoutFeedback`, `RecalcProposal`, `PerformanceReport`, `Notification`.
+**Planned entities** (see `PROJECT_SPEC.md` §7): `PerformanceReport`, `Notification`.
 
 ### Activity normalization
 
@@ -134,6 +137,19 @@ After each activity upsert/delete (webhook, incremental sync, backfill) and when
 - Unmatched planned workouts older than 2 days are auto-skipped (still rematchable if `matchSource` is not `manual`)
 
 The calendar at `/calendar` has week and month views, planned vs actual duration/TSS, and controls to correct a match.
+
+### Feedback and suggested recalc
+
+After a workout is `completed` (matched to a Strava activity), the athlete can leave a free-text note. `LLMProvider.analyzeFeedback` extracts RPE, external factors, and `planDeviation`. The text and JSON analysis are stored on `WorkoutFeedback` (one per workout).
+
+A **recalc proposal** is generated only when all of these hold:
+
+- `planDeviation` is `significant`
+- the workout's planned date falls in the calibration window (2 weeks if the program is ≤8 weeks, 3 weeks if 10–12 weeks; parameterized in `/lib/feedback`)
+- no other `pending` proposal exists for that program
+- there are future `planned` workouts to patch
+
+The workout diff is built algorithmically from `suggestedAction` (`reduce_load`, `shift_rest_day`, `extend_recovery`) — not a second LLM call. Approve/reject is explicit in the UI (dashboard, calendar, program detail). Approving writes the patches onto future `Workout` rows; rejecting only updates `RecalcProposal.status`.
 
 ---
 
@@ -213,6 +229,8 @@ interface LLMProvider {
 6. Every call logged to `LLMInteractionLog` with token counts and estimated cost from static price tables in `/lib/llm/constants.ts`
 
 HTTP 429/5xx responses trigger up to 2 retries with exponential backoff.
+
+Generate/regenerate program: 5 LLM calls per user per hour. Feedback analysis: 20 per user per hour (`LLMInteractionLog` counts).
 
 ---
 

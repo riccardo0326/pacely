@@ -1,18 +1,21 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { ImportStatusCard } from "@/components/import-status";
 import { MetricsPanel } from "@/components/metrics-panel";
+import { RecalcProposalList } from "@/components/recalc-proposal-card";
+import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/require-user";
 import { routes } from "@/lib/routes";
 import { logout } from "@/server/actions/auth";
+import { listPendingRecalcProposals } from "@/server/actions/feedback";
 import { getImportStatus } from "@/server/actions/import";
 import { getDashboardMetrics } from "@/server/actions/metrics";
 
 export default async function DashboardPage() {
   const sessionUser = await requireUser();
-  const [importStatus, metrics] = await Promise.all([
+  const [importStatus, metrics, proposals] = await Promise.all([
     getImportStatus(),
     getDashboardMetrics(),
+    listPendingRecalcProposals(),
   ]);
 
   return (
@@ -37,6 +40,7 @@ export default async function DashboardPage() {
         </form>
       </div>
       <ImportStatusCard initial={importStatus} />
+      <RecalcProposalList proposals={proposals} showProgramLink />
       <MetricsPanel data={metrics} />
       <section className="rounded-xl border border-border bg-background p-4">
         <h2 className="font-medium">Calendario</h2>
