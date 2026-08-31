@@ -130,11 +130,13 @@ Assunzioni Fase 7: un feedback per workout. Finestra di calibrazione sulla data 
 
 ## Fase 8 — Report performance periodico
 
-- [ ] Modello `PerformanceReport` in Prisma + migrazione.
-- [ ] Chiamata `LLMProvider.analyzePerformance` con input: trend metriche + feedback raccolti nel periodo.
-- [ ] Job/cron per generazione periodica automatica (configurabile) + possibilità di generazione on-demand.
-- [ ] UI di visualizzazione report (sintesi punti di forza / aree di miglioramento / suggerimenti).
-- [ ] Test integration: generazione report con dati mock, verifica che il contenuto salvato sia coerente con l'input.
+- [x] Modello `PerformanceReport` in Prisma + migrazione.
+- [x] Chiamata `LLMProvider.analyzePerformance` con input: trend metriche + feedback raccolti nel periodo.
+- [x] Job/cron per generazione periodica automatica (configurabile) + possibilità di generazione on-demand.
+- [x] UI di visualizzazione report (sintesi punti di forza / aree di miglioramento / suggerimenti).
+- [x] Test integration: generazione report con dati mock, verifica che il contenuto salvato sia coerente con l'input.
+
+Assunzioni Fase 8: `content` è JSON `PerformanceReportOutput` (summary/strengths/improvements/suggestions), non testo libero. Finestra default 14 giorni inclusivi, configurabile con `REPORT_PERIOD_DAYS` (14–28); on-demand offre 2 o 4 settimane. Cron giornaliero `GET /api/cron/performance-reports` (06:00 UTC) genera solo se l'ultimo report è più vecchio del periodo e ci sono snapshot o feedback; max 5 utenti per run. Quota on-demand 5 report/utente/ora. Il report è informativo e non modifica il piano. `source`: `scheduled` | `on_demand`.
 
 ---
 

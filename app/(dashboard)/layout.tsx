@@ -6,6 +6,7 @@ const NAV = [
   { href: routes.dashboard, label: "Dashboard" },
   { href: routes.calendar, label: "Calendario" },
   { href: routes.programs, label: "Programmi" },
+  { href: routes.reports, label: "Report" },
 ] as const;
 
 export default function DashboardGroupLayout({

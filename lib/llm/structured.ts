@@ -16,6 +16,7 @@ import {
   FEEDBACK_SYSTEM_PROMPT,
   PERFORMANCE_SYSTEM_PROMPT,
   PROGRAM_SYSTEM_PROMPT,
+  buildPerformanceUserPrompt,
   buildProgramUserPrompt,
 } from "@/lib/llm/prompts";
 import {
@@ -243,7 +244,7 @@ export function createStructuredLLMProvider(
         interactionType: "analyze_performance",
         schema: performanceReportOutputSchema,
         system: PERFORMANCE_SYSTEM_PROMPT,
-        userPrompt: (value) => JSON.stringify(value),
+        userPrompt: (value) => buildPerformanceUserPrompt(value),
         fallback: fallbackAnalyzePerformance,
       });
     },
