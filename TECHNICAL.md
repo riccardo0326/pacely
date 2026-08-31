@@ -2,7 +2,7 @@
 
 Multi-sport training platform built on Next.js. Strava is the sole identity provider and activity source. LLM-backed program generation, adaptive feedback, and performance reports are planned; the current codebase implements auth, activity sync, and the LLM abstraction layer.
 
-**Status (August 2026):** Phases 0–5 complete (metrics, LLM, programs). Phase 6+ (calendar, feedback, reports) are pending. See [`TASKS.md`](./TASKS.md) for the full roadmap.
+**Status (August 2026):** Phases 0–6 complete (metrics, LLM, programs, calendar matching). Phase 7+ (feedback, reports, notifications) are pending. See [`TASKS.md`](./TASKS.md) for the full roadmap.
 
 ---
 
@@ -71,6 +71,8 @@ All activity queries are scoped by `userId` from the authenticated session — n
 /app
   (auth)/login/              # Strava OAuth entry point
   (dashboard)/dashboard/     # Protected athlete dashboard
+  (dashboard)/calendar/      # Weekly/monthly planned vs actual
+  (dashboard)/programs/      # Program list, create, detail + editor
   api/
     auth/[...nextauth]/      # Auth.js route handler
     strava/webhook/          # Strava push subscription endpoint
@@ -82,6 +84,8 @@ All activity queries are scoped by `userId` from the authenticated session — n
   strava/                    # OAuth provider, API client, normalization, webhook
   llm/                       # Provider abstraction, Zod schemas, cost logging
   metrics/                   # TSS/CTL/ATL/TSB, FTP, VDOT, swim CSS, zones
+  matching/                  # Workout ↔ Activity heuristic
+  calendar/                  # Week/month ranges, planned vs actual totals
   security/                  # AES encryption for Strava tokens at rest
   validation/                # Shared Zod schemas
 /server
@@ -104,7 +108,7 @@ All activity queries are scoped by `userId` from the authenticated session — n
 | `Job`                                   | Lightweight async queue (`pending` → `running` → `done` \| `failed`); used for historical backfill and metrics recalc |
 | `LLMInteractionLog`                     | Per-call token usage, estimated USD cost, success/fallback flags                                                      |
 | `PerformanceMetricSnapshot`             | Daily CTL/ATL/TSB plus current FTP, VDOT, swim CSS, and per-sport TSS breakdown                                       |
-| `Program` / `Goal` / `Week` / `Workout` | LLM-generated training plan with block-structured workouts                                                            |
+| `Program` / `Goal` / `Week` / `Workout` | LLM-generated training plan with block-structured workouts; `activityId` + `matchSource` when linked to Strava        |
 
 **Planned entities** (see `PROJECT_SPEC.md` §7): `WorkoutFeedback`, `RecalcProposal`, `PerformanceReport`, `Notification`.
 
@@ -117,6 +121,19 @@ Strava activity types are mapped to three internal sports:
 - **swim** — Swim, Open Water Swim
 
 Imported fields include duration (`moving_time` preferred), distance, elevation, heart rate, power, cadence, pace, perceived exertion, and optional splits. The raw Strava payload is preserved in `sourceRaw`.
+
+### Workout ↔ Activity matching
+
+After each activity upsert/delete (webhook, incremental sync, backfill) and when opening `/calendar`, unmatched workouts on **active** programs are paired to Strava activities:
+
+- Same UTC calendar day and same sport (`run` / `swim` / `ride`)
+- Similar duration (within 40% of planned, or 15 minutes)
+- Greedy 1:1 assignment by duration similarity; one activity never binds two workouts
+- Match sets `status=completed` and `matchSource=auto`
+- A manual link/unlink/skip sets `matchSource=manual` and is not overwritten by rematch
+- Unmatched planned workouts older than 2 days are auto-skipped (still rematchable if `matchSource` is not `manual`)
+
+The calendar at `/calendar` has week and month views, planned vs actual duration/TSS, and controls to correct a match.
 
 ---
 
@@ -220,6 +237,7 @@ Pacely uses a **database-backed job queue** (`Job` table) instead of Redis or de
 | ----------------- | -------------------------------------------- | ------------------------------------------------------------------- |
 | `strava_backfill` | First OAuth connection                       | Paginated historical import; progress stored in `Job.progress` JSON |
 | `metrics_recalc`  | After webhook/sync/backfill activity changes | Recompute TSS/CTL/ATL/TSB snapshots                                 |
+| workout matching  | After the same activity changes + calendar   | Pair planned workouts to Strava activities; not a `Job` row         |
 
 Job processing is triggered from dashboard Server Actions (backfill chunks) and cron/webhook handlers (incremental sync). Vercel Hobby cron runs once daily; interactive dashboard actions provide lower-latency processing.
 

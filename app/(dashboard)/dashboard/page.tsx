@@ -39,6 +39,15 @@ export default async function DashboardPage() {
       <ImportStatusCard initial={importStatus} />
       <MetricsPanel data={metrics} />
       <section className="rounded-xl border border-border bg-background p-4">
+        <h2 className="font-medium">Calendario</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Confronta gli allenamenti pianificati con le attività Strava.
+        </p>
+        <Button asChild className="mt-4" variant="outline">
+          <Link href={routes.calendar}>Apri il calendario</Link>
+        </Button>
+      </section>
+      <section className="rounded-xl border border-border bg-background p-4">
         <h2 className="font-medium">Programmi di allenamento</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Crea e gestisci piani multi-sport generati con LLM.

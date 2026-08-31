@@ -11,6 +11,7 @@ import {
 } from "@/lib/strava/schemas";
 import { getValidAccessToken } from "@/lib/strava/tokens";
 import { tryRecalculateUserMetrics } from "@/server/jobs/metrics-recalc";
+import { tryMatchUserWorkouts } from "@/server/jobs/match-workouts";
 
 const PAGES_PER_CHUNK = 2;
 
@@ -158,6 +159,7 @@ export async function processBackfillChunk(
           data: { lastSyncAt: new Date() },
         });
         await tryRecalculateUserMetrics(userId);
+        await tryMatchUserWorkouts(userId);
         return { status: JOB_STATUS.done, progress: current, paused: false };
       }
 
@@ -177,6 +179,7 @@ export async function processBackfillChunk(
       data: { status: JOB_STATUS.pending, progress: current },
     });
     await tryRecalculateUserMetrics(userId);
+    await tryMatchUserWorkouts(userId);
     return { status: JOB_STATUS.pending, progress: current, paused: false };
   } catch (error) {
     if (error instanceof StravaRateLimitError) {

@@ -101,12 +101,14 @@ Assunzioni Fase 5: generazione via server action (non API route pubblica). Budge
 
 ## Fase 6 — Calendario e tracking pianificato vs effettivo
 
-- [ ] Vista calendario settimanale/mensile con workout pianificati.
-- [ ] Logica di matching automatico Workout ↔ Activity (euristica su data/sport/durata simile).
-- [ ] UI per correggere manualmente un match errato/mancante.
-- [ ] Stato workout: `planned` / `completed` / `skipped`, aggiornato automaticamente al match.
-- [ ] Vista di confronto pianificato vs effettivo (per singolo workout e a livello settimanale).
-- [ ] Test unit: euristica di matching su casi ambigui (più attività stesso giorno, sport multipli).
+- [x] Vista calendario settimanale/mensile con workout pianificati.
+- [x] Logica di matching automatico Workout ↔ Activity (euristica su data/sport/durata simile).
+- [x] UI per correggere manualmente un match errato/mancante.
+- [x] Stato workout: `planned` / `completed` / `skipped`, aggiornato automaticamente al match.
+- [x] Vista di confronto pianificato vs effettivo (per singolo workout e a livello settimanale).
+- [x] Test unit: euristica di matching su casi ambigui (più attività stesso giorno, sport multipli).
+
+Assunzioni Fase 6: matching solo sullo stesso giorno UTC (stesso sport, durata entro 40% o 15 min). Un'attività è unica per workout (`activityId` unique). Un override manuale (`matchSource: manual`) non viene sovrascritto dal rematch automatico. Workout pianificati senza match dopo 2 giorni diventano `skipped` e restano riabbinabili se arriva un'attività tardiva. Solo programmi `active` nel calendario. TSS effettivo stimato dalle soglie dell'ultimo snapshot.
 
 ---
 

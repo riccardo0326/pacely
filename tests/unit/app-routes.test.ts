@@ -12,14 +12,17 @@ describe("app routes", () => {
     expect(routes.programNew).toBe("/programs/new");
     expect(routes.program("abc")).toBe("/programs/abc");
     expect(routes.program("abc")).not.toContain("/dashboard/");
+    expect(routes.calendar).toBe("/calendar");
   });
 
-  it("protects dashboard and programs, not login or public home", () => {
+  it("protects dashboard, programs, and calendar, not login or public home", () => {
     expect(isProtectedAppPath("/dashboard")).toBe(true);
     expect(isProtectedAppPath("/dashboard/foo")).toBe(true);
     expect(isProtectedAppPath("/programs")).toBe(true);
     expect(isProtectedAppPath("/programs/new")).toBe(true);
     expect(isProtectedAppPath("/programs/abc")).toBe(true);
+    expect(isProtectedAppPath("/calendar")).toBe(true);
+    expect(isProtectedAppPath("/calendar/foo")).toBe(true);
     expect(isProtectedAppPath("/login")).toBe(false);
     expect(isProtectedAppPath("/")).toBe(false);
   });
@@ -40,6 +43,7 @@ describe("app routes", () => {
     expect(PROXY_MATCHER).toEqual([
       "/dashboard/:path*",
       "/programs/:path*",
+      "/calendar/:path*",
       "/login",
     ]);
   });
