@@ -24,6 +24,7 @@ model User {
   llmInteractionLogs         LLMInteractionLog[]
   programs                   Program[]
   performanceMetricSnapshots PerformanceMetricSnapshot[]
+  performanceReports         PerformanceReport[]
 }
 
 model StravaConnection {
@@ -246,4 +247,21 @@ model RecalcProposal {
   resolvedAt DateTime?
 
   @@index([programId, status])
+}
+
+/// Periodic LLM performance summary (Fase 8). Informational only — does not change the plan.
+model PerformanceReport {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  periodStart DateTime @db.Date
+  periodEnd   DateTime @db.Date
+  /// `PerformanceReportOutput` JSON: summary, strengths, improvements, suggestions.
+  content     Json
+  /// `scheduled` | `on_demand`
+  source      String
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, periodEnd])
 }

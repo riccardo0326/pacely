@@ -1,3 +1,5 @@
+import type { PerformanceAnalysisInput } from "@/lib/llm/schemas";
+
 export const PROGRAM_SYSTEM_PROMPT = `Sei un coach multi-sport (corsa, nuoto, ciclismo).
 Rispondi SOLO con un oggetto JSON valido, senza markdown e senza testo extra.
 Il JSON deve avere questa forma:
@@ -124,4 +126,26 @@ Il JSON deve avere questa forma:
   "improvements": string[] (almeno 1),
   "suggestions": string[] (almeno 1)
 }
-Basa il testo sui trend metriche e sui feedback forniti. Non inventare dati assenti.`;
+Basa il testo sui trend metriche e sui feedback forniti. Non inventare dati assenti.
+Un delta negativo sul passo soglia nuoto è un miglioramento. Non proporre modifiche automatiche al piano.`;
+
+export function buildPerformanceUserPrompt(
+  input: PerformanceAnalysisInput,
+): string {
+  const trendBits = Object.entries(input.metricTrends)
+    .filter(([, value]) => value !== undefined)
+    .map(([key, value]) => `${key}=${value}`)
+    .join(", ");
+  const feedback =
+    input.feedbackSummaries.length === 0
+      ? "nessun feedback nel periodo"
+      : input.feedbackSummaries
+          .map((line, index) => `${index + 1}. ${line}`)
+          .join("\n");
+
+  return [
+    `PERIODO: ${input.periodStart} – ${input.periodEnd}`,
+    `TREND METRICHE (delta nel periodo): ${trendBits || "nessun trend numerico"}`,
+    `FEEDBACK RACCOLTI:\n${feedback}`,
+  ].join("\n\n");
+}

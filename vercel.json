@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/strava-sync",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/performance-reports",
+      "schedule": "0 6 * * *"
     }
   ]
 }

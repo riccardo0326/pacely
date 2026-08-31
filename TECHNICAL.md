@@ -1,8 +1,8 @@
 # Pacely — Technical Overview
 
-Multi-sport training platform built on Next.js. Strava is the sole identity provider and activity source. LLM-backed program generation, adaptive feedback, and performance reports are planned; the current codebase implements auth, activity sync, and the LLM abstraction layer.
+Multi-sport training platform built on Next.js. Strava is the sole identity provider and activity source. LLM-backed program generation, adaptive feedback, and performance reports are implemented through Phase 8.
 
-**Status (August 2026):** Phases 0–7 complete (metrics, LLM, programs, calendar matching, feedback and suggested recalc). Phase 8+ (reports, notifications) are pending. See [`TASKS.md`](./TASKS.md) for the full roadmap.
+**Status (August 2026):** Phases 0–8 complete (metrics, LLM, programs, calendar matching, feedback, suggested recalc, performance reports). Phase 9+ (notifications) is pending. See [`TASKS.md`](./TASKS.md) for the full roadmap.
 
 ---
 
@@ -22,7 +22,7 @@ Multi-sport training platform built on Next.js. Strava is the sole identity prov
 │  │ JWT sessions │  │ OAuth client │  │ OpenAI/      │  │ TSS/CTL/FTP │  │
 │  │ Strava prov. │  │ webhook sync │  │ DeepSeek     │  │ TSS/CTL/…   │  │
 │  └──────────────┘  └──────────────┘  └──────────────┘  └─────────────┘  │
-│  /server/actions   /server/jobs      /lib/security (AES token encryption) │
+│  /lib/feedback  /lib/reports  /server/actions  /server/jobs  /lib/security │
 └───────────────────────────────┬─────────────────────────────────────────┘
                                 │ Prisma 6 (pooled + direct URL)
                                 ▼
@@ -112,8 +112,9 @@ All activity queries are scoped by `userId` from the authenticated session — n
 | `Program` / `Goal` / `Week` / `Workout` | LLM-generated training plan with block-structured workouts; `activityId` + `matchSource` when linked to Strava        |
 | `WorkoutFeedback`                       | Free-text note after a completed workout plus structured LLM analysis (RPE, factors, plan deviation)                  |
 | `RecalcProposal`                        | Suggested future-workout diff; `pending` until the athlete approves or rejects — never auto-applied                   |
+| `PerformanceReport`                     | Periodic LLM summary (`content` JSON: strengths / improvements / suggestions); `source` `scheduled` \| `on_demand`    |
 
-**Planned entities** (see `PROJECT_SPEC.md` §7): `PerformanceReport`, `Notification`.
+**Planned entities** (see `PROJECT_SPEC.md` §7): `Notification`.
 
 ### Activity normalization
 
@@ -150,6 +151,20 @@ A **recalc proposal** is generated only when all of these hold:
 - there are future `planned` workouts to patch
 
 The workout diff is built algorithmically from `suggestedAction` (`reduce_load`, `shift_rest_day`, `extend_recovery`) — not a second LLM call. Approve/reject is explicit in the UI (dashboard, calendar, program detail). Approving writes the patches onto future `Workout` rows; rejecting only updates `RecalcProposal.status`.
+
+### Performance reports
+
+`LLMProvider.analyzePerformance` builds an informational summary from:
+
+- metric trends (first vs last `PerformanceMetricSnapshot` in the window: CTL/ATL/TSB, FTP, VDOT, swim threshold)
+- workout feedback collected in the same window (`WorkoutFeedback.createdAt`)
+
+Output is Zod-validated JSON (`summary`, `strengths`, `improvements`, `suggestions`) stored on `PerformanceReport.content`. The report never changes the plan.
+
+- **Window:** `REPORT_PERIOD_DAYS` (14–28, default 14), inclusive UTC dates. On-demand UI offers 14 or 28 days.
+- **Scheduled:** `GET /api/cron/performance-reports` daily at 06:00 UTC; skips users whose last report is newer than the window or who have no snapshots/feedback; max 5 users per run.
+- **On-demand:** server action from `/reports` (5 LLM calls/user/hour).
+- **UI:** `/reports` list and `/reports/[id]`.
 
 ---
 
@@ -230,18 +245,19 @@ interface LLMProvider {
 
 HTTP 429/5xx responses trigger up to 2 retries with exponential backoff.
 
-Generate/regenerate program: 5 LLM calls per user per hour. Feedback analysis: 20 per user per hour (`LLMInteractionLog` counts).
+Generate/regenerate program: 5 LLM calls per user per hour. Feedback analysis: 20 per user per hour. Performance reports: 5 per user per hour (`LLMInteractionLog` counts).
 
 ---
 
 ## API routes
 
-| Method     | Path                      | Auth                  | Description                        |
-| ---------- | ------------------------- | --------------------- | ---------------------------------- |
-| `GET/POST` | `/api/auth/[...nextauth]` | Public                | Auth.js OAuth flow                 |
-| `GET`      | `/api/health`             | Public                | Health check                       |
-| `GET/POST` | `/api/strava/webhook`     | Verify token          | Strava webhook validation + events |
-| `GET`      | `/api/cron/strava-sync`   | `Bearer $CRON_SECRET` | Daily fallback activity sync       |
+| Method     | Path                            | Auth                  | Description                        |
+| ---------- | ------------------------------- | --------------------- | ---------------------------------- |
+| `GET/POST` | `/api/auth/[...nextauth]`       | Public                | Auth.js OAuth flow                 |
+| `GET`      | `/api/health`                   | Public                | Health check                       |
+| `GET/POST` | `/api/strava/webhook`           | Verify token          | Strava webhook validation + events |
+| `GET`      | `/api/cron/strava-sync`         | `Bearer $CRON_SECRET` | Daily fallback activity sync       |
+| `GET`      | `/api/cron/performance-reports` | `Bearer $CRON_SECRET` | Periodic performance report job    |
 
 Future program/feedback endpoints will follow the same pattern: Route Handlers for webhooks/cron, Server Actions for UI mutations.
 
@@ -251,11 +267,12 @@ Future program/feedback endpoints will follow the same pattern: Route Handlers f
 
 Pacely uses a **database-backed job queue** (`Job` table) instead of Redis or dedicated workers:
 
-| Job type          | Trigger                                      | Behavior                                                            |
-| ----------------- | -------------------------------------------- | ------------------------------------------------------------------- |
-| `strava_backfill` | First OAuth connection                       | Paginated historical import; progress stored in `Job.progress` JSON |
-| `metrics_recalc`  | After webhook/sync/backfill activity changes | Recompute TSS/CTL/ATL/TSB snapshots                                 |
-| workout matching  | After the same activity changes + calendar   | Pair planned workouts to Strava activities; not a `Job` row         |
+| Job type            | Trigger                                      | Behavior                                                            |
+| ------------------- | -------------------------------------------- | ------------------------------------------------------------------- |
+| `strava_backfill`   | First OAuth connection                       | Paginated historical import; progress stored in `Job.progress` JSON |
+| `metrics_recalc`    | After webhook/sync/backfill activity changes | Recompute TSS/CTL/ATL/TSB snapshots                                 |
+| workout matching    | After the same activity changes + calendar   | Pair planned workouts to Strava activities; not a `Job` row         |
+| performance reports | Daily cron + on-demand server action         | `analyzePerformance`; not a `Job` row                               |
 
 Job processing is triggered from dashboard Server Actions (backfill chunks) and cron/webhook handlers (incremental sync). Vercel Hobby cron runs once daily; interactive dashboard actions provide lower-latency processing.
 
@@ -296,7 +313,7 @@ Local alternative: `docker compose up -d` with Postgres on `localhost:5432`.
 4. Update Strava **Authorization Callback Domain** to the production hostname.
 5. Register the Strava webhook against the production URL.
 
-Cron schedule (from `vercel.json`): `/api/cron/strava-sync` at `0 5 * * *` (05:00 UTC daily).
+Cron schedule (from `vercel.json`): `/api/cron/strava-sync` at `0 5 * * *` (05:00 UTC daily); `/api/cron/performance-reports` at `0 6 * * *` (06:00 UTC daily).
 
 ---
 
