@@ -1,8 +1,8 @@
 # Pacely — Technical Overview
 
-Multi-sport training platform built on Next.js. Strava is the sole identity provider and activity source. LLM-backed program generation, adaptive feedback, and performance reports are implemented through Phase 8.
+Multi-sport training platform built on Next.js. Strava is the sole identity provider and activity source. LLM-backed program generation, adaptive feedback, performance reports, and notifications are implemented through Phase 9.
 
-**Status (August 2026):** Phases 0–8 complete (metrics, LLM, programs, calendar matching, feedback, suggested recalc, performance reports). Phase 9+ (notifications) is pending. See [`TASKS.md`](./TASKS.md) for the full roadmap.
+**Status (August 2026):** Phases 0–9 complete (metrics, LLM, programs, calendar matching, feedback, suggested recalc, performance reports, in-app + Web Push notifications). Phase 10 (polish / beta) is pending. See [`TASKS.md`](./TASKS.md) for the full roadmap.
 
 ---
 
@@ -22,7 +22,7 @@ Multi-sport training platform built on Next.js. Strava is the sole identity prov
 │  │ JWT sessions │  │ OAuth client │  │ OpenAI/      │  │ TSS/CTL/FTP │  │
 │  │ Strava prov. │  │ webhook sync │  │ DeepSeek     │  │ TSS/CTL/…   │  │
 │  └──────────────┘  └──────────────┘  └──────────────┘  └─────────────┘  │
-│  /lib/feedback  /lib/reports  /server/actions  /server/jobs  /lib/security │
+│  /lib/feedback  /lib/reports  /lib/notifications  /server/actions  /server/jobs  /lib/security │
 └───────────────────────────────┬─────────────────────────────────────────┘
                                 │ Prisma 6 (pooled + direct URL)
                                 ▼
@@ -31,7 +31,7 @@ Multi-sport training platform built on Next.js. Strava is the sole identity prov
 │  User · StravaConnection · Activity · Job · LLMInteractionLog · …       │
 └─────────────────────────────────────────────────────────────────────────┘
 
-External: Strava API (OAuth, activities, webhooks) · OpenAI / DeepSeek · Vercel Cron
+External: Strava API (OAuth, activities, webhooks) · OpenAI / DeepSeek · Web Push (VAPID) · Vercel Cron
 ```
 
 ### Request flow — activity sync
@@ -77,6 +77,8 @@ All activity queries are scoped by `userId` from the authenticated session — n
     auth/[...nextauth]/      # Auth.js route handler
     strava/webhook/          # Strava push subscription endpoint
     cron/strava-sync/        # Daily fallback sync
+    cron/performance-reports/ # Periodic LLM reports
+    cron/notifications/      # Today's-workout reminders
     health/                  # Liveness probe
 /components                  # Domain + UI components
 /lib
@@ -87,6 +89,8 @@ All activity queries are scoped by `userId` from the authenticated session — n
   matching/                  # Workout ↔ Activity heuristic
   calendar/                  # Week/month ranges, planned vs actual totals
   feedback/                  # Calibration window, suggested recalc diffs
+  reports/                   # Performance report window, trends, generation
+  notifications/             # In-app + Web Push (VAPID)
   security/                  # AES encryption for Strava tokens at rest
   validation/                # Shared Zod schemas
 /server
@@ -113,8 +117,10 @@ All activity queries are scoped by `userId` from the authenticated session — n
 | `WorkoutFeedback`                       | Free-text note after a completed workout plus structured LLM analysis (RPE, factors, plan deviation)                  |
 | `RecalcProposal`                        | Suggested future-workout diff; `pending` until the athlete approves or rejects — never auto-applied                   |
 | `PerformanceReport`                     | Periodic LLM summary (`content` JSON: strengths / improvements / suggestions); `source` `scheduled` \| `on_demand`    |
+| `Notification`                          | In-app item (`workout_today` \| `recalc_proposal`); `readAt` null = unread; `dedupeKey` for idempotency               |
+| `PushSubscription`                      | Browser Web Push endpoint + VAPID keys (`p256dh`, `auth`) per user                                                    |
 
-**Planned entities** (see `PROJECT_SPEC.md` §7): `Notification`.
+**Planned entities** (see `PROJECT_SPEC.md` §7): none remaining for MVP.
 
 ### Activity normalization
 
@@ -165,6 +171,15 @@ Output is Zod-validated JSON (`summary`, `strengths`, `improvements`, `suggestio
 - **Scheduled:** `GET /api/cron/performance-reports` daily at 06:00 UTC; skips users whose last report is newer than the window or who have no snapshots/feedback; max 5 users per run.
 - **On-demand:** server action from `/reports` (5 LLM calls/user/hour).
 - **UI:** `/reports` list and `/reports/[id]`.
+
+### Notifications
+
+In-app notifications are always created; browser push is opt-in.
+
+- **Today's workout:** `GET /api/cron/notifications` at 07:00 UTC. Users with `planned` workouts on active programs for the UTC day get one `workout_today` notification (`dedupeKey` = `workout_today:YYYY-MM-DD`). Payload lists sport, name, duration. Links to `/calendar`. Max 50 users per run.
+- **Recalc proposal:** `notifyRecalcProposal` runs after a pending `RecalcProposal` is saved from feedback. Links to `/programs/:id`. Push failure is logged and does not roll back the proposal.
+- **Web Push:** `web-push` with VAPID (`WEB_PUSH_PUBLIC_KEY` / `WEB_PUSH_PRIVATE_KEY`). Service worker at `/sw.js`. Expired endpoints (HTTP 404/410) are deleted. Missing VAPID keys skip push and keep in-app only.
+- **UI:** header bell (unread count), `/notifications` (list, mark read / mark all, enable/disable push).
 
 ---
 
@@ -258,6 +273,7 @@ Generate/regenerate program: 5 LLM calls per user per hour. Feedback analysis: 2
 | `GET/POST` | `/api/strava/webhook`           | Verify token          | Strava webhook validation + events |
 | `GET`      | `/api/cron/strava-sync`         | `Bearer $CRON_SECRET` | Daily fallback activity sync       |
 | `GET`      | `/api/cron/performance-reports` | `Bearer $CRON_SECRET` | Periodic performance report job    |
+| `GET`      | `/api/cron/notifications`       | `Bearer $CRON_SECRET` | Today's-workout in-app + push      |
 
 Future program/feedback endpoints will follow the same pattern: Route Handlers for webhooks/cron, Server Actions for UI mutations.
 
@@ -273,6 +289,7 @@ Pacely uses a **database-backed job queue** (`Job` table) instead of Redis or de
 | `metrics_recalc`    | After webhook/sync/backfill activity changes | Recompute TSS/CTL/ATL/TSB snapshots                                 |
 | workout matching    | After the same activity changes + calendar   | Pair planned workouts to Strava activities; not a `Job` row         |
 | performance reports | Daily cron + on-demand server action         | `analyzePerformance`; not a `Job` row                               |
+| daily notifications | Daily cron (today's workouts) + feedback     | In-app `Notification` + Web Push; not a `Job` row                   |
 
 Job processing is triggered from dashboard Server Actions (backfill chunks) and cron/webhook handlers (incremental sync). Vercel Hobby cron runs once daily; interactive dashboard actions provide lower-latency processing.
 
@@ -313,7 +330,7 @@ Local alternative: `docker compose up -d` with Postgres on `localhost:5432`.
 4. Update Strava **Authorization Callback Domain** to the production hostname.
 5. Register the Strava webhook against the production URL.
 
-Cron schedule (from `vercel.json`): `/api/cron/strava-sync` at `0 5 * * *` (05:00 UTC daily); `/api/cron/performance-reports` at `0 6 * * *` (06:00 UTC daily).
+Cron schedule (from `vercel.json`): `/api/cron/strava-sync` at `0 5 * * *` (05:00 UTC daily); `/api/cron/performance-reports` at `0 6 * * *` (06:00 UTC daily); `/api/cron/notifications` at `0 7 * * *` (07:00 UTC daily).
 
 ---
 

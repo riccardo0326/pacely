@@ -142,12 +142,14 @@ Assunzioni Fase 8: `content` è JSON `PerformanceReportOutput` (summary/strength
 
 ## Fase 9 — Notifiche
 
-- [ ] Modello `Notification` in Prisma + migrazione.
-- [ ] Setup Web Push (service worker, chiavi VAPID) per notifiche browser.
-- [ ] Notifica in-app + push per "allenamento di oggi" (cron giornaliero).
-- [ ] Notifica per proposta di ricalcolo in attesa di approvazione.
-- [ ] Centro notifiche in-app (lista, stato letta/non letta).
-- [ ] Test: job di invio notifiche giornaliere con mock del servizio push.
+- [x] Modello `Notification` in Prisma + migrazione.
+- [x] Setup Web Push (service worker, chiavi VAPID) per notifiche browser.
+- [x] Notifica in-app + push per "allenamento di oggi" (cron giornaliero).
+- [x] Notifica per proposta di ricalcolo in attesa di approvazione.
+- [x] Centro notifiche in-app (lista, stato letta/non letta).
+- [x] Test: job di invio notifiche giornaliere con mock del servizio push.
+
+Assunzioni Fase 9: `Notification` ha `title`/`body`/`href`/`readAt`/`dedupeKey` (idempotenza). Tabella extra `PushSubscription` per gli endpoint Web Push (non in spec §7, necessaria per VAPID). Tipi: `workout_today` e `recalc_proposal`. Cron `GET /api/cron/notifications` alle 07:00 UTC (mattina IT); max 50 utenti/run; "oggi" in UTC come le date workout. Push opzionali (`web-push` + `public/sw.js`); senza chiavi VAPID restano solo le in-app. Le push iOS Safari richiedono PWA sulla Home (limite noto). Un fallimento push non blocca la notifica in-app né il salvataggio del feedback.
 
 ---
 

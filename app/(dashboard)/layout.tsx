@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { NotificationBell } from "@/components/notification-bell";
 import { routes } from "@/lib/routes";
+import { getUnreadNotificationCount } from "@/server/actions/notifications";
 
 const NAV = [
   { href: routes.dashboard, label: "Dashboard" },
@@ -9,11 +11,13 @@ const NAV = [
   { href: routes.reports, label: "Report" },
 ] as const;
 
-export default function DashboardGroupLayout({
+export default async function DashboardGroupLayout({
   children,
 }: {
   children: ReactNode;
 }) {
+  const unreadCount = await getUnreadNotificationCount();
+
   return (
     <div className="flex min-h-full flex-col">
       <header className="border-b border-border">
@@ -33,6 +37,7 @@ export default function DashboardGroupLayout({
               {item.label}
             </Link>
           ))}
+          <NotificationBell unreadCount={unreadCount} />
         </nav>
       </header>
       {children}

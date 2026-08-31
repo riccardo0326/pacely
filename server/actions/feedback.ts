@@ -16,6 +16,7 @@ import {
   LlmQuotaExceededError,
 } from "@/lib/llm/quota";
 import { WORKOUT_STATUS } from "@/lib/matching/constants";
+import { notifyRecalcProposal } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 import { routes } from "@/lib/routes";
 import {
@@ -231,6 +232,7 @@ export async function submitWorkoutFeedback(
           program: {
             select: {
               id: true,
+              name: true,
               startDate: true,
               durationWeeks: true,
             },
@@ -304,7 +306,7 @@ export async function submitWorkoutFeedback(
     hasPendingProposal: pendingCount > 0,
   });
 
-  await prisma.$transaction(async (tx) => {
+  const createdProposal = await prisma.$transaction(async (tx) => {
     const feedback = await tx.workoutFeedback.create({
       data: {
         workoutId: workout.id,
@@ -313,21 +315,39 @@ export async function submitWorkoutFeedback(
       },
     });
 
-    if (evaluation.proposal) {
-      await tx.recalcProposal.create({
-        data: {
-          programId: workout.week.program.id,
-          weekId: evaluation.proposal.weekId,
-          feedbackId: feedback.id,
-          rationale: evaluation.proposal.rationale,
-          changes: evaluation.proposal.changes as Prisma.InputJsonValue,
-          status: RECALC_STATUS.pending,
-        },
-      });
+    if (!evaluation.proposal) {
+      return null;
     }
+
+    return tx.recalcProposal.create({
+      data: {
+        programId: workout.week.program.id,
+        weekId: evaluation.proposal.weekId,
+        feedbackId: feedback.id,
+        rationale: evaluation.proposal.rationale,
+        changes: evaluation.proposal.changes as Prisma.InputJsonValue,
+        status: RECALC_STATUS.pending,
+      },
+      select: { id: true },
+    });
   });
 
+  if (createdProposal) {
+    try {
+      await notifyRecalcProposal({
+        userId: user.id,
+        programId: workout.week.program.id,
+        proposalId: createdProposal.id,
+        programName: workout.week.program.name,
+      });
+    } catch (error) {
+      console.error("recalc proposal notification failed", error);
+    }
+  }
+
   revalidateFeedbackPaths(workout.week.program.id);
+  revalidatePath(routes.notifications, "layout");
+  revalidatePath("/", "layout");
   return {
     ok: true,
     proposalCreated: evaluation.proposal !== null,

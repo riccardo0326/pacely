@@ -40,6 +40,7 @@ export const config = {
     "/programs/:path*",
     "/calendar/:path*",
     "/reports/:path*",
+    "/notifications/:path*",
     "/login",
   ],
 };

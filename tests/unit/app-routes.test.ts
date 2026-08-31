@@ -15,9 +15,10 @@ describe("app routes", () => {
     expect(routes.calendar).toBe("/calendar");
     expect(routes.reports).toBe("/reports");
     expect(routes.report("abc")).toBe("/reports/abc");
+    expect(routes.notifications).toBe("/notifications");
   });
 
-  it("protects dashboard, programs, calendar, and reports, not login or public home", () => {
+  it("protects dashboard, programs, calendar, reports, and notifications, not login or public home", () => {
     expect(isProtectedAppPath("/dashboard")).toBe(true);
     expect(isProtectedAppPath("/dashboard/foo")).toBe(true);
     expect(isProtectedAppPath("/programs")).toBe(true);
@@ -27,6 +28,8 @@ describe("app routes", () => {
     expect(isProtectedAppPath("/calendar/foo")).toBe(true);
     expect(isProtectedAppPath("/reports")).toBe(true);
     expect(isProtectedAppPath("/reports/abc")).toBe(true);
+    expect(isProtectedAppPath("/notifications")).toBe(true);
+    expect(isProtectedAppPath("/notifications/foo")).toBe(true);
     expect(isProtectedAppPath("/login")).toBe(false);
     expect(isProtectedAppPath("/")).toBe(false);
   });
@@ -49,6 +52,7 @@ describe("app routes", () => {
       "/programs/:path*",
       "/calendar/:path*",
       "/reports/:path*",
+      "/notifications/:path*",
       "/login",
     ]);
   });
