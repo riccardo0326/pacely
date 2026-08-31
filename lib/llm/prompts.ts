@@ -31,12 +31,76 @@ Il JSON deve avere questa forma:
     }
   ]
 }
-Vincoli:
-- Bilancia il carico (TSS) tra gli sport richiesti; non generare tre piani indipendenti.
-- Rispetta il budget TSS settimanale (con progressione ragionevole e una settimana di scarico ogni 4).
-- Ogni workout ha almeno un blocco warm-up, un main-set e un cool-down.
-- Usa solo i giorni disponibili indicati dall'atleta.
+Regole HARD:
+- Ogni settimana ha ESATTAMENTE un workout per ciascuno slot indicato (stesso dayOfWeek e timeOfDay). Non inventare altri giorni.
+- Usa SOLO gli sport richiesti e usali TUTTI nel corso del programma.
+- Rispetta il budget TSS settimanale (progressione ragionevole, scarico ogni 4 settimane).
+- Ogni workout ha almeno warm-up, main-set e cool-down.
+- I VINCOLI/VIETATO sono divieti: non farne il tema del piano (es. se è vietata la salita, non programmare corsa in salita).
 - Non inventare metriche assenti nell'input.`;
+
+export const WEEKDAY_PROMPT_NAMES = [
+  "Domenica",
+  "Lunedì",
+  "Martedì",
+  "Mercoledì",
+  "Giovedì",
+  "Venerdì",
+  "Sabato",
+] as const;
+
+export function buildProgramUserPrompt(input: {
+  sports: Array<"run" | "swim" | "ride">;
+  durationWeeks: number;
+  availableSlots: Array<{ weekday: number; timeOfDay?: string }>;
+  goal: {
+    type: string;
+    description: string;
+    raceType?: string;
+    distance?: string;
+    date?: string;
+  };
+  constraints?: string;
+  weeklyTssBudget: number;
+  currentMetrics: unknown;
+  aggregatedHistory: unknown;
+  forbiddenTerms?: string[];
+}): string {
+  const slots = input.availableSlots
+    .map((slot) => {
+      const day =
+        WEEKDAY_PROMPT_NAMES[slot.weekday] ?? `giorno ${slot.weekday}`;
+      const time = slot.timeOfDay ? ` alle ${slot.timeOfDay}` : "";
+      return `- ${day} (dayOfWeek=${slot.weekday})${time}`;
+    })
+    .join("\n");
+
+  const goalBits = [
+    `tipo=${input.goal.type}`,
+    input.goal.description,
+    input.goal.raceType ? `gara=${input.goal.raceType}` : null,
+    input.goal.distance ? `distanza=${input.goal.distance}` : null,
+    input.goal.date ? `data=${input.goal.date}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const forbidden =
+    input.forbiddenTerms && input.forbiddenTerms.length > 0
+      ? `VIETATO (divieti, NON farne l'obiettivo del piano; non usare queste parole in name/focus/description):\n- ${input.forbiddenTerms.join("\n- ")}\nVincolo originale: ${input.constraints}`
+      : `VINCOLI: ${input.constraints?.trim() || "nessuno"}`;
+
+  return [
+    `SPORT OBBLIGATORI (tutti, nessun altro): ${input.sports.join(", ")}`,
+    `DURATA: ${input.durationWeeks} settimane (weekNumber da 1 a ${input.durationWeeks})`,
+    `BUDGET TSS SETTIMANALE TARGET: ${input.weeklyTssBudget}`,
+    `OBIETTIVO: ${goalBits}`,
+    `SLOT OBBLIGATORI (copia dayOfWeek e timeOfDay; una seduta per slot, ogni settimana):\n${slots}`,
+    forbidden,
+    `METRICHE ATLETA: ${JSON.stringify(input.currentMetrics)}`,
+    `STORICO AGGREGATO: ${JSON.stringify(input.aggregatedHistory)}`,
+  ].join("\n\n");
+}
 
 export const FEEDBACK_SYSTEM_PROMPT = `Analizza il feedback testuale di un atleta dopo un allenamento.
 Rispondi SOLO con un oggetto JSON valido, senza markdown e senza testo extra.

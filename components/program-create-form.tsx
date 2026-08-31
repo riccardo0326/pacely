@@ -3,6 +3,10 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { nextMonday } from "@/lib/programs/dates";
+import {
+  looksLikeTriathlonGoal,
+  missingTriathlonSports,
+} from "@/lib/programs/constraints";
 
 const SPORT_OPTIONS = [
   { value: "run", label: "Corsa" },
@@ -37,6 +41,8 @@ export function ProgramCreateForm({
   );
   const [goalType, setGoalType] = useState<"race" | "generic">("generic");
   const [sports, setSports] = useState<string[]>(["run"]);
+  const [goalDescription, setGoalDescription] = useState("");
+  const [raceType, setRaceType] = useState("");
   const [slots, setSlots] = useState<SlotRow[]>([
     { weekday: 1, timeOfDay: "07:00" },
     { weekday: 3, timeOfDay: "07:00" },
@@ -104,6 +110,21 @@ export function ProgramCreateForm({
             );
           })}
         </div>
+        {looksLikeTriathlonGoal(`${goalDescription} ${raceType}`) &&
+        missingTriathlonSports(sports).length > 0 ? (
+          <p className="text-sm text-amber-700 dark:text-amber-400">
+            Per un triathlon o mezzo Ironman seleziona corsa, nuoto e ciclismo.
+            Ora il piano userà solo:{" "}
+            {sports
+              .map(
+                (sport) =>
+                  SPORT_OPTIONS.find((option) => option.value === sport)
+                    ?.label ?? sport,
+              )
+              .join(", ")}
+            .
+          </p>
+        ) : null}
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2">
@@ -158,6 +179,8 @@ export function ProgramCreateForm({
             name="goalDescription"
             required
             rows={3}
+            value={goalDescription}
+            onChange={(event) => setGoalDescription(event.target.value)}
             placeholder="Es. migliorare la base aerobica per un mezzo ironman"
             className="rounded-lg border border-border bg-background px-3 py-2"
           />
@@ -169,6 +192,8 @@ export function ProgramCreateForm({
               <input
                 name="raceType"
                 placeholder="Es. mezzo ironman"
+                value={raceType}
+                onChange={(event) => setRaceType(event.target.value)}
                 className="rounded-lg border border-border bg-background px-3 py-2"
               />
             </label>

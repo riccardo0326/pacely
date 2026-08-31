@@ -79,6 +79,8 @@ describe("LLMProvider validation and fallback", () => {
     expect(result.source).toBe("llm");
     expect(result.usedFallback).toBe(false);
     expect(result.data.name).toBe("Base aerobica");
+    expect(result.data.weeks).toHaveLength(4);
+    expect(result.data.weeks[0]?.workouts).toHaveLength(3);
     expect(completeJson).toHaveBeenCalledOnce();
     expect(logUsage).toHaveBeenCalledOnce();
     const log = logUsage.mock.calls[0]?.[0];
