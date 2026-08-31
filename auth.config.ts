@@ -1,10 +1,11 @@
 import type { NextAuthConfig } from "next-auth";
 import { stravaProvider } from "@/lib/strava/provider";
+import { isProtectedAppPath, routes } from "@/lib/routes";
 
 export const authConfig = {
   providers: [stravaProvider()],
   pages: {
-    signIn: "/login",
+    signIn: routes.login,
   },
   session: {
     strategy: "jwt",
@@ -14,7 +15,7 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request }) {
       const isLoggedIn = Boolean(auth?.user);
-      if (request.nextUrl.pathname.startsWith("/dashboard")) {
+      if (isProtectedAppPath(request.nextUrl.pathname)) {
         return isLoggedIn;
       }
       return true;

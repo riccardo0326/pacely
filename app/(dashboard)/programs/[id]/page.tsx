@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ExportProgramExcelButton } from "@/components/export-program-excel-button";
 import { ProgramTimeline } from "@/components/program-timeline";
 import { RegenerateProgramButton } from "@/components/regenerate-program-button";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/require-user";
+import { routes } from "@/lib/routes";
 import { getProgram } from "@/server/actions/programs";
 
 type ProgramDetailPageProps = {
@@ -39,13 +41,16 @@ export default async function ProgramDetailPage({
             </p>
           ) : null}
         </div>
-        <RegenerateProgramButton programId={program.id} />
+        <div className="flex flex-wrap items-start gap-2">
+          <ExportProgramExcelButton program={program} />
+          <RegenerateProgramButton programId={program.id} />
+        </div>
       </div>
 
       <ProgramTimeline program={program} />
 
       <Button asChild variant="outline" className="self-start">
-        <Link href="/dashboard/programs">Torna ai programmi</Link>
+        <Link href={routes.programs}>Torna ai programmi</Link>
       </Button>
     </main>
   );

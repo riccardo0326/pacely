@@ -16,6 +16,7 @@ import {
   buildAggregatedHistory,
   buildAggregatedHistoryFromSnapshots,
 } from "@/lib/programs/history";
+import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma";
 import {
   buildProgramCreateData,
@@ -353,8 +354,8 @@ export async function generateProgram(
       result,
     );
 
-    revalidatePath("/dashboard/programs");
-    revalidatePath(`/dashboard/programs/${programId}`);
+    revalidatePath(routes.programs);
+    revalidatePath(routes.program(programId));
     return { ok: true, programId, usedFallback: result.usedFallback };
   } catch (error) {
     if (error instanceof LlmQuotaExceededError) {
@@ -441,8 +442,8 @@ export async function regenerateProgram(
       }
     });
 
-    revalidatePath("/dashboard/programs");
-    revalidatePath(`/dashboard/programs/${programId}`);
+    revalidatePath(routes.programs);
+    revalidatePath(routes.program(programId));
     return { ok: true, programId, usedFallback: result.usedFallback };
   } catch (error) {
     if (error instanceof LlmQuotaExceededError) {
@@ -506,7 +507,7 @@ export async function updateWorkout(
     },
   });
 
-  revalidatePath(`/dashboard/programs/${workout.week.programId}`);
+  revalidatePath(routes.program(workout.week.programId));
   return { ok: true };
 }
 
@@ -515,11 +516,9 @@ export async function createProgramAndRedirect(
 ): Promise<void> {
   const result = await generateProgram(formData);
   if (!result.ok) {
-    redirect(
-      `/dashboard/programs/new?error=${encodeURIComponent(result.error)}`,
-    );
+    redirect(`${routes.programNew}?error=${encodeURIComponent(result.error)}`);
   }
-  redirect(`/dashboard/programs/${result.programId}`);
+  redirect(routes.program(result.programId));
 }
 
 function parseSlotsFromForm(formData: FormData) {

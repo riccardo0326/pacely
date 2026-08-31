@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ImportStatusCard } from "@/components/import-status";
 import { MetricsPanel } from "@/components/metrics-panel";
 import { requireUser } from "@/lib/auth/require-user";
+import { routes } from "@/lib/routes";
 import { logout } from "@/server/actions/auth";
 import { getImportStatus } from "@/server/actions/import";
 import { getDashboardMetrics } from "@/server/actions/metrics";
@@ -43,7 +44,7 @@ export default async function DashboardPage() {
           Crea e gestisci piani multi-sport generati con LLM.
         </p>
         <Button asChild className="mt-4">
-          <Link href="/dashboard/programs">Vai ai programmi</Link>
+          <Link href={routes.programs}>Vai ai programmi</Link>
         </Button>
       </section>
     </main>
