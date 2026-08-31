@@ -16,6 +16,7 @@ import {
   FEEDBACK_SYSTEM_PROMPT,
   PERFORMANCE_SYSTEM_PROMPT,
   PROGRAM_SYSTEM_PROMPT,
+  buildProgramUserPrompt,
 } from "@/lib/llm/prompts";
 import {
   feedbackAnalysisInputSchema,
@@ -37,6 +38,8 @@ import type {
   LLMUsageLog,
   TokenUsage,
 } from "@/lib/llm/types";
+import { forbiddenTermsFromConstraints } from "@/lib/programs/constraints";
+import { repairGeneratedProgram } from "@/lib/programs/repair-generated";
 
 function errorMessage(error: unknown): string {
   if (error instanceof ZodError) {
@@ -206,9 +209,19 @@ export function createStructuredLLMProvider(
         interactionType: "generate_program",
         schema: programGenerationOutputSchema,
         system: PROGRAM_SYSTEM_PROMPT,
-        userPrompt: (value) => JSON.stringify(value),
+        userPrompt: (value) =>
+          buildProgramUserPrompt({
+            ...value,
+            forbiddenTerms: forbiddenTermsFromConstraints(value.constraints),
+          }),
         fallback: fallbackGenerateProgram,
-      });
+      }).then((result) => ({
+        ...result,
+        data: repairGeneratedProgram(
+          programGenerationInputSchema.parse(input),
+          result.data,
+        ),
+      }));
     },
     analyzeFeedback(input: FeedbackAnalysisInput) {
       return run({

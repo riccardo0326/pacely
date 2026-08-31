@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/require-user";
+import { routes } from "@/lib/routes";
 import { listPrograms } from "@/server/actions/programs";
 
 const SPORT_LABEL: Record<string, string> = {
@@ -29,7 +30,7 @@ export default async function ProgramsPage() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/dashboard/programs/new">Nuovo programma</Link>
+          <Link href={routes.programNew}>Nuovo programma</Link>
         </Button>
       </div>
 
@@ -39,7 +40,7 @@ export default async function ProgramsPage() {
             Non hai ancora creato un programma.
           </p>
           <Button asChild className="mt-4">
-            <Link href="/dashboard/programs/new">Crea il primo programma</Link>
+            <Link href={routes.programNew}>Crea il primo programma</Link>
           </Button>
         </div>
       ) : (
@@ -47,7 +48,7 @@ export default async function ProgramsPage() {
           {programs.map((program) => (
             <li key={program.id}>
               <Link
-                href={`/dashboard/programs/${program.id}`}
+                href={routes.program(program.id)}
                 className="block rounded-xl border border-border bg-background p-4 transition-colors hover:bg-muted/40"
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
@@ -71,7 +72,7 @@ export default async function ProgramsPage() {
       )}
 
       <Button asChild variant="outline" className="self-start">
-        <Link href="/dashboard">Torna alla dashboard</Link>
+        <Link href={routes.dashboard}>Torna alla dashboard</Link>
       </Button>
     </main>
   );

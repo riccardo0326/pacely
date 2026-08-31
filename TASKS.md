@@ -95,7 +95,7 @@ Assunzioni Fase 4: implementata su richiesta prima della Fase 3 (l'astrazione no
 - [x] Funzione "rigenera programma" (nuova chiamata LLM con eventuali input aggiornati).
 - [x] Test integration: creazione programma end-to-end con provider LLM mockato, verifica bilanciamento carico tra sport nel JSON generato.
 
-Assunzioni Fase 5: generazione via server action (non API route pubblica). Budget TSS = CTL×1.05 (cap 120–600). Storico settimanale da `PerformanceMetricSnapshot.sportBreakdown` se presente, altrimenti stima durata×60. Quota 5 generate/regenerate LLM per utente/ora (`LLMInteractionLog`). Editor blocchi: tipo, durata, descrizione, zona 1–5, metrica hr/pace/power; persistenza Zod. Rigenera riusa sport/goal/slot del programma esistente.
+Assunzioni Fase 5: generazione via server action (non API route pubblica). Budget TSS = CTL×1.05 (cap 120–600). Storico settimanale da `PerformanceMetricSnapshot.sportBreakdown` se presente, altrimenti stima durata×60. Quota 5 generate/regenerate LLM per utente/ora (`LLMInteractionLog`). Editor blocchi: tipo, durata, descrizione, zona 1–5, metrica hr/pace/power; persistenza Zod. Rigenera riusa sport/goal/slot del programma esistente. Output LLM riparato in codice prima del save: slot (giorno/orario) e sport del form sono vincoli duri; i vincoli testuali (es. evitare salita) vengono scrubbati. Prompt utente a sezioni (SPORT / SLOT / VIETATO), non un JSON blob. Export Excel `.xlsx` dal dettaglio programma (fogli Riepilogo + Allenamenti).
 
 ---
 
@@ -168,6 +168,7 @@ Da non implementare ora — annotare qui eventuali idee emerse durante lo svilup
 - [ ] Feedback vocale con trascrizione automatica (Whisper o equivalente).
 - [ ] Ricalcolo del piano completamente automatico (senza approvazione utente).
 - [ ] Export/push programmi verso Strava.
+- [ ] Eval live qualità generazione LLM (script opzionale fuori CI, dopo repair deterministico).
 - [ ] Notifiche push native mobile / app mobile dedicata.
 - [ ] Provider LLM aggiuntivi (Anthropic, Google) nell'astrazione già predisposta.
 - [ ] Eventuali piani di abbonamento / monetizzazione.

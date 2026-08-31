@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ProgramCreateForm } from "@/components/program-create-form";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/require-user";
+import { routes } from "@/lib/routes";
 import { createProgramAndRedirect } from "@/server/actions/programs";
 
 type NewProgramPageProps = {
@@ -35,7 +36,7 @@ export default async function NewProgramPage({
       />
 
       <Button asChild variant="outline" className="self-start">
-        <Link href="/dashboard/programs">Annulla</Link>
+        <Link href={routes.programs}>Annulla</Link>
       </Button>
     </main>
   );

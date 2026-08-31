@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/auth";
+import { routes } from "@/lib/routes";
 import { connectWithStrava } from "@/server/actions/auth";
 
 export default async function Home() {
@@ -18,7 +20,7 @@ export default async function Home() {
       </p>
       {session?.user ? (
         <Button asChild size="lg">
-          <a href="/dashboard">Vai alla dashboard</a>
+          <Link href={routes.dashboard}>Vai alla dashboard</Link>
         </Button>
       ) : (
         <form
