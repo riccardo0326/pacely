@@ -4,13 +4,13 @@ const mocks = vi.hoisted(() => ({
   requireUser: vi.fn(),
   programFindFirst: vi.fn(),
   programFindMany: vi.fn(),
+  programDelete: vi.fn(),
   reportFindFirst: vi.fn(),
   reportFindMany: vi.fn(),
   notificationFindMany: vi.fn(),
   proposalFindFirst: vi.fn(),
   workoutFindFirst: vi.fn(),
   activityFindFirst: vi.fn(),
-  betaFeedbackCreate: vi.fn(),
 }));
 
 vi.mock("@/lib/auth/require-user", () => ({
@@ -22,6 +22,7 @@ vi.mock("@/lib/prisma", () => ({
     program: {
       findFirst: mocks.programFindFirst,
       findMany: mocks.programFindMany,
+      delete: mocks.programDelete,
     },
     performanceReport: {
       findFirst: mocks.reportFindFirst,
@@ -31,7 +32,6 @@ vi.mock("@/lib/prisma", () => ({
     recalcProposal: { findFirst: mocks.proposalFindFirst },
     workout: { findFirst: mocks.workoutFindFirst, findMany: vi.fn() },
     activity: { findFirst: mocks.activityFindFirst },
-    betaFeedback: { create: mocks.betaFeedbackCreate },
   },
 }));
 
@@ -50,7 +50,11 @@ vi.mock("@/auth", () => ({
   signOut: vi.fn(),
 }));
 
-import { getProgram, listPrograms } from "@/server/actions/programs";
+import {
+  deleteProgram,
+  getProgram,
+  listPrograms,
+} from "@/server/actions/programs";
 import {
   getPerformanceReport,
   listPerformanceReports,
@@ -58,7 +62,6 @@ import {
 import { listNotifications } from "@/server/actions/notifications";
 import { getPendingRecalcProposalForProgram } from "@/server/actions/feedback";
 import { skipWorkout } from "@/server/actions/calendar";
-import { submitBetaFeedback } from "@/server/actions/beta-feedback";
 
 describe("per-user data isolation", () => {
   beforeEach(() => {
@@ -147,22 +150,15 @@ describe("per-user data isolation", () => {
     );
   });
 
-  it("stores beta feedback under the session userId", async () => {
-    mocks.betaFeedbackCreate.mockResolvedValue({ id: "fb-1" });
-    const formData = new FormData();
-    formData.set("category", "bug");
-    formData.set(
-      "message",
-      "Il match automatico ha collegato la corsa sbagliata.",
+  it("refuses to delete another user's program", async () => {
+    mocks.programFindFirst.mockResolvedValue(null);
+    const result = await deleteProgram("program-of-user-b");
+    expect(result).toEqual({ ok: false, error: "Programma non trovato" });
+    expect(mocks.programFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "program-of-user-b", userId: "user-a" },
+      }),
     );
-    const result = await submitBetaFeedback(formData);
-    expect(result).toEqual({ ok: true });
-    expect(mocks.betaFeedbackCreate).toHaveBeenCalledWith({
-      data: {
-        userId: "user-a",
-        category: "bug",
-        message: "Il match automatico ha collegato la corsa sbagliata.",
-      },
-    });
+    expect(mocks.programDelete).not.toHaveBeenCalled();
   });
 });

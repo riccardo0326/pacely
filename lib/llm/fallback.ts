@@ -138,54 +138,117 @@ export function fallbackAnalyzePerformance(
   input: PerformanceAnalysisInput,
 ): PerformanceReportOutput {
   const { metricTrends } = input;
+  const ctl = metricTrends.ctlChange ?? 0;
+  const atl = metricTrends.atlChange ?? 0;
+  const tsb = metricTrends.tsbChange ?? 0;
   const strengths: string[] = [];
   const improvements: string[] = [];
   const suggestions: string[] = [];
 
-  if ((metricTrends.ctlChange ?? 0) > 0) {
-    strengths.push("Il CTL è in aumento nel periodo.");
-  } else if ((metricTrends.ctlChange ?? 0) < 0) {
-    improvements.push("Il CTL è in calo nel periodo.");
+  if (ctl > 0) {
+    strengths.push(
+      "La base di forma (CTL, il carico cronico) è cresciuta: stai costruendo condizione.",
+    );
+  } else if (ctl < 0) {
+    improvements.push(
+      "La base di forma (CTL) è scesa: in questo periodo ti sei scaricato più di quanto hai costruito.",
+    );
   }
 
-  if ((metricTrends.atlChange ?? 0) > 0) {
-    improvements.push("Il carico acuto (ATL) è aumentato nel periodo.");
-  } else if ((metricTrends.atlChange ?? 0) < 0) {
-    strengths.push("Il carico acuto (ATL) è diminuito.");
+  if (atl > 0) {
+    improvements.push(
+      "Il carico acuto (ATL, la fatica recente) è salito: hai lavorato di più, non è un miglioramento della forma.",
+    );
+  } else if (atl < 0) {
+    strengths.push(
+      "Il carico acuto (ATL) è sceso: nelle ultime sessioni ti sei dato più recupero.",
+    );
   }
 
-  if ((metricTrends.tsbChange ?? 0) > 0) {
-    strengths.push("La forma (TSB) è migliorata: sei più riposato.");
-  } else if ((metricTrends.tsbChange ?? 0) < 0) {
+  if (tsb > 0) {
+    strengths.push(
+      "La forma (TSB) è salita: sei più fresco rispetto al carico di base.",
+    );
+  } else if (tsb < 0) {
     improvements.push(
       "La forma (TSB) è scesa: più fatica recente, non un miglioramento.",
     );
   }
 
   if ((metricTrends.ftpChange ?? 0) > 0) {
-    strengths.push("L'FTP stimato è in crescita.");
+    strengths.push("L'FTP stimato in bici è in crescita.");
   }
   if ((metricTrends.vdotChange ?? 0) > 0) {
-    strengths.push("Il VDOT stimato è in crescita.");
+    strengths.push("Il VDOT stimato in corsa è in crescita.");
   }
   if ((metricTrends.swimThresholdPaceChangeSec ?? 0) < 0) {
-    strengths.push("Il passo soglia di nuoto è migliorato.");
+    strengths.push("Il passo soglia di nuoto è migliorato (più veloce).");
   }
 
   if (strengths.length === 0) {
     strengths.push("I dati del periodo sono stati conservati.");
   }
   if (improvements.length === 0) {
-    improvements.push("Nessuna area di miglioramento evidente dai numeri.");
+    improvements.push(
+      "Dai numeri non emerge un'area di attenzione evidente: continua a osservare come rispondi al carico.",
+    );
   }
   suggestions.push(
-    "Genera di nuovo il report quando hai più allenamenti nel periodo.",
+    "Tieni d'occhio il rapporto tra fatica recente e recupero: se l'ATL resta alto, inserisci un giorno più facile prima di spingere di nuovo.",
   );
 
+  const style = input.style ?? "simple";
+  const summary =
+    style === "technical"
+      ? `Dal ${input.periodStart} al ${input.periodEnd}, CTL ${signed(ctl)}, ATL ${signed(atl)}, TSB ${signed(tsb)}. Un ATL in salita e un TSB in calo indicano più fatica recente, non una forma migliore.`
+      : [
+          `Guardando il periodo dal ${input.periodStart} al ${input.periodEnd}, il quadro è questo: ${ctlSentence(ctl)} ${atlSentence(atl)}`,
+          tsbSentence(tsb),
+        ].join("\n\n");
+
   return {
-    summary: `Sintesi del periodo ${input.periodStart} – ${input.periodEnd} dai trend delle metriche.`,
+    summary,
     strengths,
     improvements,
     suggestions,
+    style,
   };
+}
+
+function signed(value: number): string {
+  const rounded = Math.round(value);
+  if (rounded > 0) {
+    return `+${rounded}`;
+  }
+  return String(rounded);
+}
+
+function ctlSentence(ctl: number): string {
+  if (ctl > 0) {
+    return "la base di forma è cresciuta un po'.";
+  }
+  if (ctl < 0) {
+    return "la base di forma si è alleggerita.";
+  }
+  return "la base di forma è rimasta sostanzialmente stabile.";
+}
+
+function atlSentence(atl: number): string {
+  if (atl > 0) {
+    return "Hai faticato di più nelle sessioni recenti.";
+  }
+  if (atl < 0) {
+    return "Nelle ultime sessioni il carico è stato più leggero.";
+  }
+  return "Il carico delle ultime sessioni è rimasto simile a prima.";
+}
+
+function tsbSentence(tsb: number): string {
+  if (tsb > 0) {
+    return "Di conseguenza sei arrivato più fresco: la forma è migliorata perché hai recuperato rispetto al carico di base.";
+  }
+  if (tsb < 0) {
+    return "Di conseguenza sei un po' più stanco: la forma è scesa perché la fatica recente pesa più del carico di base. Non è un passo avanti, è solo più accumulo.";
+  }
+  return "La forma è restata in equilibrio tra carico e recupero.";
 }

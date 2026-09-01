@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import {
   REPORT_CRON_MAX_USERS,
   REPORT_SOURCE,
+  REPORT_STYLE,
   generatePerformanceReportContent,
   isReportDue,
   reportCreateData,
@@ -11,12 +12,14 @@ import {
   type FeedbackForReport,
   type MetricSnapshotPoint,
   type ReportSource,
+  type ReportStyle,
 } from "@/lib/reports";
 import { getReportPeriodDays } from "@/lib/reports/period";
 
 export type GenerateReportOptions = {
   source: ReportSource;
   periodDays?: number;
+  style?: ReportStyle;
   now?: Date;
 };
 
@@ -84,6 +87,7 @@ export async function generateAndSaveReportForUser(
       periodStart: window.periodStart,
       periodEnd: window.periodEnd,
       source: options.source,
+      style: options.style ?? REPORT_STYLE.simple,
       snapshots,
       feedbacks,
     },

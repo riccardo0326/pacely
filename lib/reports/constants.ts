@@ -13,6 +13,27 @@ export const REPORT_SOURCE = {
 
 export type ReportSource = (typeof REPORT_SOURCE)[keyof typeof REPORT_SOURCE];
 
+export const REPORT_STYLE = {
+  simple: "simple",
+  technical: "technical",
+} as const;
+
+export type ReportStyle = (typeof REPORT_STYLE)[keyof typeof REPORT_STYLE];
+
+export const REPORT_STYLE_OPTIONS = [
+  REPORT_STYLE.simple,
+  REPORT_STYLE.technical,
+] as const;
+
+export const REPORT_STYLE_LABEL: Record<ReportStyle, string> = {
+  simple: "Semplice",
+  technical: "Tecnico",
+};
+
+export function isReportStyle(value: string): value is ReportStyle {
+  return value === REPORT_STYLE.simple || value === REPORT_STYLE.technical;
+}
+
 export const MAX_FEEDBACK_SUMMARIES = 30;
 export const MAX_FEEDBACK_SUMMARY_CHARS = 200;
 

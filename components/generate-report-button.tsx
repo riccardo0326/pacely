@@ -3,7 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { REPORT_PERIOD_DAY_OPTIONS } from "@/lib/reports/constants";
+import {
+  REPORT_PERIOD_DAY_OPTIONS,
+  REPORT_STYLE,
+  REPORT_STYLE_LABEL,
+  REPORT_STYLE_OPTIONS,
+  type ReportStyle,
+} from "@/lib/reports/constants";
 import { routes } from "@/lib/routes";
 import { generatePerformanceReportOnDemand } from "@/server/actions/reports";
 
@@ -22,6 +28,7 @@ export function GenerateReportButton({
   const [periodDays, setPeriodDays] = useState(
     defaultPeriodDays === 28 ? 28 : 14,
   );
+  const [style, setStyle] = useState<ReportStyle>(REPORT_STYLE.simple);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,6 +37,7 @@ export function GenerateReportButton({
     setError(null);
     const formData = new FormData();
     formData.set("periodDays", String(periodDays));
+    formData.set("style", style);
     const result = await generatePerformanceReportOnDemand(formData);
     setLoading(false);
 
@@ -60,6 +68,28 @@ export function GenerateReportButton({
           {REPORT_PERIOD_DAY_OPTIONS.map((days) => (
             <option key={days} value={days}>
               {PERIOD_LABEL[days]}
+            </option>
+          ))}
+        </select>
+        <label className="sr-only" htmlFor="report-style">
+          Tipo di report
+        </label>
+        <select
+          id="report-style"
+          value={style}
+          disabled={loading}
+          onChange={(event) =>
+            setStyle(
+              event.target.value === REPORT_STYLE.technical
+                ? REPORT_STYLE.technical
+                : REPORT_STYLE.simple,
+            )
+          }
+          className="h-8 rounded-lg border border-border bg-card px-2 text-sm"
+        >
+          {REPORT_STYLE_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {REPORT_STYLE_LABEL[option]}
             </option>
           ))}
         </select>

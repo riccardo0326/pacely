@@ -117,20 +117,41 @@ Il JSON deve avere questa forma:
 }
 Non inventare un RPE se il testo non lo implica. Non inventare fattori esterni non menzionati.`;
 
-export const PERFORMANCE_SYSTEM_PROMPT = `Scrivi un report di performance informativo (non modificare il piano).
-Rispondi SOLO con un oggetto JSON valido, senza markdown e senza testo extra.
+const PERFORMANCE_METRIC_RULES = `CTL = carico cronico (fitness): un aumento è generalmente positivo.
+ATL = carico acuto (fatica recente): un aumento indica più sforzo recente, non un miglioramento della forma.
+TSB = forma (CTL − ATL): un TSB in calo significa più fatica, non un miglioramento. Non chiamare «miglioramento» una diminuzione del TSB.
+Un delta negativo sul passo soglia nuoto è un miglioramento (passo più veloce). Non proporre modifiche automatiche al piano.
+Non inventare dati assenti. Se un trend è zero o assente, dillo in modo naturale invece di ripetere «nessun cambiamento».`;
+
+const PERFORMANCE_JSON_SHAPE = `Rispondi SOLO con un oggetto JSON valido, senza markdown e senza testo extra.
 Il JSON deve avere questa forma:
 {
   "summary": string,
   "strengths": string[] (almeno 1),
   "improvements": string[] (almeno 1),
   "suggestions": string[] (almeno 1)
+}`;
+
+export function performanceSystemPrompt(
+  style: PerformanceAnalysisInput["style"] = "simple",
+): string {
+  if (style === "technical") {
+    return `Sei un coach di endurance. Scrivi un report tecnico ma leggibile (non modificare il piano).
+${PERFORMANCE_JSON_SHAPE}
+Nella sintesi (2 paragrafi) cita i delta numerici di CTL, ATL, TSB e, se presenti, FTP/VDOT/soglia nuoto.
+Punti di forza, aree di miglioramento e suggerimenti: frasi complete, con i numeri. Niente elenchi di slogan.
+${PERFORMANCE_METRIC_RULES}`;
+  }
+
+  return `Sei un coach di endurance che parla all'atleta in italiano, in modo chiaro e umano.
+Non suonare come un report automatico: niente frasi del tipo «si è registrato un aumento di X unità», niente elenchi speculari e contraddittori.
+Spiega cosa significano i numeri nella vita reale (più stanco, più in forma, carico stabile).
+Se usi CTL, ATL o TSB, spiega l'acronimo la prima volta in parentesi.
+Nella sintesi scrivi 2-3 paragrafi discorsivi, separati da una riga vuota.
+Punti di forza, aree di attenzione e consigli: frasi complete da coach, non bullet telegraphic.
+${PERFORMANCE_JSON_SHAPE}
+${PERFORMANCE_METRIC_RULES}`;
 }
-Basa il testo sui trend metriche e sui feedback forniti. Non inventare dati assenti.
-CTL = carico cronico (fitness): un aumento è generalmente positivo.
-ATL = carico acuto (fatica recente): un aumento indica più sforzo recente, non un miglioramento della forma.
-TSB = forma (CTL − ATL): un TSB in calo significa più fatica, non un miglioramento. Non chiamare «miglioramento» una diminuzione del TSB.
-Un delta negativo sul passo soglia nuoto è un miglioramento (passo più veloce). Non proporre modifiche automatiche al piano.`;
 
 export function buildPerformanceUserPrompt(
   input: PerformanceAnalysisInput,
@@ -145,9 +166,14 @@ export function buildPerformanceUserPrompt(
       : input.feedbackSummaries
           .map((line, index) => `${index + 1}. ${line}`)
           .join("\n");
+  const styleLine =
+    input.style === "technical"
+      ? "STILE: tecnico — usa acronimi e delta numerici, resta comunque discorsivo."
+      : "STILE: semplice — linguaggio da coach, discorsivo, spiega i numeri.";
 
   return [
     `PERIODO: ${input.periodStart} – ${input.periodEnd}`,
+    styleLine,
     `TREND METRICHE (delta nel periodo): ${trendBits || "nessun trend numerico"}`,
     `FEEDBACK RACCOLTI:\n${feedback}`,
   ].join("\n\n");
