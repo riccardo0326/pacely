@@ -4,8 +4,13 @@ export {
   REPORT_PERIOD_DAY_OPTIONS,
   REPORT_PERIOD_DAYS_DEFAULT,
   REPORT_SOURCE,
+  REPORT_STYLE,
+  REPORT_STYLE_LABEL,
+  REPORT_STYLE_OPTIONS,
+  isReportStyle,
   type ReportPeriodDayOption,
   type ReportSource,
+  type ReportStyle,
 } from "@/lib/reports/constants";
 export {
   generatePerformanceReportContent,

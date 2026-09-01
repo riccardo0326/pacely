@@ -1,3 +1,4 @@
+import { MetricLabel } from "@/components/metric-help";
 import {
   durationDeltaPct,
   type PlannedActualTotals,
@@ -57,7 +58,7 @@ export function PlannedVsActualSummary({
       </div>
       <div className="rounded-lg border border-border bg-card px-3 py-3">
         <p className="text-xs tracking-wide text-muted-foreground uppercase">
-          TSS
+          <MetricLabel term="tss" />
         </p>
         <p className="mt-1 text-xl font-semibold tabular-nums">
           {Math.round(totals.actualTss)} / {Math.round(totals.plannedTss)}
