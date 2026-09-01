@@ -15,6 +15,7 @@ import {
   pointY,
   type PmcChartPoint,
 } from "@/lib/ui/pmc-chart";
+import { MetricHelp } from "@/components/metric-help";
 import { PMC_CSS } from "@/lib/ui/theme";
 
 type Series = {
@@ -180,6 +181,7 @@ export function MetricsPmcChart({ points }: { points: PmcPoint[] }) {
                 style={{ background: series.color }}
               />
               {series.label}
+              <MetricHelp term={series.key} />
             </span>
           ))}
         </figcaption>

@@ -14,10 +14,10 @@ import {
 import { safePersistLLMUsage } from "@/lib/llm/log";
 import {
   FEEDBACK_SYSTEM_PROMPT,
-  PERFORMANCE_SYSTEM_PROMPT,
   PROGRAM_SYSTEM_PROMPT,
   buildPerformanceUserPrompt,
   buildProgramUserPrompt,
+  performanceSystemPrompt,
 } from "@/lib/llm/prompts";
 import {
   feedbackAnalysisInputSchema,
@@ -243,7 +243,7 @@ export function createStructuredLLMProvider(
         userId: input.userId,
         interactionType: "analyze_performance",
         schema: performanceReportOutputSchema,
-        system: PERFORMANCE_SYSTEM_PROMPT,
+        system: performanceSystemPrompt(input.style),
         userPrompt: (value) => buildPerformanceUserPrompt(value),
         fallback: fallbackAnalyzePerformance,
       });

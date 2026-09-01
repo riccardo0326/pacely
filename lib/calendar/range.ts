@@ -5,7 +5,7 @@ import {
   utcToday,
 } from "@/lib/metrics/dates";
 
-export type CalendarView = "week" | "month";
+export type CalendarView = "day" | "week" | "month";
 
 /** Monday 00:00 UTC of the week containing `date`. */
 export function startOfUtcWeek(date: Date): Date {
@@ -37,10 +37,20 @@ export type DateRange = {
 };
 
 /**
- * Inclusive start, exclusive end. Week = 7 days from Monday.
+ * Inclusive start, exclusive end. Day = 1 day. Week = 7 days from Monday.
  * Month grid = 6 weeks from the Monday on/before the 1st.
  */
 export function calendarRange(view: CalendarView, focus: Date): DateRange {
+  if (view === "day") {
+    const start = parseUtcDateKey(utcDateKey(focus));
+    const end = parseUtcDateKey(addUtcDays(utcDateKey(start), 1));
+    return {
+      start,
+      end,
+      startKey: utcDateKey(start),
+      endKey: utcDateKey(end),
+    };
+  }
   if (view === "week") {
     const start = startOfUtcWeek(focus);
     const end = parseUtcDateKey(addUtcDays(utcDateKey(start), 7));
@@ -73,7 +83,13 @@ export function enumerateUtcDates(startKey: string, endKey: string): string[] {
 }
 
 export function parseCalendarView(value: string | undefined): CalendarView {
-  return value === "month" ? "month" : "week";
+  if (value === "month") {
+    return "month";
+  }
+  if (value === "day") {
+    return "day";
+  }
+  return "week";
 }
 
 export function parseFocusDate(value: string | undefined): Date {
@@ -92,6 +108,9 @@ export function shiftFocus(
   focus: Date,
   direction: -1 | 1,
 ): Date {
+  if (view === "day") {
+    return parseUtcDateKey(addUtcDays(utcDateKey(focus), direction));
+  }
   if (view === "week") {
     return parseUtcDateKey(addUtcDays(utcDateKey(focus), direction * 7));
   }
@@ -117,6 +136,16 @@ export function formatWeekRangeLabel(startKey: string, endKey: string): string {
 export function formatMonthLabel(focus: Date): string {
   return startOfUtcMonth(focus).toLocaleDateString("it-IT", {
     timeZone: "UTC",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export function formatDayLabel(focus: Date): string {
+  return parseUtcDateKey(utcDateKey(focus)).toLocaleDateString("it-IT", {
+    timeZone: "UTC",
+    weekday: "long",
+    day: "numeric",
     month: "long",
     year: "numeric",
   });

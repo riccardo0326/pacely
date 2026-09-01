@@ -57,10 +57,6 @@ export function ProfileForm({ profile }: ProfileFormProps) {
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="font-medium">Dati personali</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Peso, altezza e data di nascita. Altezza e nascita restano solo su
-            Pacely: Strava non li fornisce.
-          </p>
           {profile.lastStravaSyncedAt ? (
             <p className="mt-1 text-xs text-muted-foreground">
               Ultima sync Strava:{" "}

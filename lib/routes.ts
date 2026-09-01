@@ -9,7 +9,6 @@ export const routes = {
   reports: "/reports",
   report: (id: string) => `/reports/${id}`,
   notifications: "/notifications",
-  feedback: "/feedback",
   profile: "/profile",
 } as const;
 
@@ -19,7 +18,6 @@ export const PROXY_MATCHER = [
   "/calendar/:path*",
   "/reports/:path*",
   "/notifications/:path*",
-  "/feedback/:path*",
   "/profile/:path*",
   "/login",
 ] as const;
@@ -49,8 +47,6 @@ export function isProtectedAppPath(pathname: string): boolean {
     pathname.startsWith(`${routes.reports}/`) ||
     pathname === routes.notifications ||
     pathname.startsWith(`${routes.notifications}/`) ||
-    pathname === routes.feedback ||
-    pathname.startsWith(`${routes.feedback}/`) ||
     pathname === routes.profile ||
     pathname.startsWith(`${routes.profile}/`)
   );

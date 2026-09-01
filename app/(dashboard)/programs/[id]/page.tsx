@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { DeleteProgramButton } from "@/components/delete-program-button";
 import { ExportProgramExcelButton } from "@/components/export-program-excel-button";
 import { PageHeader } from "@/components/page-header";
 import { ProgramTimeline } from "@/components/program-timeline";
@@ -49,6 +50,7 @@ export default async function ProgramDetailPage({
           <>
             <ExportProgramExcelButton program={program} />
             <RegenerateProgramButton programId={program.id} />
+            <DeleteProgramButton programId={program.id} />
           </>
         }
       />

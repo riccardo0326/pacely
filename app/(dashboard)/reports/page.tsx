@@ -18,7 +18,7 @@ export default async function ReportsPage() {
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-16">
       <PageHeader
         title="Performance"
-        description="Sintesi sul tuo carico e sui feedback del periodo."
+        description="Sintesi sul tuo carico e sui feedback del periodo. Scegli un report semplice o tecnico."
         actions={<GenerateReportButton defaultPeriodDays={defaultPeriodDays} />}
       />
 
