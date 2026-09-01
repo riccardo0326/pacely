@@ -1,7 +1,7 @@
 import { LlmQuotaExceededError } from "@/lib/llm/quota";
 
 export const USER_FACING_ERROR = {
-  generic: "Qualcosa è andato storto. Riprova, o segnalalo da Feedback.",
+  generic: "Qualcosa è andato storto. Riprova tra poco.",
   generateProgram:
     "La generazione del programma non è riuscita. Riprova tra un minuto.",
   regenerateProgram:

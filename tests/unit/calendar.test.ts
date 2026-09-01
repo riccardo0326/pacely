@@ -19,7 +19,7 @@ describe("calendar range", () => {
     );
   });
 
-  it("returns 7 days for week view and 42 for month grid", () => {
+  it("returns 7 days for week view, 42 for month grid, and 1 for day view", () => {
     const week = calendarRange("week", new Date("2026-08-31T00:00:00.000Z"));
     expect(enumerateUtcDates(week.startKey, week.endKey)).toHaveLength(7);
     expect(week.startKey).toBe("2026-08-31");
@@ -27,6 +27,11 @@ describe("calendar range", () => {
 
     const month = calendarRange("month", new Date("2026-08-15T00:00:00.000Z"));
     expect(enumerateUtcDates(month.startKey, month.endKey)).toHaveLength(42);
+
+    const day = calendarRange("day", new Date("2026-09-01T12:00:00.000Z"));
+    expect(enumerateUtcDates(day.startKey, day.endKey)).toHaveLength(1);
+    expect(day.startKey).toBe("2026-09-01");
+    expect(day.endKey).toBe("2026-09-02");
   });
 
   it("shifts week by 7 days and month by calendar month", () => {
@@ -34,10 +39,14 @@ describe("calendar range", () => {
     expect(shiftFocus("week", focus, 1).toISOString()).toBe(
       "2026-09-07T00:00:00.000Z",
     );
+    expect(shiftFocus("day", focus, 1).toISOString()).toBe(
+      "2026-09-01T00:00:00.000Z",
+    );
     expect(shiftFocus("month", focus, 1).toISOString()).toBe(
       "2026-09-01T00:00:00.000Z",
     );
     expect(parseCalendarView("month")).toBe("month");
+    expect(parseCalendarView("day")).toBe("day");
     expect(parseCalendarView("nope")).toBe("week");
   });
 });

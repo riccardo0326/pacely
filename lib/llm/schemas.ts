@@ -134,6 +134,7 @@ export const performanceAnalysisInputSchema = z.object({
   userId: z.string().min(1),
   periodStart: z.string().min(1),
   periodEnd: z.string().min(1),
+  style: z.enum(["simple", "technical"]).optional(),
   metricTrends: z.object({
     ctlChange: z.number().optional(),
     atlChange: z.number().optional(),
@@ -153,6 +154,7 @@ export const performanceReportOutputSchema = z.object({
   strengths: z.array(z.string().min(1)).min(1),
   improvements: z.array(z.string().min(1)).min(1),
   suggestions: z.array(z.string().min(1)).min(1),
+  style: z.enum(["simple", "technical"]).optional(),
 });
 export type PerformanceReportOutput = z.infer<
   typeof performanceReportOutputSchema
