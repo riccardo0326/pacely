@@ -5,7 +5,7 @@ import type {
   PerformanceReportOutput,
 } from "@/lib/llm/schemas";
 import { parseUtcDateKey } from "@/lib/metrics/dates";
-import type { ReportSource } from "@/lib/reports/constants";
+import { type ReportSource, type ReportStyle } from "@/lib/reports/constants";
 import {
   buildPerformanceAnalysisInput,
   hasReportSourceData,
@@ -18,6 +18,7 @@ export type GenerateReportParams = {
   periodStart: string;
   periodEnd: string;
   source: ReportSource;
+  style?: ReportStyle;
   snapshots: MetricSnapshotPoint[];
   feedbacks: FeedbackForReport[];
 };
@@ -60,7 +61,10 @@ export async function generatePerformanceReportContent(
       periodStart: parseUtcDateKey(params.periodStart),
       periodEnd: parseUtcDateKey(params.periodEnd),
       source: params.source,
-      content: result.data,
+      content: {
+        ...result.data,
+        style: analysisInput.style,
+      },
       usedFallback: result.usedFallback,
     },
   };

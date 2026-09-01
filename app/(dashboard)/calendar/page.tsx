@@ -20,7 +20,7 @@ export default async function CalendarPage({
   ]);
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-16">
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-10 sm:px-6 sm:py-16">
       <PageHeader
         title="Pianificato vs effettivo"
         description="Allenamenti del piano, accanto a quello che hai fatto su Strava."

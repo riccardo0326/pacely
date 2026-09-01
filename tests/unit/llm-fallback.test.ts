@@ -40,6 +40,9 @@ describe("fallbackAnalyzePerformance", () => {
 
     expect(report.improvements.some((item) => item.includes("TSB"))).toBe(true);
     expect(report.improvements.some((item) => item.includes("ATL"))).toBe(true);
+    expect(report.improvements.some((item) => item.includes("fatica"))).toBe(
+      true,
+    );
     expect(report.strengths.some((item) => item.includes("migliorata"))).toBe(
       false,
     );

@@ -129,6 +129,7 @@ export async function generatePerformanceReportOnDemand(
   const user = await requireUser();
   const parsed = generateReportFormSchema.safeParse({
     periodDays: formData.get("periodDays"),
+    style: formData.get("style") || undefined,
   });
   if (!parsed.success) {
     return { ok: false, error: "Scegli un periodo di 2 o 4 settimane" };
@@ -146,6 +147,7 @@ export async function generatePerformanceReportOnDemand(
   const result = await generateAndSaveReportForUser(user.id, {
     source: REPORT_SOURCE.onDemand,
     periodDays: parsed.data.periodDays,
+    style: parsed.data.style,
   });
 
   if (!result.ok) {

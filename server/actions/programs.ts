@@ -499,6 +499,26 @@ export async function regenerateProgram(
   }
 }
 
+export async function deleteProgram(
+  programId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await requireUser();
+  const existing = await prisma.program.findFirst({
+    where: { id: programId, userId: user.id },
+    select: { id: true },
+  });
+  if (!existing) {
+    return { ok: false, error: "Programma non trovato" };
+  }
+
+  await prisma.program.delete({ where: { id: existing.id } });
+
+  revalidatePath(routes.programs);
+  revalidatePath(routes.calendar);
+  revalidatePath(routes.dashboard);
+  return { ok: true };
+}
+
 export async function updateWorkout(
   formData: FormData,
 ): Promise<{ ok: true } | { ok: false; error: string }> {

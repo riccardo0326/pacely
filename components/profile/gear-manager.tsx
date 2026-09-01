@@ -91,11 +91,6 @@ export function GearManager({ gear }: GearManagerProps) {
   return (
     <section className="rounded-xl border border-border bg-card p-4">
       <h2 className="font-medium">Attrezzatura</h2>
-      <p className="mt-1 mb-4 text-sm text-muted-foreground">
-        Scarpe, bici e accessori per disciplina. Le voci Strava restano
-        collegate; puoi aggiungere pezzi solo su Pacely (es. muta).
-      </p>
-
       {gear.length === 0 ? (
         <p className="mb-4 text-sm text-muted-foreground">
           Nessuna attrezzatura ancora. Sincronizza da Strava o aggiungila qui.

@@ -3,6 +3,8 @@ import { parseFeedbackAnalysis } from "@/lib/feedback/summary";
 import {
   MAX_FEEDBACK_SUMMARIES,
   MAX_FEEDBACK_SUMMARY_CHARS,
+  REPORT_STYLE,
+  type ReportStyle,
 } from "@/lib/reports/constants";
 import {
   buildMetricTrends,
@@ -41,11 +43,13 @@ export function buildPerformanceAnalysisInput(input: {
   periodEnd: string;
   snapshots: MetricSnapshotPoint[];
   feedbacks: FeedbackForReport[];
+  style?: ReportStyle;
 }): PerformanceAnalysisInput {
   return {
     userId: input.userId,
     periodStart: input.periodStart,
     periodEnd: input.periodEnd,
+    style: input.style ?? REPORT_STYLE.simple,
     metricTrends: buildMetricTrends(input.snapshots),
     feedbackSummaries: buildFeedbackSummaries(input.feedbacks),
   };

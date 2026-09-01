@@ -159,7 +159,7 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
       {job?.status === JOB_STATUS.failed ? (
         <div className="mt-4 space-y-3">
           <p className="text-sm text-destructive">
-            Import non riuscito. Riprova, o segnalalo da Feedback.
+            Import non riuscito. Riprova tra poco.
           </p>
           <Button
             type="button"
