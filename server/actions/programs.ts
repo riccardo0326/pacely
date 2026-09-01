@@ -18,6 +18,7 @@ import {
   buildAggregatedHistoryFromSnapshots,
 } from "@/lib/programs/history";
 import { routes } from "@/lib/routes";
+import { buildAthleteContext } from "@/lib/profile/athlete-context";
 import { prisma } from "@/lib/prisma";
 import {
   buildProgramCreateData,
@@ -158,31 +159,45 @@ async function buildGenerationInput(
   const eightWeeksAgo = new Date();
   eightWeeksAgo.setUTCDate(eightWeeksAgo.getUTCDate() - 56);
 
-  const [activities, latestSnapshot, snapshots] = await Promise.all([
-    prisma.activity.findMany({
-      where: { userId },
-      orderBy: { startedAt: "desc" },
-      take: 200,
-      select: { sport: true, durationSec: true, startedAt: true },
-    }),
-    prisma.performanceMetricSnapshot.findFirst({
-      where: { userId },
-      orderBy: { date: "desc" },
-      select: {
-        ctl: true,
-        atl: true,
-        tsb: true,
-        ftp: true,
-        vdot: true,
-        swimThresholdPaceSecPer100m: true,
-      },
-    }),
-    prisma.performanceMetricSnapshot.findMany({
-      where: { userId, date: { gte: eightWeeksAgo } },
-      orderBy: { date: "asc" },
-      select: { date: true, sportBreakdown: true },
-    }),
-  ]);
+  const [activities, latestSnapshot, snapshots, profile, gear] =
+    await Promise.all([
+      prisma.activity.findMany({
+        where: { userId },
+        orderBy: { startedAt: "desc" },
+        take: 200,
+        select: { sport: true, durationSec: true, startedAt: true },
+      }),
+      prisma.performanceMetricSnapshot.findFirst({
+        where: { userId },
+        orderBy: { date: "desc" },
+        select: {
+          ctl: true,
+          atl: true,
+          tsb: true,
+          ftp: true,
+          vdot: true,
+          swimThresholdPaceSecPer100m: true,
+        },
+      }),
+      prisma.performanceMetricSnapshot.findMany({
+        where: { userId, date: { gte: eightWeeksAgo } },
+        orderBy: { date: "asc" },
+        select: { date: true, sportBreakdown: true },
+      }),
+      prisma.userProfile.findUnique({
+        where: { userId },
+        select: { weightKg: true, heightCm: true, birthDate: true },
+      }),
+      prisma.gear.findMany({
+        where: { userId },
+        select: {
+          sport: true,
+          kind: true,
+          name: true,
+          isPrimary: true,
+        },
+      }),
+    ]);
 
   const weeklyTssBudget = calculateWeeklyTssBudget({
     ctl: latestSnapshot?.ctl,
@@ -233,6 +248,12 @@ async function buildGenerationInput(
         latestSnapshot?.swimThresholdPaceSecPer100m ?? undefined,
     },
     aggregatedHistory,
+    athleteContext: buildAthleteContext({
+      weightKg: profile?.weightKg,
+      heightCm: profile?.heightCm,
+      birthDate: profile?.birthDate,
+      gear,
+    }),
   };
 
   return programGenerationInputSchema.parse(input);

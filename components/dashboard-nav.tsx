@@ -13,6 +13,7 @@ const NAV = [
   { href: routes.calendar, label: "Calendario", match: "prefix" as const },
   { href: routes.programs, label: "Programmi", match: "prefix" as const },
   { href: routes.reports, label: "Report", match: "prefix" as const },
+  { href: routes.profile, label: "Profilo", match: "prefix" as const },
 ] as const;
 
 function isActive(pathname: string, href: string, match: "exact" | "prefix") {

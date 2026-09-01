@@ -7,6 +7,20 @@ export const stravaAthleteSchema = z.object({
   profile: z.string().nullable().optional(),
 });
 
+const stravaGearSummarySchema = z.object({
+  id: z.union([z.string(), z.number()]).transform((id) => String(id)),
+  name: z.string().min(1),
+  primary: z.boolean().optional().default(false),
+  distance: z.number().optional().nullable(),
+  resource_state: z.number().optional(),
+});
+
+export const stravaDetailedAthleteSchema = stravaAthleteSchema.extend({
+  weight: z.number().optional().nullable(),
+  bikes: z.array(stravaGearSummarySchema).optional().default([]),
+  shoes: z.array(stravaGearSummarySchema).optional().default([]),
+});
+
 export const stravaTokenResponseSchema = z.object({
   token_type: z.string().optional(),
   access_token: z.string().min(1),
@@ -17,6 +31,7 @@ export const stravaTokenResponseSchema = z.object({
 });
 
 export type StravaAthlete = z.infer<typeof stravaAthleteSchema>;
+export type StravaDetailedAthlete = z.infer<typeof stravaDetailedAthleteSchema>;
 export type StravaTokenResponse = z.infer<typeof stravaTokenResponseSchema>;
 
 const stravaId = z

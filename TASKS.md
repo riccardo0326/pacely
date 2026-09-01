@@ -168,6 +168,19 @@ Assunzioni Fase 10: error boundary `app/error.tsx` + `global-error.tsx` + `not-f
 
 ---
 
+## Fase 11 — Profilo Utente, Dati Personali & Gestione Gear
+
+- [x] Creazione e gestione del profilo utente con memorizzazione dei dati anagrafici e fisiologici (peso, altezza, data di nascita/età).
+- [x] Interfaccia dedicata per la gestione dell'attrezzatura ("Gear"): associazione di scarpe, bici e accessori alle diverse discipline (corsa, ciclismo, nuoto).
+- [x] Integrazione dei dati del profilo e del gear con l'account Strava già collegato, mantenendo sincronizzati i riferimenti dell'atleta.
+- [x] Creazione del tasto e della pagina Profilo (`/profile`) nella barra di navigazione principale per la visualizzazione e la modifica in tempo reale dei dati personali.
+- [x] Validazione dei dati in ingresso (es. intervalli ammessi per peso, altezza e date) e salvataggio persistente nel database di sistema.
+- [x] Passaggio dei dati fisiologici e dell'attrezzatura utilizzata all'LLM come contesto aggiuntivo per raffinare i calcoli di carico e la generazione dei programmi.
+
+Assunzioni Fase 11: `UserProfile` (1:1) e `Gear` (1:N) su `User`. UI in `components/profile/profile-form.tsx` e `components/profile/gear-manager.tsx`. Validazione Zod in `lib/validation/profile.ts` (non `lib/validations/`). Il prompt LLM resta in `lib/llm/prompts.ts` (`athleteContext` opzionale su `generateProgram`). Altezza e data di nascita sono solo locali (non esistono in Strava). Peso e bikes/shoes da `GET /athlete` con sync esplicito da `/profile`; `weightSource=manual` non viene sovrascritto. Gear catalogo per sport, niente `gear_id` sulle Activity e niente write verso Strava. Peso/altezza/età/gear nel prompt, nessuna formula calorie nel motore metriche.
+
+---
+
 ## Backlog futuro (esplicitamente fuori scope MVP)
 
 Da non implementare ora — annotare qui eventuali idee emerse durante lo sviluppo, non realizzarle:

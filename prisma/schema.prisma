@@ -28,6 +28,8 @@ model User {
   notifications              Notification[]
   pushSubscriptions          PushSubscription[]
   betaFeedbacks              BetaFeedback[]
+  profile                    UserProfile?
+  gear                       Gear[]
 }
 
 model StravaConnection {
@@ -304,6 +306,41 @@ model PushSubscription {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+}
+
+/// Physiological profile (Fase 11). Weight may be seeded from Strava; height and birth date are local-only.
+model UserProfile {
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weightKg           Float?
+  heightCm           Int?
+  birthDate          DateTime? @db.Date
+  /// `strava` | `manual`. Manual wins over Strava sync.
+  weightSource       String?
+  lastStravaSyncedAt DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+/// Equipment catalog per sport (Fase 11). `stravaGearId` null = created in Pacely.
+model Gear {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// `run` | `swim` | `ride`
+  sport        String
+  /// `shoes` | `bike` | `accessory`
+  kind         String
+  name         String
+  stravaGearId String?
+  isPrimary    Boolean  @default(false)
+  distanceM    Float?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, stravaGearId])
+  @@index([userId, sport])
 }
 
 /// Structured beta-tester notes (Fase 10). Scoped to the submitting athlete.

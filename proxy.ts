@@ -42,6 +42,7 @@ export const config = {
     "/reports/:path*",
     "/notifications/:path*",
     "/feedback/:path*",
+    "/profile/:path*",
     "/login",
   ],
 };

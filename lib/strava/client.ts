@@ -130,3 +130,11 @@ export async function fetchStravaActivity(
   );
   return json;
 }
+
+export async function fetchAthlete(
+  accessToken: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<unknown> {
+  const { json } = await stravaGet("/athlete", accessToken, fetchImpl);
+  return json;
+}

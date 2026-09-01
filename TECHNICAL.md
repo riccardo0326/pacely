@@ -73,6 +73,9 @@ All activity queries are scoped by `userId` from the authenticated session — n
   (dashboard)/dashboard/     # Protected athlete dashboard
   (dashboard)/calendar/      # Weekly/monthly planned vs actual
   (dashboard)/programs/      # Program list, create, detail + editor
+  (dashboard)/reports/       # Performance reports
+  (dashboard)/notifications/ # In-app notification center
+  (dashboard)/profile/       # Athlete profile + gear catalog
   (dashboard)/feedback/      # Beta tester structured notes
   api/
     auth/[...nextauth]/      # Auth.js route handler
@@ -92,6 +95,7 @@ All activity queries are scoped by `userId` from the authenticated session — n
   feedback/                  # Calibration window, suggested recalc diffs
   reports/                   # Performance report window, trends, generation
   notifications/             # In-app + Web Push (VAPID)
+  profile/                   # Weight/height/age + gear → LLM athleteContext
   security/                  # AES encryption for Strava tokens at rest
   validation/                # Shared Zod schemas
 /server
@@ -121,6 +125,8 @@ All activity queries are scoped by `userId` from the authenticated session — n
 | `Notification`                          | In-app item (`workout_today` \| `recalc_proposal`); `readAt` null = unread; `dedupeKey` for idempotency               |
 | `PushSubscription`                      | Browser Web Push endpoint + VAPID keys (`p256dh`, `auth`) per user                                                    |
 | `BetaFeedback`                          | Structured beta-tester notes (`bug` \| `ux` \| `idea` \| `other`); scoped by `userId`                                 |
+| `UserProfile`                           | Weight/height/birth date; `weightSource` `strava` \| `manual` (manual is not overwritten by Strava sync)              |
+| `Gear`                                  | Per-sport catalog (`shoes` \| `bike` \| `accessory`); `stravaGearId` when imported from Strava                        |
 
 **Planned entities** (see `PROJECT_SPEC.md` §7): none remaining for MVP.
 
@@ -221,6 +227,10 @@ curl -X POST https://www.strava.com/api/v3/push_subscriptions \
 ```
 
 Local development requires an HTTPS tunnel (e.g. ngrok) pointing to `/api/strava/webhook`.
+
+### Athlete profile and gear
+
+`GET /athlete` (explicit sync from `/profile`) imports weight plus bikes/shoes. Height and birth date are not in the Strava API and stay user-entered. A manually saved weight (`weightSource=manual`) is not overwritten. Gear is a per-sport catalog (no `gear_id` on activities, no writes back to Strava). When present, weight, height, age, and gear names are passed as optional `athleteContext` to `generateProgram`.
 
 ---
 
