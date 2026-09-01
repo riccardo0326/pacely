@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { GEAR_KIND_OPTIONS } from "@/lib/profile/constants";
 
 export const sportSchema = z.enum(["run", "swim", "ride"]);
 export type Sport = z.infer<typeof sportSchema>;
@@ -33,6 +34,21 @@ export const goalInputSchema = z.object({
   date: z.string().optional(),
 });
 
+export const athleteGearContextSchema = z.object({
+  sport: sportSchema,
+  kind: z.enum(GEAR_KIND_OPTIONS),
+  name: z.string().min(1),
+  isPrimary: z.boolean(),
+});
+
+export const athleteContextSchema = z.object({
+  weightKg: z.number().optional(),
+  heightCm: z.number().int().optional(),
+  ageYears: z.number().int().optional(),
+  gear: z.array(athleteGearContextSchema).optional(),
+});
+export type AthleteContext = z.infer<typeof athleteContextSchema>;
+
 export const programGenerationInputSchema = z.object({
   userId: z.string().min(1),
   sports: z.array(sportSchema).min(1).max(3),
@@ -45,6 +61,7 @@ export const programGenerationInputSchema = z.object({
   aggregatedHistory: z.object({
     weeklySummaries: z.array(weeklyHistorySummarySchema),
   }),
+  athleteContext: athleteContextSchema.optional(),
 });
 export type ProgramGenerationInput = z.infer<
   typeof programGenerationInputSchema

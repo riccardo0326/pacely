@@ -18,5 +18,7 @@ Entità MVP (dettaglio in `PROJECT_SPEC.md` §7):
 - **WorkoutFeedback** — testo libero + sentiment JSON da LLM
 - **RecalcProposal** — diff JSON, stato `pending`/`approved`/`rejected`
 - **PerformanceReport**, **Notification**, **PushSubscription**, **LLMInteractionLog**, **BetaFeedback**
+- **UserProfile** — peso/altezza/data di nascita; `weightSource` `strava`|`manual`
+- **Gear** — scarpe/bici/accessori per sport; `stravaGearId` se importato da Strava
 
 Relazioni pensate per un futuro ruolo `coach` senza migrazioni distruttive.

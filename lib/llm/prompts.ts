@@ -67,6 +67,17 @@ export function buildProgramUserPrompt(input: {
   currentMetrics: unknown;
   aggregatedHistory: unknown;
   forbiddenTerms?: string[];
+  athleteContext?: {
+    weightKg?: number;
+    heightCm?: number;
+    ageYears?: number;
+    gear?: Array<{
+      sport: "run" | "swim" | "ride";
+      kind: string;
+      name: string;
+      isPrimary: boolean;
+    }>;
+  };
 }): string {
   const slots = input.availableSlots
     .map((slot) => {
@@ -92,6 +103,8 @@ export function buildProgramUserPrompt(input: {
       ? `VIETATO (divieti, NON farne l'obiettivo del piano; non usare queste parole in name/focus/description):\n- ${input.forbiddenTerms.join("\n- ")}\nVincolo originale: ${input.constraints}`
       : `VINCOLI: ${input.constraints?.trim() || "nessuno"}`;
 
+  const profileSection = formatAthleteContextPrompt(input.athleteContext);
+
   return [
     `SPORT OBBLIGATORI (tutti, nessun altro): ${input.sports.join(", ")}`,
     `DURATA: ${input.durationWeeks} settimane (weekNumber da 1 a ${input.durationWeeks})`,
@@ -99,9 +112,53 @@ export function buildProgramUserPrompt(input: {
     `OBIETTIVO: ${goalBits}`,
     `SLOT OBBLIGATORI (copia dayOfWeek e timeOfDay; una seduta per slot, ogni settimana):\n${slots}`,
     forbidden,
+    profileSection,
     `METRICHE ATLETA: ${JSON.stringify(input.currentMetrics)}`,
     `STORICO AGGREGATO: ${JSON.stringify(input.aggregatedHistory)}`,
-  ].join("\n\n");
+  ]
+    .filter((section): section is string => Boolean(section))
+    .join("\n\n");
+}
+
+function formatAthleteContextPrompt(
+  context:
+    | {
+        weightKg?: number;
+        heightCm?: number;
+        ageYears?: number;
+        gear?: Array<{
+          sport: string;
+          kind: string;
+          name: string;
+          isPrimary: boolean;
+        }>;
+      }
+    | undefined,
+): string | null {
+  if (!context) {
+    return null;
+  }
+  const lines: string[] = [];
+  if (typeof context.weightKg === "number") {
+    lines.push(`- peso: ${context.weightKg} kg`);
+  }
+  if (typeof context.heightCm === "number") {
+    lines.push(`- altezza: ${context.heightCm} cm`);
+  }
+  if (typeof context.ageYears === "number") {
+    lines.push(`- età: ${context.ageYears} anni`);
+  }
+  if (context.gear && context.gear.length > 0) {
+    lines.push("- attrezzatura:");
+    for (const item of context.gear) {
+      const primary = item.isPrimary ? " (primaria)" : "";
+      lines.push(`  - ${item.sport}/${item.kind}: ${item.name}${primary}`);
+    }
+  }
+  if (lines.length === 0) {
+    return null;
+  }
+  return `PROFILO ATLETA:\n${lines.join("\n")}`;
 }
 
 export const FEEDBACK_SYSTEM_PROMPT = `Analizza il feedback testuale di un atleta dopo un allenamento.

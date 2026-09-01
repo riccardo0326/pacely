@@ -11,6 +11,16 @@ const mocks = vi.hoisted(() => ({
   workoutFindFirst: vi.fn(),
   activityFindFirst: vi.fn(),
   betaFeedbackCreate: vi.fn(),
+  profileFindUnique: vi.fn(),
+  profileCreate: vi.fn(),
+  profileUpsert: vi.fn(),
+  gearFindMany: vi.fn(),
+  gearFindFirst: vi.fn(),
+  gearCreate: vi.fn(),
+  gearUpdate: vi.fn(),
+  gearUpdateMany: vi.fn(),
+  gearDelete: vi.fn(),
+  transaction: vi.fn(),
 }));
 
 vi.mock("@/lib/auth/require-user", () => ({
@@ -32,6 +42,20 @@ vi.mock("@/lib/prisma", () => ({
     workout: { findFirst: mocks.workoutFindFirst, findMany: vi.fn() },
     activity: { findFirst: mocks.activityFindFirst },
     betaFeedback: { create: mocks.betaFeedbackCreate },
+    userProfile: {
+      findUnique: mocks.profileFindUnique,
+      create: mocks.profileCreate,
+      upsert: mocks.profileUpsert,
+    },
+    gear: {
+      findMany: mocks.gearFindMany,
+      findFirst: mocks.gearFindFirst,
+      create: mocks.gearCreate,
+      update: mocks.gearUpdate,
+      updateMany: mocks.gearUpdateMany,
+      delete: mocks.gearDelete,
+    },
+    $transaction: mocks.transaction,
   },
 }));
 
@@ -59,6 +83,7 @@ import { listNotifications } from "@/server/actions/notifications";
 import { getPendingRecalcProposalForProgram } from "@/server/actions/feedback";
 import { skipWorkout } from "@/server/actions/calendar";
 import { submitBetaFeedback } from "@/server/actions/beta-feedback";
+import { deleteGear, getProfile } from "@/server/actions/profile";
 
 describe("per-user data isolation", () => {
   beforeEach(() => {
@@ -164,5 +189,44 @@ describe("per-user data isolation", () => {
         message: "Il match automatico ha collegato la corsa sbagliata.",
       },
     });
+  });
+
+  it("loads profile and gear only for the session user", async () => {
+    mocks.profileFindUnique.mockResolvedValue({
+      weightKg: 70,
+      heightCm: 178,
+      birthDate: null,
+      weightSource: null,
+      lastStravaSyncedAt: null,
+    });
+    mocks.gearFindMany.mockResolvedValue([]);
+    await getProfile();
+    expect(mocks.profileFindUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: "user-a" },
+      }),
+    );
+    expect(mocks.gearFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: "user-a" },
+      }),
+    );
+  });
+
+  it("refuses to delete another user's gear", async () => {
+    mocks.gearFindFirst.mockResolvedValue(null);
+    const formData = new FormData();
+    formData.set("gearId", "gear-of-user-b");
+    const result = await deleteGear(formData);
+    expect(result).toEqual({
+      ok: false,
+      error: "Attrezzatura non trovata",
+    });
+    expect(mocks.gearFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "gear-of-user-b", userId: "user-a" },
+      }),
+    );
+    expect(mocks.gearDelete).not.toHaveBeenCalled();
   });
 });
