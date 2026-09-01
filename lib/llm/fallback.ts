@@ -116,7 +116,7 @@ export function fallbackGenerateProgram(
   return {
     name: `Programma ${sportLabels}`,
     summary:
-      "Programma generato con fallback algoritmico: l'LLM non ha prodotto un JSON valido. I carichi sono una progressione semplice sul budget TSS settimanale.",
+      "Bozza di programma: i carichi seguono una progressione semplice. Puoi modificarla o rigenerarla.",
     weeks,
   };
 }
@@ -127,7 +127,7 @@ export function fallbackAnalyzeFeedback(
   return {
     perceivedExertion: null,
     externalFactors: [],
-    factorNotes: "Analisi LLM non disponibile.",
+    factorNotes: "Analisi automatica non disponibile.",
     planDeviation: "none",
     deviationSummary: `Il feedback è stato salvato senza estrazione automatica: "${input.freeText.slice(0, 180)}"`,
     suggestedAction: "none",
@@ -148,6 +148,20 @@ export function fallbackAnalyzePerformance(
     improvements.push("Il CTL è in calo nel periodo.");
   }
 
+  if ((metricTrends.atlChange ?? 0) > 0) {
+    improvements.push("Il carico acuto (ATL) è aumentato nel periodo.");
+  } else if ((metricTrends.atlChange ?? 0) < 0) {
+    strengths.push("Il carico acuto (ATL) è diminuito.");
+  }
+
+  if ((metricTrends.tsbChange ?? 0) > 0) {
+    strengths.push("La forma (TSB) è migliorata: sei più riposato.");
+  } else if ((metricTrends.tsbChange ?? 0) < 0) {
+    improvements.push(
+      "La forma (TSB) è scesa: più fatica recente, non un miglioramento.",
+    );
+  }
+
   if ((metricTrends.ftpChange ?? 0) > 0) {
     strengths.push("L'FTP stimato è in crescita.");
   }
@@ -159,21 +173,17 @@ export function fallbackAnalyzePerformance(
   }
 
   if (strengths.length === 0) {
-    strengths.push(
-      "Analisi LLM non disponibile: i dati del periodo sono stati conservati.",
-    );
+    strengths.push("I dati del periodo sono stati conservati.");
   }
   if (improvements.length === 0) {
-    improvements.push(
-      "Nessuna area di miglioramento derivabile automaticamente senza l'LLM.",
-    );
+    improvements.push("Nessuna area di miglioramento evidente dai numeri.");
   }
   suggestions.push(
-    "Riprova la generazione del report quando il provider LLM è di nuovo disponibile.",
+    "Genera di nuovo il report quando hai più allenamenti nel periodo.",
   );
 
   return {
-    summary: `Report fallback per il periodo ${input.periodStart} – ${input.periodEnd}. L'analisi in linguaggio naturale non è disponibile.`,
+    summary: `Sintesi del periodo ${input.periodStart} – ${input.periodEnd} dai trend delle metriche.`,
     strengths,
     improvements,
     suggestions,

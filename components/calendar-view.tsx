@@ -1,16 +1,18 @@
 import Link from "next/link";
+import { Bike, Coffee, PersonStanding, WavesLadder } from "lucide-react";
 import { CalendarNav } from "@/components/calendar-nav";
 import { EmptyState } from "@/components/empty-state";
 import {
   PlannedVsActualSummary,
   WorkoutComparison,
 } from "@/components/planned-vs-actual";
+import { WorkoutStatusBadge } from "@/components/status-badge";
 import { WorkoutFeedbackForm } from "@/components/workout-feedback-form";
 import { WorkoutMatchControls } from "@/components/workout-match-controls";
 import { Button } from "@/components/ui/button";
 import { MATCH_SOURCE, WORKOUT_STATUS } from "@/lib/matching/constants";
 import { routes } from "@/lib/routes";
-import { SPORT_LABELS, type Sport } from "@/lib/strava/constants";
+import { sportBadgeClass, sportLabel } from "@/lib/ui/theme";
 import { cn } from "@/lib/utils";
 import type {
   CalendarData,
@@ -20,27 +22,20 @@ import type {
 
 const WEEKDAY_LABELS = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
 
-const STATUS_LABEL: Record<string, string> = {
-  [WORKOUT_STATUS.planned]: "Pianificato",
-  [WORKOUT_STATUS.completed]: "Completato",
-  [WORKOUT_STATUS.skipped]: "Saltato",
-};
-
-function sportLabel(sport: string): string {
-  if (sport === "run" || sport === "swim" || sport === "ride") {
-    return SPORT_LABELS[sport as Sport];
+function SportIcon({
+  sport,
+  className,
+}: {
+  sport: string;
+  className?: string;
+}) {
+  if (sport === "swim") {
+    return <WavesLadder className={className} aria-hidden />;
   }
-  return sport;
-}
-
-function statusClass(status: string): string {
-  if (status === WORKOUT_STATUS.completed) {
-    return "bg-emerald-500/15 text-emerald-800 dark:text-emerald-300";
+  if (sport === "ride") {
+    return <Bike className={className} aria-hidden />;
   }
-  if (status === WORKOUT_STATUS.skipped) {
-    return "bg-muted text-muted-foreground";
-  }
-  return "bg-amber-500/15 text-amber-800 dark:text-amber-300";
+  return <PersonStanding className={className} aria-hidden />;
 }
 
 function formatDayHeading(date: string): string {
@@ -56,23 +51,17 @@ function WorkoutCard({ workout }: { workout: CalendarWorkoutCard }) {
   return (
     <article
       className={cn(
-        "rounded-lg border border-border bg-background p-2",
+        "rounded-lg border border-border bg-card p-2",
         workout.status === WORKOUT_STATUS.skipped && "opacity-70",
       )}
     >
       <div className="flex items-start justify-between gap-1">
-        <p className="text-xs font-medium">
+        <p className="flex items-center gap-1 text-xs font-medium">
+          <SportIcon sport={workout.sport} className="size-3.5" />
           {sportLabel(workout.sport)}
           {workout.timeOfDay ? ` · ${workout.timeOfDay}` : ""}
         </p>
-        <span
-          className={cn(
-            "rounded-full px-1.5 py-0.5 text-[10px] font-medium uppercase",
-            statusClass(workout.status),
-          )}
-        >
-          {STATUS_LABEL[workout.status] ?? workout.status}
-        </span>
+        <WorkoutStatusBadge status={workout.status} />
       </div>
       <Link
         href={routes.program(workout.programId)}
@@ -126,7 +115,7 @@ function WeekDayColumn({ day }: { day: CalendarDay }) {
   return (
     <section
       className={cn(
-        "flex min-h-40 flex-col gap-2 rounded-xl border border-border p-2",
+        "flex min-h-40 flex-col gap-2 rounded-xl border border-border bg-card p-2",
         day.isToday && "ring-2 ring-primary/40",
       )}
     >
@@ -134,7 +123,10 @@ function WeekDayColumn({ day }: { day: CalendarDay }) {
         {formatDayHeading(day.date)}
       </h3>
       {day.workouts.length === 0 && day.unplannedActivities.length === 0 ? (
-        <p className="text-xs text-muted-foreground">Riposo</p>
+        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Coffee className="size-3.5" aria-hidden />
+          Riposo
+        </p>
       ) : null}
       {day.workouts.map((workout) => (
         <WorkoutCard key={workout.id} workout={workout} />
@@ -152,11 +144,12 @@ function WeekDayColumn({ day }: { day: CalendarDay }) {
 
 function MonthCell({ day }: { day: CalendarDay }) {
   const dayNum = Number(day.date.slice(8, 10));
+  const overflow = day.workouts.length - 3;
   return (
     <Link
       href={`${routes.calendar}?view=week&date=${day.date}`}
       className={cn(
-        "flex min-h-24 flex-col gap-1 rounded-lg border border-border p-1.5 text-left hover:bg-muted/40",
+        "flex min-h-24 flex-col gap-1 rounded-lg border border-border bg-card p-1.5 text-left hover:bg-muted/40",
         !day.inMonth && "opacity-40",
         day.isToday && "ring-2 ring-primary/40",
       )}
@@ -166,16 +159,20 @@ function MonthCell({ day }: { day: CalendarDay }) {
         <span
           key={workout.id}
           className={cn(
-            "truncate rounded px-1 py-0.5 text-[10px]",
-            statusClass(workout.status),
+            "flex items-center gap-0.5 truncate rounded px-1 py-0.5 text-[11px] font-medium",
+            sportBadgeClass(workout.sport),
           )}
         >
-          {sportLabel(workout.sport)}
+          <SportIcon sport={workout.sport} className="size-3 shrink-0" />
+          <span className="truncate">{sportLabel(workout.sport)}</span>
+          {workout.status === WORKOUT_STATUS.completed ? (
+            <span className="ml-auto size-1.5 shrink-0 rounded-full bg-emerald-500" />
+          ) : null}
         </span>
       ))}
-      {day.workouts.length > 3 ? (
-        <span className="text-[10px] text-muted-foreground">
-          +{day.workouts.length - 3}
+      {overflow > 0 ? (
+        <span className="inline-flex size-5 items-center justify-center rounded-full bg-muted text-[10px] font-medium">
+          +{overflow}
         </span>
       ) : null}
       {day.unplannedActivities.length > 0 ? (
@@ -199,7 +196,7 @@ export function CalendarView({ data }: { data: CalendarData }) {
       {!data.hasActiveProgram ? (
         <EmptyState
           title="Nessun programma attivo"
-          description="Il calendario mostra gli allenamenti dei programmi attivi. Crea un piano oppure apri un programma esistente."
+          description="Il calendario mostra gli allenamenti dei programmi attivi."
           action={
             <Button asChild>
               <Link href={routes.programNew}>Crea un programma</Link>

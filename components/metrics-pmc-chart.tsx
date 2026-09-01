@@ -1,4 +1,21 @@
+"use client";
+
+import { useMemo, useState, type MouseEvent } from "react";
 import type { PmcPoint } from "@/lib/metrics/types";
+import {
+  PMC_CHART_HEIGHT,
+  PMC_CHART_WIDTH,
+  PMC_PAD,
+  clientXToIndex,
+  formatPmcDate,
+  pmcXTickIndexes,
+  pmcYDomain,
+  pmcYTicks,
+  pointX,
+  pointY,
+  type PmcChartPoint,
+} from "@/lib/ui/pmc-chart";
+import { PMC_CSS } from "@/lib/ui/theme";
 
 type Series = {
   key: "ctl" | "atl" | "tsb";
@@ -7,66 +24,115 @@ type Series = {
 };
 
 const SERIES: Series[] = [
-  { key: "ctl", label: "CTL", color: "var(--chart-1)" },
-  { key: "atl", label: "ATL", color: "var(--chart-2)" },
-  { key: "tsb", label: "TSB", color: "var(--chart-3)" },
+  { key: "ctl", label: "CTL", color: PMC_CSS.ctl },
+  { key: "atl", label: "ATL", color: PMC_CSS.atl },
+  { key: "tsb", label: "TSB", color: PMC_CSS.tsb },
 ];
 
 function polyline(
-  points: PmcPoint[],
+  points: PmcChartPoint[],
   key: Series["key"],
-  width: number,
-  height: number,
-  pad: number,
   minY: number,
   maxY: number,
 ): string {
-  if (points.length === 0) {
-    return "";
-  }
-  const innerW = width - pad * 2;
-  const innerH = height - pad * 2;
-  const range = maxY - minY || 1;
   return points
     .map((point, index) => {
-      const x =
-        pad +
-        (points.length === 1
-          ? innerW / 2
-          : (index / (points.length - 1)) * innerW);
-      const y = pad + innerH - ((point[key] - minY) / range) * innerH;
+      const x = pointX(index, points.length);
+      const y = pointY(point[key], minY, maxY);
       return `${x.toFixed(1)},${y.toFixed(1)}`;
     })
     .join(" ");
 }
 
 export function MetricsPmcChart({ points }: { points: PmcPoint[] }) {
-  if (points.length === 0) {
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+
+  const chartPoints = useMemo<PmcChartPoint[]>(
+    () =>
+      points.map((point) => ({
+        date: point.date,
+        ctl: point.ctl,
+        atl: point.atl,
+        tsb: point.tsb,
+      })),
+    [points],
+  );
+
+  if (chartPoints.length === 0) {
     return null;
   }
 
-  const width = 640;
-  const height = 200;
-  const pad = 16;
-  const values = points.flatMap((point) => [point.ctl, point.atl, point.tsb]);
-  const minY = Math.min(0, ...values);
-  const maxY = Math.max(...values, 1);
+  const { minY, maxY } = pmcYDomain(chartPoints);
+  const yTicks = pmcYTicks(minY, maxY);
+  const xTicks = pmcXTickIndexes(chartPoints.length);
+  const zeroY = pointY(0, minY, maxY);
+  const active = hoverIndex === null ? null : chartPoints[hoverIndex];
+
+  function handleMove(event: MouseEvent<SVGSVGElement>) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setHoverIndex(clientXToIndex(event.clientX, rect, chartPoints.length));
+  }
 
   return (
     <figure className="w-full">
+      <p className="mb-2 text-sm font-medium">
+        Andamento carico e forma (ultimi 90 giorni)
+      </p>
       <svg
         role="img"
-        aria-label="Andamento CTL, ATL e TSB"
-        viewBox={`0 0 ${width} ${height}`}
-        className="h-48 w-full"
+        aria-label="Andamento CTL, ATL e TSB negli ultimi 90 giorni"
+        viewBox={`0 0 ${PMC_CHART_WIDTH} ${PMC_CHART_HEIGHT}`}
+        className="h-56 w-full"
+        onMouseMove={handleMove}
+        onMouseLeave={() => setHoverIndex(null)}
       >
+        {yTicks.map((tick) => {
+          const y = pointY(tick, minY, maxY);
+          return (
+            <g key={`y-${tick}`}>
+              <line
+                x1={PMC_PAD.left}
+                x2={PMC_CHART_WIDTH - PMC_PAD.right}
+                y1={y}
+                y2={y}
+                stroke="currentColor"
+                strokeOpacity={tick === 0 ? 0.2 : 0.08}
+              />
+              <text
+                x={PMC_PAD.left - 6}
+                y={y + 3}
+                textAnchor="end"
+                className="fill-muted-foreground text-[10px]"
+              >
+                {tick}
+              </text>
+            </g>
+          );
+        })}
+        {xTicks.map((index) => {
+          const point = chartPoints[index];
+          if (!point) {
+            return null;
+          }
+          return (
+            <text
+              key={`x-${index}`}
+              x={pointX(index, chartPoints.length)}
+              y={PMC_CHART_HEIGHT - 8}
+              textAnchor="middle"
+              className="fill-muted-foreground text-[10px]"
+            >
+              {formatPmcDate(point.date)}
+            </text>
+          );
+        })}
         <line
-          x1={pad}
-          x2={width - pad}
-          y1={pad + ((height - pad * 2) * (maxY - 0)) / (maxY - minY || 1)}
-          y2={pad + ((height - pad * 2) * (maxY - 0)) / (maxY - minY || 1)}
+          x1={PMC_PAD.left}
+          x2={PMC_CHART_WIDTH - PMC_PAD.right}
+          y1={zeroY}
+          y2={zeroY}
           stroke="currentColor"
-          strokeOpacity={0.15}
+          strokeOpacity={0.2}
         />
         {SERIES.map((series) => (
           <polyline
@@ -74,29 +140,50 @@ export function MetricsPmcChart({ points }: { points: PmcPoint[] }) {
             fill="none"
             stroke={series.color}
             strokeWidth={2}
-            points={polyline(
-              points,
-              series.key,
-              width,
-              height,
-              pad,
-              minY,
-              maxY,
-            )}
+            points={polyline(chartPoints, series.key, minY, maxY)}
           />
         ))}
-      </svg>
-      <figcaption className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
-        {SERIES.map((series) => (
-          <span key={series.key} className="inline-flex items-center gap-1.5">
-            <span
-              className="inline-block size-2 rounded-full"
-              style={{ background: series.color }}
+        {hoverIndex !== null && active ? (
+          <>
+            <line
+              x1={pointX(hoverIndex, chartPoints.length)}
+              x2={pointX(hoverIndex, chartPoints.length)}
+              y1={PMC_PAD.top}
+              y2={PMC_CHART_HEIGHT - PMC_PAD.bottom}
+              stroke="currentColor"
+              strokeOpacity={0.25}
             />
-            {series.label}
-          </span>
-        ))}
-      </figcaption>
+            {SERIES.map((series) => (
+              <circle
+                key={series.key}
+                cx={pointX(hoverIndex, chartPoints.length)}
+                cy={pointY(active[series.key], minY, maxY)}
+                r={3.5}
+                fill={series.color}
+              />
+            ))}
+          </>
+        ) : null}
+      </svg>
+      {active ? (
+        <p className="mt-1 text-xs tabular-nums text-muted-foreground">
+          {formatPmcDate(active.date)} · CTL {active.ctl.toFixed(0)} · ATL{" "}
+          {active.atl.toFixed(0)} · TSB {active.tsb >= 0 ? "+" : ""}
+          {active.tsb.toFixed(0)}
+        </p>
+      ) : (
+        <figcaption className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
+          {SERIES.map((series) => (
+            <span key={series.key} className="inline-flex items-center gap-1.5">
+              <span
+                className="inline-block size-2 rounded-full"
+                style={{ background: series.color }}
+              />
+              {series.label}
+            </span>
+          ))}
+        </figcaption>
+      )}
     </figure>
   );
 }

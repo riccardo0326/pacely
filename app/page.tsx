@@ -7,15 +7,15 @@ import { connectWithStrava } from "@/server/actions/auth";
 const STEPS = [
   {
     title: "Collega Strava",
-    body: "Login solo con Strava. Pacely importa le attività, senza scrivere nulla sul tuo account.",
+    body: "Entri con Strava. Pacely legge le attività, senza scrivere sul tuo account.",
   },
   {
     title: "Vedi carico e forma",
-    body: "TSS, CTL/ATL/TSB, FTP, VDOT e soglia nuoto calcolati dallo storico.",
+    body: "CTL, ATL, TSB, FTP, VDOT e soglia nuoto calcolati dallo storico.",
   },
   {
     title: "Crea un programma",
-    body: "Obiettivo gara o generico, 1–3 sport. Generazione LLM e modifica a blocchi.",
+    body: "Obiettivo gara o generico, da 1 a 3 sport. Poi lo modifichi a blocchi.",
   },
   {
     title: "Segui e adatta",
@@ -29,15 +29,14 @@ export default async function Home() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-8 px-6 py-24 text-center">
       <div>
-        <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
+        <p className="text-sm font-medium tracking-wide text-accent-energy uppercase">
           Pacely · beta
         </p>
         <h1 className="mt-2 max-w-xl text-4xl font-semibold tracking-tight">
           Programmi di allenamento multi-sport collegati a Strava
         </h1>
         <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-          Collega Strava per importare lo storico, vedere le metriche e
-          costruire un piano su misura.
+          Collega Strava, vedi le metriche e costruisci un piano su misura.
         </p>
       </div>
       {session?.user ? (
@@ -60,7 +59,7 @@ export default async function Home() {
         {STEPS.map((step, index) => (
           <li
             key={step.title}
-            className="rounded-xl border border-border bg-background p-4"
+            className="rounded-xl border border-border bg-card p-4"
           >
             <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
               {index + 1}

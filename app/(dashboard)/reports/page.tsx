@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { GenerateReportButton } from "@/components/generate-report-button";
-import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/page-header";
 import { formatItalianDate } from "@/lib/programs/dates";
 import { getReportPeriodDays } from "@/lib/reports/period";
 import { requireUser } from "@/lib/auth/require-user";
@@ -15,26 +16,16 @@ export default async function ReportsPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-16">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
-            Report
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-            Performance
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Sintesi periodica su trend metriche e feedback. Non modifica il
-            piano: è solo informativa.
-          </p>
-        </div>
-        <GenerateReportButton defaultPeriodDays={defaultPeriodDays} />
-      </div>
+      <PageHeader
+        title="Performance"
+        description="Sintesi sul tuo carico e sui feedback del periodo."
+        actions={<GenerateReportButton defaultPeriodDays={defaultPeriodDays} />}
+      />
 
       {reports.length === 0 ? (
         <EmptyState
           title="Nessun report ancora"
-          description={`Viene generato in automatico ogni ${defaultPeriodDays} giorni, oppure creane uno ora dalle metriche e dai feedback del periodo.`}
+          description={`Ne arriva uno ogni ${defaultPeriodDays} giorni, oppure generane uno ora.`}
         />
       ) : (
         <ul className="flex flex-col gap-3">
@@ -42,31 +33,28 @@ export default async function ReportsPage() {
             <li key={report.id}>
               <Link
                 href={routes.report(report.id)}
-                className="block rounded-xl border border-border bg-background p-4 transition-colors hover:bg-muted/40"
+                className="group flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-muted/40"
               >
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
                     <h2 className="font-medium">
                       {formatItalianDate(report.periodStart)} –{" "}
                       {formatItalianDate(report.periodEnd)}
                     </h2>
-                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                      {report.summary}
-                    </p>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
+                      {report.sourceLabel}
+                    </span>
                   </div>
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
-                    {report.sourceLabel}
-                  </span>
+                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                    {report.summary}
+                  </p>
                 </div>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
               </Link>
             </li>
           ))}
         </ul>
       )}
-
-      <Button asChild variant="outline" className="self-start">
-        <Link href={routes.dashboard}>Torna alla dashboard</Link>
-      </Button>
     </main>
   );
 }

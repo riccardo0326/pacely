@@ -141,7 +141,7 @@ describe("LLMProvider validation and fallback", () => {
     expect(result.source).toBe("fallback");
     expect(result.usedFallback).toBe(true);
     expect(result.data.weeks).toHaveLength(4);
-    expect(result.data.summary).toContain("fallback algoritmico");
+    expect(result.data.summary).toContain("Bozza di programma");
     expect(logUsage.mock.calls[0]?.[0]).toMatchObject({
       success: true,
       usedFallback: true,

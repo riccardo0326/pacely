@@ -8,6 +8,8 @@ import {
   looksLikeTriathlonGoal,
   missingTriathlonSports,
 } from "@/lib/programs/constraints";
+import { sportBadgeClass } from "@/lib/ui/theme";
+import { cn } from "@/lib/utils";
 
 const SPORT_OPTIONS = [
   { value: "run", label: "Corsa" },
@@ -93,11 +95,12 @@ export function ProgramCreateForm({
             return (
               <label
                 key={option.value}
-                className={`cursor-pointer rounded-lg border px-3 py-2 text-sm ${
+                className={cn(
+                  "cursor-pointer rounded-lg border px-3 py-2 text-sm",
                   selected
-                    ? "border-primary bg-primary/10"
-                    : "border-border bg-background"
-                }`}
+                    ? sportBadgeClass(option.value)
+                    : "border-border bg-card text-muted-foreground",
+                )}
               >
                 <input
                   type="checkbox"

@@ -26,12 +26,12 @@ export function DashboardNav({ unreadCount }: { unreadCount: number }) {
   const pathname = usePathname();
 
   return (
-    <header className="border-b border-border">
+    <header className="border-b border-border bg-card">
       <nav className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-6 py-3">
         <Link href={routes.dashboard} className="font-semibold tracking-tight">
           Pacely
         </Link>
-        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+        <span className="rounded-full bg-accent-energy/15 px-2 py-0.5 text-[10px] font-medium tracking-wide text-accent-energy uppercase">
           Beta
         </span>
         {NAV.map((item) => {

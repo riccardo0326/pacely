@@ -31,4 +31,7 @@ export {
 } from "@/lib/reports/period";
 export type { ReportPeriodWindow } from "@/lib/reports/period";
 export { buildMetricTrends } from "@/lib/reports/trends";
-export type { MetricSnapshotPoint } from "@/lib/reports/trends";
+export type {
+  MetricSnapshotPoint,
+  ReportMetricStrip,
+} from "@/lib/reports/trends";

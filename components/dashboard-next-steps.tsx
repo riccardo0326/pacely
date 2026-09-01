@@ -20,8 +20,8 @@ export function DashboardNextSteps({
   if (importing) {
     return (
       <EmptyState
-        title="Primo passo: import dello storico"
-        description="Stiamo scaricando le attività da Strava. Quando finisce vedrai le metriche e potrai creare un programma."
+        title="Stiamo importando le tue attività"
+        description="Tra poco vedrai le metriche e potrai creare un programma."
       />
     );
   }
@@ -30,7 +30,7 @@ export function DashboardNextSteps({
     return (
       <EmptyState
         title="Import non riuscito"
-        description="Lo storico non è stato importato. Usa «Riprova import» nella scheda Attività Strava qui sotto."
+        description="Usa «Riprova import» nella scheda Attività Strava qui sotto."
       />
     );
   }
@@ -39,7 +39,7 @@ export function DashboardNextSteps({
     return (
       <EmptyState
         title="Nessuna attività di corsa, nuoto o ciclismo"
-        description="Pacely importa solo run, swim e ride. Se hai già allenamenti su Strava, premi «Sincronizza ora». Altrimenti crea comunque un programma: useremo un budget di carico conservativo."
+        description="Se hai già allenamenti su Strava, premi «Sincronizza ora». Altrimenti puoi creare comunque un programma."
         action={
           <Button asChild>
             <Link href={routes.programNew}>Crea un programma</Link>
@@ -53,7 +53,7 @@ export function DashboardNextSteps({
     return (
       <EmptyState
         title="Crea il primo programma"
-        description="Lo storico è pronto. Genera un piano multi-sport verso un obiettivo (gara o generico), poi seguilo dal calendario."
+        description="Scegli un obiettivo e le discipline: il piano apparirà nel calendario."
         action={
           <Button asChild>
             <Link href={routes.programNew}>Crea un programma</Link>

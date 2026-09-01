@@ -11,7 +11,9 @@ import { prisma } from "@/lib/prisma";
 import {
   REPORT_SOURCE,
   REPORT_SOURCE_LABEL,
+  buildMetricTrends,
   isReportSource,
+  type ReportMetricStrip,
 } from "@/lib/reports";
 import { routes } from "@/lib/routes";
 import {
@@ -32,6 +34,7 @@ export type ReportListItem = {
 
 export type ReportDetail = ReportListItem & {
   content: PerformanceReportOutput | null;
+  metrics: ReportMetricStrip | null;
 };
 
 export type GenerateReportActionResult =
@@ -85,9 +88,38 @@ export async function getPerformanceReport(
     return null;
   }
   const content = storedPerformanceReportSchema.safeParse(row.content);
+  const snapshots = await prisma.performanceMetricSnapshot.findMany({
+    where: {
+      userId: user.id,
+      date: { gte: row.periodStart, lte: row.periodEnd },
+    },
+    orderBy: { date: "asc" },
+    select: {
+      date: true,
+      ctl: true,
+      atl: true,
+      tsb: true,
+      ftp: true,
+      vdot: true,
+      swimThresholdPaceSecPer100m: true,
+    },
+  });
+  const latest = snapshots.at(-1);
+  const trends = buildMetricTrends(snapshots);
+
   return {
     ...toListItem(row),
     content: content.success ? content.data : null,
+    metrics: latest
+      ? {
+          ctl: latest.ctl,
+          atl: latest.atl,
+          tsb: latest.tsb,
+          ctlChange: trends.ctlChange,
+          atlChange: trends.atlChange,
+          tsbChange: trends.tsbChange,
+        }
+      : null,
   };
 }
 

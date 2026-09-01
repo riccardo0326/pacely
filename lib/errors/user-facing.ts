@@ -1,8 +1,7 @@
 import { LlmQuotaExceededError } from "@/lib/llm/quota";
 
 export const USER_FACING_ERROR = {
-  generic:
-    "Qualcosa è andato storto. Riprova. Se succede di nuovo, segnalalo dal form beta.",
+  generic: "Qualcosa è andato storto. Riprova, o segnalalo da Feedback.",
   generateProgram:
     "La generazione del programma non è riuscita. Riprova tra un minuto.",
   regenerateProgram:
@@ -10,8 +9,7 @@ export const USER_FACING_ERROR = {
   importSync: "Sincronizzazione Strava non riuscita. Riprova tra poco.",
   importProcess: "Import interrotto. Puoi riprovare.",
   importRetry: "Impossibile riavviare l'import. Riprova tra poco.",
-  pageLoad:
-    "Non siamo riusciti a caricare questa pagina. Riprova oppure torna alla dashboard.",
+  pageLoad: "Non siamo riusciti a caricare questa pagina. Riprova.",
   notFound: "Questa pagina non esiste o non è più disponibile.",
 } as const;
 

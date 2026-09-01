@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   formatMonthLabel,
   formatWeekRangeLabel,
@@ -28,6 +29,7 @@ export function CalendarNav({
   const focusDate = parseFocusDate(focus);
   const prev = utcDateKey(shiftFocus(view, focusDate, -1));
   const next = utcDateKey(shiftFocus(view, focusDate, 1));
+  const today = utcDateKey(new Date());
   const title =
     view === "week"
       ? formatWeekRangeLabel(rangeStart, rangeEnd)
@@ -38,41 +40,41 @@ export function CalendarNav({
       <div className="flex items-center gap-2">
         <Link
           href={calendarHref(view, prev)}
-          className="rounded-lg border border-border px-2 py-1 text-sm hover:bg-muted"
+          className="inline-flex size-9 items-center justify-center rounded-lg border border-border bg-card hover:bg-muted"
+          aria-label="Periodo precedente"
         >
-          ←
+          <ChevronLeft className="size-5" />
         </Link>
         <h2 className="min-w-0 text-lg font-semibold capitalize">{title}</h2>
         <Link
           href={calendarHref(view, next)}
-          className="rounded-lg border border-border px-2 py-1 text-sm hover:bg-muted"
+          className="inline-flex size-9 items-center justify-center rounded-lg border border-border bg-card hover:bg-muted"
+          aria-label="Periodo successivo"
         >
-          →
+          <ChevronRight className="size-5" />
         </Link>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex rounded-lg border border-border bg-card p-0.5">
         <Link
-          href={calendarHref(view, utcDateKey(new Date()))}
-          className="rounded-lg border border-border px-2 py-1 text-sm hover:bg-muted"
+          href={calendarHref(view, today)}
+          className="rounded-md px-2.5 py-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           Oggi
         </Link>
-        <div className="flex rounded-lg border border-border p-0.5">
-          {(["week", "month"] as const).map((option) => (
-            <Link
-              key={option}
-              href={calendarHref(option, focus)}
-              className={cn(
-                "rounded-md px-2.5 py-1 text-sm",
-                view === option
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {option === "week" ? "Settimana" : "Mese"}
-            </Link>
-          ))}
-        </div>
+        {(["week", "month"] as const).map((option) => (
+          <Link
+            key={option}
+            href={calendarHref(option, focus)}
+            className={cn(
+              "rounded-md px-2.5 py-1.5 text-sm",
+              view === option
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {option === "week" ? "Settimana" : "Mese"}
+          </Link>
+        ))}
       </div>
     </div>
   );

@@ -39,7 +39,7 @@ export function RegenerateProgramButton({
 
     if (result.usedFallback) {
       setNotice(
-        "Programma rigenerato con il fallback algoritmico. Puoi modificarlo a mano.",
+        "Non siamo riusciti a rigenerare il piano. Ecco una bozza: puoi modificarla a mano.",
       );
     }
     router.refresh();
@@ -49,7 +49,7 @@ export function RegenerateProgramButton({
     <div className="flex flex-col items-end gap-2">
       <Button
         type="button"
-        variant="outline"
+        variant="default"
         onClick={handleRegenerate}
         disabled={loading}
       >

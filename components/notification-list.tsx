@@ -108,7 +108,7 @@ export function NotificationList({
                 <Link
                   href={item.href}
                   onClick={() => void openNotification(item)}
-                  className={`block rounded-xl border p-4 transition-colors hover:bg-muted/40 ${unreadItem ? "border-border bg-background" : "border-border/70 bg-muted/20"}`}
+                  className={`block rounded-xl border p-4 transition-colors hover:bg-muted/40 ${unreadItem ? "border-border bg-card" : "border-border/70 bg-muted/20"}`}
                 >
                   {content}
                 </Link>
@@ -116,7 +116,7 @@ export function NotificationList({
                 <button
                   type="button"
                   onClick={() => void openNotification(item)}
-                  className={`w-full rounded-xl border p-4 text-left transition-colors hover:bg-muted/40 ${unreadItem ? "border-border bg-background" : "border-border/70 bg-muted/20"}`}
+                  className={`w-full rounded-xl border p-4 text-left transition-colors hover:bg-muted/40 ${unreadItem ? "border-border bg-card" : "border-border/70 bg-muted/20"}`}
                 >
                   {content}
                 </button>

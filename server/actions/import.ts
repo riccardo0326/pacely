@@ -27,6 +27,7 @@ export type ImportStatus = {
   actionError: string | null;
   recent: Array<{
     id: string;
+    stravaActivityId: string;
     name: string | null;
     sport: string;
     startedAt: string;
@@ -49,9 +50,10 @@ async function loadImportStatus(userId: string): Promise<ImportStatus> {
     prisma.activity.findMany({
       where: { userId },
       orderBy: { startedAt: "desc" },
-      take: 5,
+      take: 7,
       select: {
         id: true,
+        stravaActivityId: true,
         name: true,
         sport: true,
         startedAt: true,
@@ -74,6 +76,7 @@ async function loadImportStatus(userId: string): Promise<ImportStatus> {
     actionError: null,
     recent: recent.map((activity) => ({
       id: activity.id,
+      stravaActivityId: activity.stravaActivityId,
       name: activity.name,
       sport: activity.sport,
       startedAt: activity.startedAt.toISOString(),

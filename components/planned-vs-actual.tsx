@@ -33,7 +33,7 @@ export function PlannedVsActualSummary({
 
   return (
     <div className="grid gap-3 sm:grid-cols-4">
-      <div className="rounded-lg border border-border px-3 py-3">
+      <div className="rounded-lg border border-border bg-card px-3 py-3">
         <p className="text-xs tracking-wide text-muted-foreground uppercase">
           Completati
         </p>
@@ -44,7 +44,7 @@ export function PlannedVsActualSummary({
           {totals.skippedCount} saltati · {totals.unmatchedCount} da abbinare
         </p>
       </div>
-      <div className="rounded-lg border border-border px-3 py-3">
+      <div className="rounded-lg border border-border bg-card px-3 py-3">
         <p className="text-xs tracking-wide text-muted-foreground uppercase">
           Durata
         </p>
@@ -55,7 +55,7 @@ export function PlannedVsActualSummary({
           Scostamento {formatDelta(durationPct)}
         </p>
       </div>
-      <div className="rounded-lg border border-border px-3 py-3">
+      <div className="rounded-lg border border-border bg-card px-3 py-3">
         <p className="text-xs tracking-wide text-muted-foreground uppercase">
           TSS
         </p>
@@ -66,7 +66,7 @@ export function PlannedVsActualSummary({
           Scostamento {formatDelta(tssPct)}
         </p>
       </div>
-      <div className="rounded-lg border border-border px-3 py-3">
+      <div className="rounded-lg border border-border bg-card px-3 py-3">
         <p className="text-xs tracking-wide text-muted-foreground uppercase">
           Completamento
         </p>

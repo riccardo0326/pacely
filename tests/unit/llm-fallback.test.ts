@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { fallbackGenerateProgram } from "@/lib/llm/fallback";
+import {
+  fallbackAnalyzePerformance,
+  fallbackGenerateProgram,
+} from "@/lib/llm/fallback";
 import { programInput } from "./llm-fixtures";
 
 describe("fallbackGenerateProgram", () => {
@@ -22,5 +25,23 @@ describe("fallbackGenerateProgram", () => {
     const tssSum =
       week1?.workouts.reduce((sum, workout) => sum + workout.tss, 0) ?? 0;
     expect(tssSum).toBeCloseTo(week1?.weekLoadTarget ?? 0, 5);
+  });
+});
+
+describe("fallbackAnalyzePerformance", () => {
+  it("treats a TSB drop as fatigue, not a strength", () => {
+    const report = fallbackAnalyzePerformance({
+      userId: "user-1",
+      periodStart: "2026-08-01",
+      periodEnd: "2026-08-14",
+      metricTrends: { tsbChange: -6, atlChange: 6, ctlChange: 0 },
+      feedbackSummaries: [],
+    });
+
+    expect(report.improvements.some((item) => item.includes("TSB"))).toBe(true);
+    expect(report.improvements.some((item) => item.includes("ATL"))).toBe(true);
+    expect(report.strengths.some((item) => item.includes("migliorata"))).toBe(
+      false,
+    );
   });
 });
