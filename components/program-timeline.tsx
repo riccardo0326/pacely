@@ -10,14 +10,9 @@ import {
   toStoredWorkoutBlocks,
   type EditableBlock,
 } from "@/lib/programs/blocks";
+import { sportLabel } from "@/lib/ui/theme";
 import { updateWorkout } from "@/server/actions/programs";
 import type { ProgramDetail } from "@/server/actions/programs";
-
-const SPORT_LABEL: Record<string, string> = {
-  run: "Corsa",
-  swim: "Nuoto",
-  ride: "Ciclismo",
-};
 
 const STATUS_LABEL: Record<string, string> = {
   [WORKOUT_STATUS.planned]: "Pianificato",
@@ -90,13 +85,13 @@ function WorkoutEditor({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-background p-4">
+    <div className="rounded-lg border border-border bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="text-sm text-muted-foreground">
             {WEEKDAY_LABEL[workout.dayOfWeek]}{" "}
             {new Date(workout.plannedDate).toLocaleDateString("it-IT")} ·{" "}
-            {SPORT_LABEL[workout.sport] ?? workout.sport}
+            {sportLabel(workout.sport)}
           </p>
           <h3 className="mt-1 font-medium">{workout.name}</h3>
           <p className="mt-1 text-sm text-muted-foreground">

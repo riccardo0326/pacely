@@ -1,12 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { nextMonday } from "@/lib/programs/dates";
 import {
   looksLikeTriathlonGoal,
   missingTriathlonSports,
 } from "@/lib/programs/constraints";
+import { sportBadgeClass } from "@/lib/ui/theme";
+import { cn } from "@/lib/utils";
 
 const SPORT_OPTIONS = [
   { value: "run", label: "Corsa" },
@@ -92,11 +95,12 @@ export function ProgramCreateForm({
             return (
               <label
                 key={option.value}
-                className={`cursor-pointer rounded-lg border px-3 py-2 text-sm ${
+                className={cn(
+                  "cursor-pointer rounded-lg border px-3 py-2 text-sm",
                   selected
-                    ? "border-primary bg-primary/10"
-                    : "border-border bg-background"
-                }`}
+                    ? sportBadgeClass(option.value)
+                    : "border-border bg-card text-muted-foreground",
+                )}
               >
                 <input
                   type="checkbox"
@@ -295,9 +299,23 @@ export function ProgramCreateForm({
         />
       </label>
 
-      <Button type="submit" className="self-start">
-        Genera programma
-      </Button>
+      <GenerateSubmitButton />
     </form>
+  );
+}
+
+function GenerateSubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <div className="flex flex-col items-start gap-2">
+      <Button type="submit" disabled={pending}>
+        {pending ? "Generazione in corso…" : "Genera programma"}
+      </Button>
+      {pending ? (
+        <p className="text-sm text-muted-foreground">
+          Può richiedere fino a un minuto. Non chiudere la pagina.
+        </p>
+      ) : null}
+    </div>
   );
 }

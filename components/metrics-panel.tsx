@@ -1,12 +1,8 @@
 import { MetricsPmcChart } from "@/components/metrics-pmc-chart";
+import { EmptyState } from "@/components/empty-state";
+import { SportBadge } from "@/components/sport-badge";
 import { formatPace, formatZoneBound } from "@/lib/metrics/format";
 import type { IntensityZone, PmcPoint, SportZones } from "@/lib/metrics/types";
-
-const SPORT_LABEL: Record<string, string> = {
-  run: "Corsa",
-  swim: "Nuoto",
-  ride: "Ciclismo",
-};
 
 function MetricCard({
   label,
@@ -18,7 +14,7 @@ function MetricCard({
   hint?: string;
 }) {
   return (
-    <div className="rounded-lg border border-border px-3 py-3">
+    <div className="rounded-lg border border-border bg-card px-3 py-3">
       <p className="text-xs tracking-wide text-muted-foreground uppercase">
         {label}
       </p>
@@ -57,23 +53,21 @@ export type MetricsPanelData = {
 export function MetricsPanel({ data }: { data: MetricsPanelData }) {
   if (!data.latest) {
     return (
-      <section className="rounded-xl border border-border bg-background p-4">
-        <h2 className="font-medium">Carico e forma</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Le metriche appariranno quando avrai almeno un&apos;attività importata
-          da Strava.
-        </p>
-      </section>
+      <EmptyState
+        className="text-left"
+        title="Carico e forma"
+        description="Le metriche appariranno dopo la prima attività di corsa, nuoto o ciclismo."
+      />
     );
   }
 
   const { latest, history, zones } = data;
 
   return (
-    <section className="rounded-xl border border-border bg-background p-4">
+    <section className="rounded-xl border border-border bg-card p-5">
       <h2 className="font-medium">Carico e forma</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        CTL (42 giorni), ATL (7 giorni) e TSB aggregati su corsa, bici e nuoto.
+        CTL, ATL e TSB su corsa, bici e nuoto.
       </p>
       <div className="mt-4 grid grid-cols-3 gap-2">
         <MetricCard
@@ -117,14 +111,15 @@ export function MetricsPanel({ data }: { data: MetricsPanelData }) {
         <MetricsPmcChart points={history} />
       </div>
       {zones.length > 0 ? (
-        <div className="mt-4 space-y-3">
+        <div className="mt-5 space-y-4">
           <h3 className="text-sm font-medium">Zone di intensità</h3>
           {zones.map((group) => (
             <div key={`${group.sport}-${group.metric}`}>
-              <p className="text-xs text-muted-foreground">
-                {SPORT_LABEL[group.sport] ?? group.sport} · {group.metric}
-              </p>
-              <ul className="mt-1 grid gap-1 text-sm">
+              <div className="flex items-center gap-2">
+                <SportBadge sport={group.sport} />
+                <p className="text-xs text-muted-foreground">{group.metric}</p>
+              </div>
+              <ul className="mt-2 grid gap-1.5 text-sm leading-relaxed">
                 {group.zones.map((zone) => (
                   <li
                     key={zone.zone}

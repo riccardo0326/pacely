@@ -145,8 +145,7 @@ export function PushSubscribeButton() {
   if (state === "unconfigured") {
     return (
       <p className="text-sm text-muted-foreground">
-        Le push non sono configurate su questo ambiente (chiavi VAPID mancanti).
-        Le notifiche in-app restano attive.
+        Le notifiche browser non sono disponibili qui. Restano quelle in-app.
       </p>
     );
   }

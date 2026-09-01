@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import {
   markAllNotificationsRead,
@@ -57,12 +58,10 @@ export function NotificationList({
 
   if (notifications.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border p-8 text-center">
-        <p className="text-muted-foreground">
-          Nessuna notifica. Ti avviseremo per l&apos;allenamento del giorno e
-          per le proposte di ricalcolo.
-        </p>
-      </div>
+      <EmptyState
+        title="Nessuna notifica"
+        description="Ti avviseremo per l'allenamento del giorno e per le proposte di ricalcolo."
+      />
     );
   }
 
@@ -109,7 +108,7 @@ export function NotificationList({
                 <Link
                   href={item.href}
                   onClick={() => void openNotification(item)}
-                  className={`block rounded-xl border p-4 transition-colors hover:bg-muted/40 ${unreadItem ? "border-border bg-background" : "border-border/70 bg-muted/20"}`}
+                  className={`block rounded-xl border p-4 transition-colors hover:bg-muted/40 ${unreadItem ? "border-border bg-card" : "border-border/70 bg-muted/20"}`}
                 >
                   {content}
                 </Link>
@@ -117,7 +116,7 @@ export function NotificationList({
                 <button
                   type="button"
                   onClick={() => void openNotification(item)}
-                  className={`w-full rounded-xl border p-4 text-left transition-colors hover:bg-muted/40 ${unreadItem ? "border-border bg-background" : "border-border/70 bg-muted/20"}`}
+                  className={`w-full rounded-xl border p-4 text-left transition-colors hover:bg-muted/40 ${unreadItem ? "border-border bg-card" : "border-border/70 bg-muted/20"}`}
                 >
                   {content}
                 </button>

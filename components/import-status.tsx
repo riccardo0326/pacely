@@ -1,10 +1,13 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
 import { useEffect } from "react";
+import { SportBadge } from "@/components/sport-badge";
 import { Button } from "@/components/ui/button";
+import { USER_FACING_ERROR } from "@/lib/errors/user-facing";
 import { JOB_STATUS } from "@/lib/strava/constants";
+import { stravaActivityUrl } from "@/lib/ui/theme";
 import {
   getImportStatus,
   processImportChunk,
@@ -13,11 +16,21 @@ import {
   type ImportStatus,
 } from "@/server/actions/import";
 
-const SPORT_LABEL: Record<string, string> = {
-  run: "Corsa",
-  swim: "Nuoto",
-  ride: "Ciclismo",
+const RECENT_DATE: Intl.DateTimeFormatOptions = {
+  day: "numeric",
+  month: "short",
 };
+
+function formatWhen(iso: string): string {
+  return new Date(iso).toLocaleString("it-IT", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
+function formatDay(iso: string): string {
+  return new Date(iso).toLocaleDateString("it-IT", RECENT_DATE);
+}
 
 function formatDistance(distanceM: number | null, sport: string): string {
   if (distanceM == null) {
@@ -27,13 +40,6 @@ function formatDistance(distanceM: number | null, sport: string): string {
     return `${Math.round(distanceM)} m`;
   }
   return `${(distanceM / 1000).toFixed(1)} km`;
-}
-
-function formatWhen(iso: string): string {
-  return new Date(iso).toLocaleString("it-IT", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
 }
 
 export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
@@ -144,7 +150,7 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
           </p>
           {isPaused ? (
             <p className="text-sm text-muted-foreground">
-              In pausa per i limiti API di Strava. Riprendiamo automaticamente.
+              In pausa, riproviamo tra poco.
             </p>
           ) : null}
         </div>
@@ -153,8 +159,7 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
       {job?.status === JOB_STATUS.failed ? (
         <div className="mt-4 space-y-3">
           <p className="text-sm text-destructive">
-            Import non riuscito
-            {job.error ? `: ${job.error}` : "."}
+            Import non riuscito. Riprova, o segnalalo da Feedback.
           </p>
           <Button
             type="button"
@@ -167,6 +172,27 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
         </div>
       ) : null}
 
+      {data.actionError ||
+      processMutation.isError ||
+      retryMutation.isError ||
+      syncMutation.isError ? (
+        <p className="mt-4 text-sm text-destructive">
+          {data.actionError ??
+            (processMutation.isError
+              ? USER_FACING_ERROR.importProcess
+              : retryMutation.isError
+                ? USER_FACING_ERROR.importRetry
+                : USER_FACING_ERROR.importSync)}
+        </p>
+      ) : null}
+
+      {job?.status === JOB_STATUS.done && data.activityCount === 0 ? (
+        <p className="mt-4 text-sm text-muted-foreground">
+          Import completato, ma non ci sono attività di corsa, nuoto o ciclismo.
+          Puoi comunque creare un programma.
+        </p>
+      ) : null}
+
       {job?.status === JOB_STATUS.done || data.lastSyncAt ? (
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <p className="text-sm">
@@ -175,7 +201,7 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
           </p>
           <Button
             type="button"
-            variant="outline"
+            variant="accent"
             size="sm"
             onClick={() => syncMutation.mutate()}
             disabled={syncMutation.isPending || isImporting}
@@ -188,19 +214,29 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
       {data.recent.length > 0 ? (
         <ul className="mt-4 divide-y divide-border text-sm">
           {data.recent.map((activity) => (
-            <li
-              key={activity.id}
-              className="flex items-baseline justify-between gap-3 py-2"
-            >
-              <span className="min-w-0 truncate">
-                {activity.name ?? "Attività"}
-                <span className="ml-2 text-muted-foreground">
-                  {SPORT_LABEL[activity.sport] ?? activity.sport}
+            <li key={activity.id}>
+              <a
+                href={stravaActivityUrl(activity.stravaActivityId)}
+                target="_blank"
+                rel="noreferrer"
+                className="group flex items-center gap-3 py-2.5 hover:bg-muted/40"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2">
+                    <span className="truncate font-medium">
+                      {activity.name ?? "Attività"}
+                    </span>
+                    <SportBadge sport={activity.sport} />
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    {formatDay(activity.startedAt)}
+                  </span>
                 </span>
-              </span>
-              <span className="shrink-0 text-muted-foreground">
-                {formatDistance(activity.distanceM, activity.sport)}
-              </span>
+                <span className="shrink-0 tabular-nums text-muted-foreground">
+                  {formatDistance(activity.distanceM, activity.sport)}
+                </span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+              </a>
             </li>
           ))}
         </ul>

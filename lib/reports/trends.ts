@@ -11,6 +11,15 @@ export type MetricSnapshotPoint = {
   swimThresholdPaceSecPer100m: number | null;
 };
 
+export type ReportMetricStrip = {
+  ctl: number;
+  atl: number;
+  tsb: number;
+  ctlChange?: number;
+  atlChange?: number;
+  tsbChange?: number;
+};
+
 function round1(value: number): number {
   return Math.round(value * 10) / 10;
 }

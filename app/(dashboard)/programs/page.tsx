@@ -1,14 +1,13 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
+import { SportBadge } from "@/components/sport-badge";
+import { ProgramStatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/require-user";
 import { routes } from "@/lib/routes";
 import { listPrograms } from "@/server/actions/programs";
-
-const SPORT_LABEL: Record<string, string> = {
-  run: "Corsa",
-  swim: "Nuoto",
-  ride: "Ciclismo",
-};
 
 export default async function ProgramsPage() {
   await requireUser();
@@ -16,64 +15,54 @@ export default async function ProgramsPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-16">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
-            Programmi
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-            I tuoi programmi
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Crea un piano multi-sport con generazione LLM e modifica manuale dei
-            singoli allenamenti.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href={routes.programNew}>Nuovo programma</Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="I tuoi programmi"
+        description="Piani multi-sport verso un obiettivo. Puoi modificarli a mano."
+        actions={
+          <Button asChild>
+            <Link href={routes.programNew}>Nuovo programma</Link>
+          </Button>
+        }
+      />
 
       {programs.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-8 text-center">
-          <p className="text-muted-foreground">
-            Non hai ancora creato un programma.
-          </p>
-          <Button asChild className="mt-4">
-            <Link href={routes.programNew}>Crea il primo programma</Link>
-          </Button>
-        </div>
+        <EmptyState
+          title="Nessun programma"
+          description="Scegli le discipline e un obiettivo: gara o generico."
+          action={
+            <Button asChild>
+              <Link href={routes.programNew}>Crea il primo programma</Link>
+            </Button>
+          }
+        />
       ) : (
         <ul className="flex flex-col gap-3">
           {programs.map((program) => (
             <li key={program.id}>
               <Link
                 href={routes.program(program.id)}
-                className="block rounded-xl border border-border bg-background p-4 transition-colors hover:bg-muted/40"
+                className="group flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-muted/40"
               >
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
                     <h2 className="font-medium">{program.name}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {program.sportsIncluded
-                        .map((sport) => SPORT_LABEL[sport] ?? sport)
-                        .join(" · ")}{" "}
-                      · {program.durationWeeks} settimane
-                    </p>
+                    <ProgramStatusBadge status={program.status} />
                   </div>
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium uppercase">
-                    {program.status}
-                  </span>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    {program.sportsIncluded.map((sport) => (
+                      <SportBadge key={sport} sport={sport} />
+                    ))}
+                    <span className="text-sm text-muted-foreground">
+                      · {program.durationWeeks} settimane
+                    </span>
+                  </div>
                 </div>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
               </Link>
             </li>
           ))}
         </ul>
       )}
-
-      <Button asChild variant="outline" className="self-start">
-        <Link href={routes.dashboard}>Torna alla dashboard</Link>
-      </Button>
     </main>
   );
 }

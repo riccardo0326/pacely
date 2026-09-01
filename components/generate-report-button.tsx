@@ -55,7 +55,7 @@ export function GenerateReportButton({
           onChange={(event) =>
             setPeriodDays(Number(event.target.value) === 28 ? 28 : 14)
           }
-          className="h-8 rounded-lg border border-border bg-background px-2 text-sm"
+          className="h-8 rounded-lg border border-border bg-card px-2 text-sm"
         >
           {REPORT_PERIOD_DAY_OPTIONS.map((days) => (
             <option key={days} value={days}>
@@ -63,7 +63,12 @@ export function GenerateReportButton({
             </option>
           ))}
         </select>
-        <Button type="button" onClick={handleGenerate} disabled={loading}>
+        <Button
+          type="button"
+          variant="accent"
+          onClick={handleGenerate}
+          disabled={loading}
+        >
           {loading ? "Generazione…" : "Genera report"}
         </Button>
       </div>

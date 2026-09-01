@@ -127,7 +127,10 @@ Il JSON deve avere questa forma:
   "suggestions": string[] (almeno 1)
 }
 Basa il testo sui trend metriche e sui feedback forniti. Non inventare dati assenti.
-Un delta negativo sul passo soglia nuoto è un miglioramento. Non proporre modifiche automatiche al piano.`;
+CTL = carico cronico (fitness): un aumento è generalmente positivo.
+ATL = carico acuto (fatica recente): un aumento indica più sforzo recente, non un miglioramento della forma.
+TSB = forma (CTL − ATL): un TSB in calo significa più fatica, non un miglioramento. Non chiamare «miglioramento» una diminuzione del TSB.
+Un delta negativo sul passo soglia nuoto è un miglioramento (passo più veloce). Non proporre modifiche automatiche al piano.`;
 
 export function buildPerformanceUserPrompt(
   input: PerformanceAnalysisInput,
