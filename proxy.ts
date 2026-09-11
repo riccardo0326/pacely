@@ -37,6 +37,7 @@ export const proxy = auth((req) => {
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/activities/:path*",
     "/programs/:path*",
     "/calendar/:path*",
     "/reports/:path*",

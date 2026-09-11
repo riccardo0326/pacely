@@ -103,6 +103,7 @@ describe("requestWeekAdapt", () => {
       weeks: [
         {
           id: "week-1",
+          number: 1,
           weekLoadTarget: 300,
           focus: "qualità",
           workouts: [
