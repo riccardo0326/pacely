@@ -1,5 +1,9 @@
 import { WORKOUT_STATUS } from "@/lib/matching/constants";
-import { SPORT_LABELS, type Sport } from "@/lib/strava/constants";
+import {
+  SPORT_LABELS,
+  type ActivitySport,
+  type Sport,
+} from "@/lib/strava/constants";
 import type { ProgramStatus } from "@/lib/validation/program";
 
 export const PMC_CSS = {
@@ -18,8 +22,12 @@ export function isSport(value: string): value is Sport {
   return value === "run" || value === "swim" || value === "ride";
 }
 
+export function isActivitySport(value: string): value is ActivitySport {
+  return isSport(value) || value === "other";
+}
+
 export function sportLabel(sport: string): string {
-  if (isSport(sport)) {
+  if (isActivitySport(sport)) {
     return SPORT_LABELS[sport];
   }
   return sport;

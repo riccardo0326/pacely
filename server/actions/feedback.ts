@@ -4,7 +4,7 @@ import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/require-user";
 import { evaluateRecalcFromFeedback } from "@/lib/feedback/evaluate";
-import { RECALC_STATUS } from "@/lib/feedback/constants";
+import { RECALC_SOURCE, RECALC_STATUS } from "@/lib/feedback/constants";
 import { summarizeRecalcChanges } from "@/lib/feedback/labels";
 import type { RecalcTargetWorkout } from "@/lib/feedback/proposal";
 import { recalcChangesSchema, type RecalcChanges } from "@/lib/feedback/schema";
@@ -40,10 +40,15 @@ export type RecalcProposalView = {
   programName: string;
   rationale: string;
   action: RecalcChanges["action"];
+  strategy: RecalcChanges["strategy"];
+  source: string;
   summary: string;
   createdAt: string;
+  weekLoadFrom: number | null;
+  weekLoadTo: number | null;
   workouts: Array<{
     workoutId: string;
+    op: string | null;
     nameFrom: string;
     nameTo: string;
     plannedDateFrom: string | null;
@@ -52,6 +57,7 @@ export type RecalcProposalView = {
     durationMinTo: number | null;
     tssFrom: number | null;
     tssTo: number | null;
+    skipped: boolean;
   }>;
 };
 
@@ -69,6 +75,7 @@ function toProposalView(
     rationale: string;
     changes: unknown;
     createdAt: Date;
+    source?: string | null;
     program: { name: string };
   },
   nameByWorkoutId: Map<string, string>,
@@ -77,19 +84,25 @@ function toProposalView(
   if (!changes.success) {
     return null;
   }
+  const week = changes.data.weeks[0];
   return {
     id: row.id,
     programId: row.programId,
     programName: row.program.name,
     rationale: row.rationale,
     action: changes.data.action,
+    strategy: changes.data.strategy,
+    source: row.source ?? "feedback",
     summary: summarizeRecalcChanges(changes.data),
     createdAt: row.createdAt.toISOString(),
+    weekLoadFrom: week?.weekLoadTarget.from ?? null,
+    weekLoadTo: week?.weekLoadTarget.to ?? null,
     workouts: changes.data.workouts.map((patch) => {
       const currentName = nameByWorkoutId.get(patch.workoutId);
       const nameFrom = patch.name?.from ?? currentName ?? "Allenamento";
       return {
         workoutId: patch.workoutId,
+        op: patch.op ?? null,
         nameFrom,
         nameTo: patch.name?.to ?? nameFrom,
         plannedDateFrom: patch.plannedDate?.from ?? null,
@@ -98,6 +111,7 @@ function toProposalView(
         durationMinTo: patch.durationMin?.to ?? null,
         tssFrom: patch.tss?.from ?? null,
         tssTo: patch.tss?.to ?? null,
+        skipped: patch.status?.to === WORKOUT_STATUS.skipped,
       };
     }),
   };
@@ -324,6 +338,7 @@ export async function submitWorkoutFeedback(
         programId: workout.week.program.id,
         weekId: evaluation.proposal.weekId,
         feedbackId: feedback.id,
+        source: RECALC_SOURCE.feedback,
         rationale: evaluation.proposal.rationale,
         changes: evaluation.proposal.changes as Prisma.InputJsonValue,
         status: RECALC_STATUS.pending,
@@ -440,6 +455,11 @@ export async function approveRecalcProposal(
       }
 
       const data: Prisma.WorkoutUpdateInput = {};
+      if (patch.status?.to === WORKOUT_STATUS.skipped) {
+        data.status = WORKOUT_STATUS.skipped;
+        data.activity = { disconnect: true };
+        data.matchSource = null;
+      }
       if (patch.name) {
         data.name = patch.name.to;
       }
@@ -453,7 +473,28 @@ export async function approveRecalcProposal(
         data.dayOfWeek = patch.dayOfWeek.to;
       }
       if (patch.plannedDate) {
-        data.plannedDate = new Date(`${patch.plannedDate.to}T00:00:00.000Z`);
+        const nextDate = new Date(`${patch.plannedDate.to}T00:00:00.000Z`);
+        const occupant = await tx.workout.findFirst({
+          where: {
+            id: { not: workout.id },
+            status: WORKOUT_STATUS.planned,
+            plannedDate: nextDate,
+            week: { program: { userId: user.id, id: proposal.programId } },
+          },
+          select: { id: true },
+        });
+        const occupantPatchedAway = occupant
+          ? changes.data.workouts.some(
+              (other) =>
+                other.workoutId === occupant.id &&
+                (other.status?.to === WORKOUT_STATUS.skipped ||
+                  (other.plannedDate != null &&
+                    other.plannedDate.to !== patch.plannedDate?.to)),
+            )
+          : true;
+        if (!occupant || occupantPatchedAway) {
+          data.plannedDate = nextDate;
+        }
       }
       if (patch.blocks) {
         data.blocks = patch.blocks as Prisma.InputJsonValue;

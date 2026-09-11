@@ -8,8 +8,10 @@ import { RegenerateProgramButton } from "@/components/regenerate-program-button"
 import { SportBadge } from "@/components/sport-badge";
 import { ProgramStatusBadge } from "@/components/status-badge";
 import { requireUser } from "@/lib/auth/require-user";
+import { utcToday } from "@/lib/metrics/dates";
 import { routes } from "@/lib/routes";
 import { getPendingRecalcProposalForProgram } from "@/server/actions/feedback";
+import { listRecentExtraLoad } from "@/server/actions/adapt-week";
 import { getProgram } from "@/server/actions/programs";
 
 type ProgramDetailPageProps = {
@@ -24,9 +26,10 @@ export default async function ProgramDetailPage({
   await requireUser();
   const { id } = await params;
   const { generated } = await searchParams;
-  const [program, proposal] = await Promise.all([
+  const [program, proposal, extraLoad] = await Promise.all([
     getProgram(id),
     getPendingRecalcProposalForProgram(id),
+    listRecentExtraLoad(),
   ]);
   if (!program) {
     notFound();
@@ -66,7 +69,12 @@ export default async function ProgramDetailPage({
 
       {proposal ? <RecalcProposalCard proposal={proposal} /> : null}
 
-      <ProgramTimeline program={program} />
+      <ProgramTimeline
+        program={program}
+        extraLoad={extraLoad}
+        hasPendingProposal={proposal !== null}
+        today={utcToday()}
+      />
     </main>
   );
 }

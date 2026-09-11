@@ -19,6 +19,7 @@ export const LLM_INTERACTION_TYPE = {
   generateProgram: "generate_program",
   analyzeFeedback: "analyze_feedback",
   analyzePerformance: "analyze_performance",
+  adaptWeek: "adapt_week",
 } as const;
 
 export type LLMInteractionType =

@@ -92,6 +92,7 @@ describe("program generation integration (mocked LLM)", () => {
       generateProgram: mockGenerate,
       analyzeFeedback: vi.fn(),
       analyzePerformance: vi.fn(),
+      adaptWeek: vi.fn(),
     });
 
     const provider = getLLMProvider();

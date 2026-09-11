@@ -235,3 +235,85 @@ export function buildPerformanceUserPrompt(
     `FEEDBACK RACCOLTI:\n${feedback}`,
   ].join("\n\n");
 }
+
+export const ADAPT_WEEK_SYSTEM_PROMPT = `Sei un coach multi-sport. L'atleta chiede di adattare SOLO i workout rimasti in questa settimana per una situazione di vita (fatica extra, malattia, infortunio, viaggio, poco tempo, impegno personale).
+Rispondi SOLO con un oggetto JSON valido, senza markdown e senza testo extra.
+{
+  "rationale": string (italiano, tono da coach, max 800 caratteri),
+  "strategy": "recover" | "reshape" | "postpone_quality" | "timebox",
+  "workouts": [
+    {
+      "workoutId": string,
+      "op": "scale" | "retype" | "move" | "skip" | "swap",
+      "name": string opzionale,
+      "durationMin": number opzionale,
+      "tss": number opzionale,
+      "dayOfWeek": 0-6 opzionale,
+      "plannedDate": "YYYY-MM-DD" opzionale,
+      "blocks": array opzionale,
+      "swapWithWorkoutId": string opzionale
+    }
+  ]
+}
+Regole HARD:
+- Modifica SOLO i workout in remainingWorkouts (status planned). Non toccare i completed.
+- Non inventare giorni: plannedDate/dayOfWeek devono essere tra availableRemainingSlots.
+- Non cambiare sport.
+- Malattia o infortunio (tag illness / niggle_injury): recovery aggressivo, skip della seduta chiave è consentito.
+- Altrimenti NON skippare la seduta chiave (isKeySession): spostala o trasformala in recupero facile.
+- Preferisci spostare la qualità a uno slot libero più avanti nella settimana piuttosto che cancellarla.
+- Se c'è un timeCap, rispettalo su quella data.
+- Il TSS rimanente della settimana non deve aumentare oltre il 10% rispetto a remainingTss.
+- rationale in italiano, concreto (cosa succede lunedì, mercoledì, …).`;
+
+export function buildAdaptWeekUserPrompt(input: {
+  situationText: string;
+  situationTags: string[];
+  timeCapMin?: number;
+  timeCapDate?: string;
+  remainingWorkouts: unknown;
+  completedThisWeek: unknown;
+  extraActivities: unknown;
+  currentMetrics: unknown;
+  weekFocus?: string;
+  weekLoadTarget: number;
+  remainingTss: number;
+  availableRemainingSlots: Array<{ weekday: number; timeOfDay?: string }>;
+  sportsIncluded: string[];
+  goalDescription?: string;
+  keyWorkoutId?: string;
+}): string {
+  const slots = input.availableRemainingSlots
+    .map((slot) => {
+      const day =
+        WEEKDAY_PROMPT_NAMES[slot.weekday] ?? `giorno ${slot.weekday}`;
+      const time = slot.timeOfDay ? ` alle ${slot.timeOfDay}` : "";
+      return `- ${day} (dayOfWeek=${slot.weekday})${time}`;
+    })
+    .join("\n");
+
+  const cap =
+    input.timeCapMin && input.timeCapDate
+      ? `TIME CAP: il ${input.timeCapDate} massimo ${input.timeCapMin} minuti.`
+      : input.timeCapMin
+        ? `TIME CAP: massimo ${input.timeCapMin} minuti sulla seduta indicata nel testo.`
+        : null;
+
+  return [
+    `SITUAZIONE: ${input.situationText}`,
+    `TAG: ${input.situationTags.join(", ") || "nessuno"}`,
+    cap,
+    `OBIETTIVO PROGRAMMA: ${input.goalDescription ?? "n/d"}`,
+    `FOCUS SETTIMANA: ${input.weekFocus ?? "n/d"}`,
+    `TSS SETTIMANA TARGET: ${input.weekLoadTarget} · TSS RIMANENTE: ${input.remainingTss}`,
+    `SEDUTA CHIAVE: ${input.keyWorkoutId ?? "n/d"}`,
+    `SPORT: ${input.sportsIncluded.join(", ")}`,
+    `METRICHE: ${JSON.stringify(input.currentMetrics)}`,
+    `ATTIVITÀ EXTRA (48h, non nel piano): ${JSON.stringify(input.extraActivities)}`,
+    `COMPLETATI QUESTA SETTIMANA: ${JSON.stringify(input.completedThisWeek)}`,
+    `SLOT ANCORA USABILI:\n${slots}`,
+    `WORKOUT RIMANENTI (solo questi): ${JSON.stringify(input.remainingWorkouts)}`,
+  ]
+    .filter((section): section is string => Boolean(section))
+    .join("\n\n");
+}

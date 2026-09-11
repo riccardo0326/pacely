@@ -105,6 +105,14 @@ Il differenziale rispetto a Strava/TrainingPeaks/Runna: la combinazione di (a) g
 - Report generato via LLM su base periodica (configurabile, es. ogni 2-4 settimane o a richiesta), che riceve in input le metriche calcolate (trend CTL/ATL/TSB, progressione FTP/VDOT/soglia nuoto) e i feedback testuali raccolti.
 - Output: sintesi leggibile in linguaggio naturale con punti di forza, aree di miglioramento, e suggerimenti (non modifica il piano automaticamente — è puramente informativo in MVP).
 
+### 5.5 Adatta la settimana (on-demand, post-MVP)
+
+- In qualsiasi settimana di un programma `active`, l'atleta può descrivere una situazione (testo libero e/o chip: fatica extra, poco tempo, malattia, infortunio, viaggio, impegno personale) e chiedere un ricalcolo dei workout **rimanenti** di quella settimana.
+- L'LLM propone modifiche strutturate (saltare, ammorbidire, spostare, cambiare tipo, ricalcolare durata/TSS). La proposta è sempre da approvare — mai applicata in automatico.
+- Il contesto include metriche correnti (CTL/ATL/TSB), allenamenti già fatti nella settimana, e attività Strava extra (es. trekking) non presenti nel piano.
+- La seduta chiave della settimana si sposta o si ammorbidisce; si elimina solo in caso di malattia o infortunio.
+- Scope v1: sola settimana corrente. Le settimane successive non vengono riscritte.
+
 ---
 
 ## 6. Metriche Calcolate
@@ -144,20 +152,20 @@ Tutte le metriche vengono ricalcolate in background quando arrivano nuove attivi
 
 ### 8.1 Stack
 
-| Layer | Scelta | Motivazione |
-|---|---|---|
-| Frontend + Backend | **Next.js 14+ (App Router), TypeScript** | Full-stack unico, API routes/server actions, deploy semplice, ottimo fit per MVP senza team dedicato al backend |
-| Autenticazione | **Auth.js (NextAuth)** con provider Strava custom | OAuth Strava nativo come login, gestione sessione standard |
-| Database | **PostgreSQL** su **Neon** (free tier) | Serverless, scalabile, free tier sufficiente per MVP/demo |
-| ORM | **Prisma** | Type-safety, migrazioni gestite, buon fit con TS |
-| UI | **Tailwind CSS + shadcn/ui** | Sviluppo rapido, componenti accessibili, personalizzabili |
-| Data fetching client | **TanStack Query** | Cache, invalidazione, gestione stato server |
-| Validazione | **Zod** | Validazione input API e output strutturato LLM |
-| Job asincroni (sync Strava, ricalcolo metriche) | **Vercel Cron Jobs** + queue leggera (es. tabella `Job` con stato, oppure Upstash QStash free tier) | Evita infrastruttura pesante (no Redis/worker dedicato) mantenendo affidabilità |
-| LLM | **Astrazione provider-agnostic**: OpenAI e DeepSeek, switchabili via config/env, selezionabili anche per singola chiamata | Costi contenuti (DeepSeek default per generazione/analisi massiva), OpenAI disponibile per task dove serve qualità extra o dove l'utente ha già credito |
-| Notifiche | **Web Push API** (service worker) + notifiche in-app | Nessun costo, nessuna dipendenza da app store per l'MVP |
-| Deploy | **Vercel** | Free tier generoso, integrazione nativa Next.js, cron incluso |
-| Monitoring/log errori | **Sentry (free tier)** | Visibilità minima su errori in produzione durante i test con gli amici |
+| Layer                                           | Scelta                                                                                                                    | Motivazione                                                                                                                                             |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend + Backend                              | **Next.js 14+ (App Router), TypeScript**                                                                                  | Full-stack unico, API routes/server actions, deploy semplice, ottimo fit per MVP senza team dedicato al backend                                         |
+| Autenticazione                                  | **Auth.js (NextAuth)** con provider Strava custom                                                                         | OAuth Strava nativo come login, gestione sessione standard                                                                                              |
+| Database                                        | **PostgreSQL** su **Neon** (free tier)                                                                                    | Serverless, scalabile, free tier sufficiente per MVP/demo                                                                                               |
+| ORM                                             | **Prisma**                                                                                                                | Type-safety, migrazioni gestite, buon fit con TS                                                                                                        |
+| UI                                              | **Tailwind CSS + shadcn/ui**                                                                                              | Sviluppo rapido, componenti accessibili, personalizzabili                                                                                               |
+| Data fetching client                            | **TanStack Query**                                                                                                        | Cache, invalidazione, gestione stato server                                                                                                             |
+| Validazione                                     | **Zod**                                                                                                                   | Validazione input API e output strutturato LLM                                                                                                          |
+| Job asincroni (sync Strava, ricalcolo metriche) | **Vercel Cron Jobs** + queue leggera (es. tabella `Job` con stato, oppure Upstash QStash free tier)                       | Evita infrastruttura pesante (no Redis/worker dedicato) mantenendo affidabilità                                                                         |
+| LLM                                             | **Astrazione provider-agnostic**: OpenAI e DeepSeek, switchabili via config/env, selezionabili anche per singola chiamata | Costi contenuti (DeepSeek default per generazione/analisi massiva), OpenAI disponibile per task dove serve qualità extra o dove l'utente ha già credito |
+| Notifiche                                       | **Web Push API** (service worker) + notifiche in-app                                                                      | Nessun costo, nessuna dipendenza da app store per l'MVP                                                                                                 |
+| Deploy                                          | **Vercel**                                                                                                                | Free tier generoso, integrazione nativa Next.js, cron incluso                                                                                           |
+| Monitoring/log errori                           | **Sentry (free tier)**                                                                                                    | Visibilità minima su errori in produzione durante i test con gli amici                                                                                  |
 
 ### 8.2 Astrazione LLM
 
@@ -168,6 +176,7 @@ interface LLMProvider {
   generateProgram(input: ProgramGenerationInput): Promise<ProgramGenerationOutput>;
   analyzeFeedback(input: FeedbackInput): Promise<FeedbackAnalysisOutput>;
   analyzePerformance(input: PerformanceInput): Promise<PerformanceReportOutput>;
+  adaptWeek(input: AdaptWeekInput): Promise<AdaptWeekOutput>;
 }
 ```
 

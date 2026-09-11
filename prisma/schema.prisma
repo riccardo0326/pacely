@@ -45,13 +45,13 @@ model StravaConnection {
   updatedAt             DateTime  @updatedAt
 }
 
-/// Imported Strava activity (run / swim / ride). Always queried with userId.
+/// Imported Strava activity. Always queried with userId.
 model Activity {
   id                String   @id @default(cuid())
   userId            String
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   stravaActivityId  String
-  /// `run` | `swim` | `ride`
+  /// `run` | `swim` | `ride` | `other` (hike/walk/etc. unplanned load)
   sport             String
   name              String?
   startedAt         DateTime
@@ -102,7 +102,7 @@ model LLMInteractionLog {
   id               String   @id @default(cuid())
   userId           String
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  /// `generate_program` | `analyze_feedback` | `analyze_performance`
+  /// `generate_program` | `analyze_feedback` | `analyze_performance` | `adapt_week`
   interactionType  String
   provider         String
   model            String
@@ -234,7 +234,7 @@ model WorkoutFeedback {
   proposal RecalcProposal?
 }
 
-/// Suggested plan edits; never applied until the athlete approves (Fase 7).
+/// Suggested plan edits; never applied until the athlete approves (Fase 7 / 12).
 model RecalcProposal {
   id         String           @id @default(cuid())
   programId  String
@@ -243,6 +243,10 @@ model RecalcProposal {
   week       Week?            @relation(fields: [weekId], references: [id], onDelete: SetNull)
   feedbackId String?          @unique
   feedback   WorkoutFeedback? @relation(fields: [feedbackId], references: [id], onDelete: SetNull)
+  /// `feedback` | `week_adapt`
+  source     String           @default("feedback")
+  situationText String?
+  situationTags String[]      @default([])
   rationale  String
   /// `RecalcChanges` JSON: action + per-workout from/to patches.
   changes    Json

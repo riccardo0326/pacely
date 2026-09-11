@@ -166,6 +166,12 @@ A **recalc proposal** is generated only when all of these hold:
 
 The workout diff is built algorithmically from `suggestedAction` (`reduce_load`, `shift_rest_day`, `extend_recovery`) — not a second LLM call. Approve/reject is explicit in the UI (dashboard, calendar, program detail). Approving writes the patches onto future `Workout` rows; rejecting only updates `RecalcProposal.status`.
 
+### Week adapt (situation-based)
+
+`LLMProvider.adaptWeek` rewrites **remaining** `planned` workouts in the current program week from a life situation (illness, injury, extra Strava load, travel, no time, personal conflict). Output is Zod-validated patches; a deterministic repair layer enforces slots, frozen completed sessions, TSS bands, and key-session protection (skip only for illness/injury). Stored as `RecalcProposal` with `source=week_adapt`. Still never auto-applied.
+
+Strava Hike/Walk/Workout/etc. import as sport `other` (unplanned load in CTL/ATL, never matched to planned workouts).
+
 ### Performance reports
 
 `LLMProvider.analyzePerformance` builds an informational summary from:
@@ -251,6 +257,7 @@ interface LLMProvider {
   analyzePerformance(
     input: PerformanceAnalysisInput,
   ): Promise<PerformanceReportOutput>;
+  adaptWeek(input: AdaptWeekInput): Promise<AdaptWeekOutput>;
 }
 ```
 
@@ -276,7 +283,7 @@ Generate/regenerate program: 5 LLM calls per user per hour. Feedback analysis: 2
 
 ### Cost (beta scenario)
 
-Conservative amateur month on DeepSeek (`lib/llm/usage-scenario.ts`): 2× generate program, 16× analyze feedback, 2× analyze performance ≈ **$0.025 / user / month** at list prices in `lib/llm/constants.ts`. Ten concurrent friends ≈ **$0.25 / month**. Query `LLMInteractionLog` for live totals.
+Conservative amateur month on DeepSeek (`lib/llm/usage-scenario.ts`): 2× generate program, 16× analyze feedback, 2× analyze performance, 4× adapt week ≈ **$0.034 / user / month** at list prices in `lib/llm/constants.ts`. Ten concurrent friends ≈ **$0.34 / month**. Query `LLMInteractionLog` for live totals.
 
 ---
 

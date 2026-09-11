@@ -66,8 +66,12 @@ describe("normalizeStravaActivity", () => {
     expect(
       normalizeStravaActivity(
         activity({ sport_type: "Workout", type: "Workout" }),
-      ),
-    ).toBeNull();
+      )?.sport,
+    ).toBe("other");
+    expect(
+      normalizeStravaActivity(activity({ sport_type: "Hike", type: "Hike" }))
+        ?.sport,
+    ).toBe("other");
   });
 
   it("falls back to elapsed_time and type when moving_time/sport_type are missing", () => {
@@ -95,7 +99,7 @@ describe("applyBackfillPage", () => {
   it("counts imported vs skipped sports and advances the page", () => {
     const result = applyBackfillPage({ page: 2, imported: 10, skipped: 1 }, [
       activity({ id: 1, sport_type: "Run" }),
-      activity({ id: 2, sport_type: "Yoga" }),
+      activity({ id: 2, sport_type: "EBikeRide" }),
       activity({ id: 3, sport_type: "Swim" }),
     ]);
     expect(result.activities.map((item) => item.sport)).toEqual([

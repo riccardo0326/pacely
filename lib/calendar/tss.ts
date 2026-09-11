@@ -4,7 +4,7 @@ import type {
   AthleteThresholds,
 } from "@/lib/metrics/types";
 import { thresholdSpeedMpsFromVdot } from "@/lib/metrics/vdot";
-import type { Sport } from "@/lib/strava/constants";
+import type { ActivitySport } from "@/lib/strava/constants";
 
 export function thresholdsFromSnapshot(
   snapshot: {
@@ -40,11 +40,16 @@ export function activityTssFromRow(
   },
   thresholds: AthleteThresholds,
 ): number {
-  if (row.sport !== "run" && row.sport !== "swim" && row.sport !== "ride") {
+  if (
+    row.sport !== "run" &&
+    row.sport !== "swim" &&
+    row.sport !== "ride" &&
+    row.sport !== "other"
+  ) {
     return 0;
   }
   const input: ActivityMetricsInput = {
-    sport: row.sport as Sport,
+    sport: row.sport as ActivitySport,
     startedAt: row.startedAt,
     durationSec: row.durationSec,
     distanceM: row.distanceM,

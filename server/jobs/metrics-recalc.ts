@@ -29,7 +29,12 @@ function activityToInput(row: {
   averageSpeedMps: number | null;
   perceivedExertion: number | null;
 }): ActivityMetricsInput | null {
-  if (row.sport !== "run" && row.sport !== "swim" && row.sport !== "ride") {
+  if (
+    row.sport !== "run" &&
+    row.sport !== "swim" &&
+    row.sport !== "ride" &&
+    row.sport !== "other"
+  ) {
     return null;
   }
   return {

@@ -17,8 +17,12 @@ export type JobStatus = (typeof JOB_STATUS)[keyof typeof JOB_STATUS];
 export const SPORTS = ["run", "swim", "ride"] as const;
 export type Sport = (typeof SPORTS)[number];
 
-export const SPORT_LABELS: Record<Sport, string> = {
+export const ACTIVITY_SPORTS = ["run", "swim", "ride", "other"] as const;
+export type ActivitySport = (typeof ACTIVITY_SPORTS)[number];
+
+export const SPORT_LABELS: Record<ActivitySport, string> = {
   run: "Corsa",
   swim: "Nuoto",
   ride: "Ciclismo",
+  other: "Extra",
 };

@@ -10,22 +10,28 @@ import {
   fallbackAnalyzeFeedback,
   fallbackAnalyzePerformance,
   fallbackGenerateProgram,
+  fallbackAdaptWeek,
 } from "@/lib/llm/fallback";
 import { safePersistLLMUsage } from "@/lib/llm/log";
 import {
   FEEDBACK_SYSTEM_PROMPT,
   PROGRAM_SYSTEM_PROMPT,
+  ADAPT_WEEK_SYSTEM_PROMPT,
+  buildAdaptWeekUserPrompt,
   buildPerformanceUserPrompt,
   buildProgramUserPrompt,
   performanceSystemPrompt,
 } from "@/lib/llm/prompts";
 import {
+  adaptWeekInputSchema,
+  adaptWeekOutputSchema,
   feedbackAnalysisInputSchema,
   feedbackAnalysisOutputSchema,
   performanceAnalysisInputSchema,
   performanceReportOutputSchema,
   programGenerationInputSchema,
   programGenerationOutputSchema,
+  type AdaptWeekInput,
   type FeedbackAnalysisInput,
   type PerformanceAnalysisInput,
   type ProgramGenerationInput,
@@ -246,6 +252,18 @@ export function createStructuredLLMProvider(
         system: performanceSystemPrompt(input.style),
         userPrompt: (value) => buildPerformanceUserPrompt(value),
         fallback: fallbackAnalyzePerformance,
+      });
+    },
+    adaptWeek(input: AdaptWeekInput) {
+      return run({
+        input,
+        parseInput: (value) => adaptWeekInputSchema.parse(value),
+        userId: input.userId,
+        interactionType: "adapt_week",
+        schema: adaptWeekOutputSchema,
+        system: ADAPT_WEEK_SYSTEM_PROMPT,
+        userPrompt: (value) => buildAdaptWeekUserPrompt(value),
+        fallback: fallbackAdaptWeek,
       });
     },
   };

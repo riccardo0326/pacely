@@ -2,9 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AdaptWeekSheet } from "@/components/adapt-week-sheet";
 import { Button } from "@/components/ui/button";
 import { WorkoutFeedbackForm } from "@/components/workout-feedback-form";
 import { WORKOUT_STATUS } from "@/lib/matching/constants";
+import type { ExtraLoadHint } from "@/server/actions/adapt-week";
 import {
   parseEditableBlocks,
   toStoredWorkoutBlocks,
@@ -328,25 +330,71 @@ function WorkoutEditor({
   );
 }
 
-export function ProgramTimeline({ program }: { program: ProgramDetail }) {
+export function ProgramTimeline({
+  program,
+  extraLoad = [],
+  hasPendingProposal = false,
+  today,
+}: {
+  program: ProgramDetail;
+  extraLoad?: ExtraLoadHint[];
+  hasPendingProposal?: boolean;
+  today: string;
+}) {
   return (
     <div className="flex flex-col gap-8">
-      {program.weeks.map((week) => (
-        <section key={week.id} className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-xl font-semibold">Settimana {week.number}</h2>
-            <p className="text-sm text-muted-foreground">
-              Target TSS {week.weekLoadTarget.toFixed(0)}
-              {week.focus ? ` · ${week.focus}` : ""}
-            </p>
-          </div>
-          <div className="flex flex-col gap-3">
-            {week.workouts.map((workout) => (
-              <WorkoutEditor key={workout.id} workout={workout} />
-            ))}
-          </div>
-        </section>
-      ))}
+      {program.weeks.map((week) => {
+        const remaining = week.workouts.filter(
+          (workout) =>
+            workout.status === WORKOUT_STATUS.planned &&
+            workout.plannedDate.slice(0, 10) >= today,
+        );
+        const inWindow = week.workouts.some(
+          (workout) =>
+            workout.plannedDate.slice(0, 10) >= today || remaining.length > 0,
+        );
+        const canShowAdapt =
+          program.status === "active" && remaining.length > 0 && inWindow;
+        let disabledReason: string | null = null;
+        if (program.status !== "active") {
+          disabledReason = "Disponibile solo sui programmi attivi.";
+        } else if (hasPendingProposal) {
+          disabledReason = "Approva o rifiuta la proposta in attesa.";
+        } else if (remaining.length === 0) {
+          disabledReason = null;
+        }
+
+        return (
+          <section key={week.id} className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-semibold">
+                  Settimana {week.number}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Target TSS {week.weekLoadTarget.toFixed(0)}
+                  {week.focus ? ` · ${week.focus}` : ""}
+                </p>
+              </div>
+              {canShowAdapt ? (
+                <AdaptWeekSheet
+                  programId={program.id}
+                  weekId={week.id}
+                  weekNumber={week.number}
+                  remainingCount={remaining.length}
+                  extraLoad={extraLoad}
+                  disabledReason={disabledReason}
+                />
+              ) : null}
+            </div>
+            <div className="flex flex-col gap-3">
+              {week.workouts.map((workout) => (
+                <WorkoutEditor key={workout.id} workout={workout} />
+              ))}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }

@@ -12,6 +12,8 @@ export const USER_FACING_ERROR = {
   profileSave:
     "Non siamo riusciti a salvare il profilo. Controlla i valori e riprova.",
   gearSave: "Non siamo riusciti a salvare l'attrezzatura. Riprova.",
+  adaptWeek:
+    "Non siamo riusciti ad adattare la settimana. Riprova tra un minuto.",
   importProcess: "Import interrotto. Puoi riprovare.",
   importRetry: "Impossibile riavviare l'import. Riprova tra poco.",
   pageLoad: "Non siamo riusciti a caricare questa pagina. Riprova.",

@@ -3,11 +3,11 @@ import {
   stravaActivityPayloadSchema,
   type BackfillProgress,
 } from "@/lib/strava/schemas";
-import type { Sport } from "@/lib/strava/constants";
+import type { ActivitySport } from "@/lib/strava/constants";
 
 export type NormalizedActivity = {
   stravaActivityId: string;
-  sport: Sport;
+  sport: ActivitySport;
   name: string | null;
   startedAt: Date;
   durationSec: number;

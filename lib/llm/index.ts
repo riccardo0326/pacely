@@ -27,6 +27,7 @@ export {
   fallbackAnalyzeFeedback,
   fallbackAnalyzePerformance,
   fallbackGenerateProgram,
+  fallbackAdaptWeek,
 } from "@/lib/llm/fallback";
 export {
   DEFAULT_LLM_PROVIDER,
@@ -43,6 +44,8 @@ export type {
   TokenUsage,
 } from "@/lib/llm/types";
 export type {
+  AdaptWeekInput,
+  AdaptWeekOutput,
   FeedbackAnalysisInput,
   FeedbackAnalysisOutput,
   PerformanceAnalysisInput,
@@ -51,6 +54,8 @@ export type {
   ProgramGenerationOutput,
 } from "@/lib/llm/schemas";
 export {
+  adaptWeekInputSchema,
+  adaptWeekOutputSchema,
   feedbackAnalysisInputSchema,
   feedbackAnalysisOutputSchema,
   performanceAnalysisInputSchema,
@@ -66,11 +71,13 @@ export {
   LLMTimeoutError,
 } from "@/lib/llm/errors";
 export {
+  assertAdaptWeekQuota,
   assertAnalyzeFeedbackQuota,
   assertAnalyzePerformanceQuota,
   assertGenerateProgramQuota,
   isLlmQuotaExceeded,
   LlmQuotaExceededError,
+  LLM_ADAPT_WEEK_MAX_PER_HOUR,
   LLM_ANALYZE_FEEDBACK_MAX_PER_HOUR,
   LLM_ANALYZE_PERFORMANCE_MAX_PER_HOUR,
   LLM_GENERATE_PROGRAM_MAX_PER_HOUR,

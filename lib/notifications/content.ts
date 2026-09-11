@@ -1,4 +1,4 @@
-import { SPORT_LABELS, type Sport } from "@/lib/strava/constants";
+import { SPORT_LABELS, type ActivitySport } from "@/lib/strava/constants";
 import { routes } from "@/lib/routes";
 import { NOTIFICATION_TYPE } from "@/lib/notifications/constants";
 
@@ -17,7 +17,7 @@ export type NotificationContent = {
 
 function sportLabel(sport: string): string {
   if (sport in SPORT_LABELS) {
-    return SPORT_LABELS[sport as Sport];
+    return SPORT_LABELS[sport as ActivitySport];
   }
   return sport;
 }
