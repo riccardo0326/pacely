@@ -2,11 +2,14 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useEffect } from "react";
 import { SportBadge } from "@/components/sport-badge";
 import { Button } from "@/components/ui/button";
 import { USER_FACING_ERROR } from "@/lib/errors/user-facing";
 import { JOB_STATUS } from "@/lib/strava/constants";
+import { formatActivityDistance } from "@/lib/strava/format";
+import { routes } from "@/lib/routes";
 import { stravaActivityUrl } from "@/lib/ui/theme";
 import {
   getImportStatus,
@@ -30,16 +33,6 @@ function formatWhen(iso: string): string {
 
 function formatDay(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", RECENT_DATE);
-}
-
-function formatDistance(distanceM: number | null, sport: string): string {
-  if (distanceM == null) {
-    return "—";
-  }
-  if (sport === "swim") {
-    return `${Math.round(distanceM)} m`;
-  }
-  return `${(distanceM / 1000).toFixed(1)} km`;
 }
 
 export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
@@ -188,8 +181,8 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
 
       {job?.status === JOB_STATUS.done && data.activityCount === 0 ? (
         <p className="mt-4 text-sm text-muted-foreground">
-          Import completato, ma non ci sono attività di corsa, nuoto o ciclismo.
-          Puoi comunque creare un programma.
+          Import completato, ma non ci sono attività di corsa, nuoto, ciclismo o
+          extra. Puoi comunque creare un programma.
         </p>
       ) : null}
 
@@ -197,7 +190,7 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <p className="text-sm">
             <strong>{data.activityCount}</strong> attività importate (corsa,
-            nuoto, ciclismo).
+            nuoto, ciclismo, extra).
           </p>
           <Button
             type="button"
@@ -208,6 +201,11 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
           >
             {syncMutation.isPending ? "Sincronizzo..." : "Sincronizza ora"}
           </Button>
+          {data.activityCount > 0 ? (
+            <Button asChild size="sm" variant="outline">
+              <Link href={routes.activities}>Vedi tutte</Link>
+            </Button>
+          ) : null}
         </div>
       ) : null}
 
@@ -233,7 +231,7 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
                   </span>
                 </span>
                 <span className="shrink-0 tabular-nums text-muted-foreground">
-                  {formatDistance(activity.distanceM, activity.sport)}
+                  {formatActivityDistance(activity.distanceM, activity.sport)}
                 </span>
                 <ChevronRight className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
               </a>

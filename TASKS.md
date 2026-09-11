@@ -195,6 +195,22 @@ Assunzioni Fase 12: mai automatico; una proposta `pending` per programma; solo s
 
 ---
 
+## Fase 13 — Polish UX beta
+
+- [x] Tooltip `?`: un solo popup aperto, overlay centrato su mobile, nessun overflow orizzontale di pagina.
+- [x] Pagina `/activities` con filtri sport + paginazione; link dalla dashboard; hike visibili in Extra.
+- [x] Riga di spiegazione (title glossario) dentro ogni box KPI, oltre al `?`.
+- [x] Grafico PMC: chip 7/30/90, fullscreen mobile, pan/scroll sulla timeline.
+- [x] Calendario: rimuovere Oggi/Giorno; default settimana; barra nav mobile titolo + 2 pill.
+- [x] Banner carico extra: CTA «Adatta il programma» (deep-link allo sheet).
+- [x] Da extra/unplanned: abbinare a mano a un workout della settimana (altro giorno). Matching automatico invariato.
+- [x] Mostrare ritmo 15–30 s/km sui blocchi corsa (helper VDOT + timeline).
+- [x] Un CTA «Adatta il programma»; picker solo settimana corrente o prossima.
+
+Assunzioni Fase 13: `MATCH_MAX_DAY_OFFSET` resta 0. Lo scroll interno della striscia settimana del calendario resta. Ritmi solo per corsa se c’è VDOT; niente numeri inventati. Extra/hike restano sport `other`.
+
+---
+
 ## Backlog futuro (esplicitamente fuori scope MVP)
 
 Da non implementare ora — annotare qui eventuali idee emerse durante lo sviluppo, non realizzarle:

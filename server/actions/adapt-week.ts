@@ -13,6 +13,7 @@ import {
   pickKeyWorkoutId,
   repairAdaptWeek,
 } from "@/lib/feedback/adapt-week";
+import { pickAdaptableWeeks } from "@/lib/feedback/adapt-weeks";
 import { SITUATION_TAG_LABEL } from "@/lib/feedback/labels";
 import { USER_FACING_ERROR, toUserFacingError } from "@/lib/errors/user-facing";
 import { getLLMProvider } from "@/lib/llm";
@@ -153,14 +154,14 @@ export async function requestWeekAdapt(
     include: {
       goal: { select: { description: true } },
       weeks: {
-        where: { id: parsed.data.weekId },
         include: {
           workouts: { orderBy: { plannedDate: "asc" } },
         },
+        orderBy: { number: "asc" },
       },
     },
   });
-  const week = program?.weeks[0];
+  const week = program?.weeks.find((row) => row.id === parsed.data.weekId);
   if (!program || !week) {
     return { ok: false, error: "Programma o settimana non trovati" };
   }
@@ -168,6 +169,15 @@ export async function requestWeekAdapt(
     return {
       ok: false,
       error: "Puoi adattare solo un programma attivo",
+    };
+  }
+
+  const today = utcToday();
+  const adaptable = pickAdaptableWeeks(program.weeks, today);
+  if (!adaptable.some((row) => row.id === week.id)) {
+    return {
+      ok: false,
+      error: "Puoi adattare solo la settimana corrente o la prossima",
     };
   }
 
@@ -184,7 +194,6 @@ export async function requestWeekAdapt(
     };
   }
 
-  const today = utcToday();
   const remainingRows = week.workouts.filter(
     (workout) =>
       workout.status === WORKOUT_STATUS.planned &&
