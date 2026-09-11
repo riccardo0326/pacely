@@ -7,6 +7,7 @@ import {
   WorkoutComparison,
 } from "@/components/planned-vs-actual";
 import { WorkoutStatusBadge } from "@/components/status-badge";
+import { UnplannedMatchControls } from "@/components/unplanned-match-controls";
 import { WorkoutFeedbackForm } from "@/components/workout-feedback-form";
 import { WorkoutMatchControls } from "@/components/workout-match-controls";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import { routes } from "@/lib/routes";
 import { sportBadgeClass, sportLabel } from "@/lib/ui/theme";
 import { cn } from "@/lib/utils";
 import type {
+  CalendarActivityCard,
   CalendarData,
   CalendarDay,
   CalendarWorkoutCard,
@@ -57,17 +59,17 @@ function formatDayHeading(date: string): string {
   });
 }
 
-function formatFullDayHeading(date: string): string {
-  return new Date(`${date}T00:00:00.000Z`).toLocaleDateString("it-IT", {
-    timeZone: "UTC",
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
+function weekHref(date: string): string {
+  return `${routes.calendar}?view=week&date=${date}`;
 }
 
-function dayHref(date: string): string {
-  return `${routes.calendar}?view=day&date=${date}`;
+function plannedUnmatched(data: CalendarData): CalendarWorkoutCard[] {
+  return data.days.flatMap((day) =>
+    day.workouts.filter(
+      (workout) =>
+        workout.status === WORKOUT_STATUS.planned && !workout.activity,
+    ),
+  );
 }
 
 function WorkoutCard({
@@ -124,16 +126,12 @@ function WorkoutCard({
 }
 
 function UnplannedCard({
-  name,
-  sport,
-  durationMin,
-  tss,
+  activity,
+  workouts,
   size = "compact",
 }: {
-  name: string | null;
-  sport: string;
-  durationMin: number;
-  tss?: number;
+  activity: CalendarActivityCard;
+  workouts: CalendarWorkoutCard[];
   size?: "compact" | "full";
 }) {
   return (
@@ -144,13 +142,14 @@ function UnplannedCard({
       )}
     >
       <p className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
-        Fuori piano · {sportLabel(sport)}
+        Fuori piano · {sportLabel(activity.sport)}
       </p>
-      <p className="text-sm">{name ?? "Attività Strava"}</p>
+      <p className="text-sm">{activity.name ?? "Attività Strava"}</p>
       <p className="text-xs text-muted-foreground">
-        {durationMin} min
-        {tss != null && tss > 0 ? ` · TSS ~${Math.round(tss)}` : ""}
+        {activity.durationMin} min
+        {activity.tss > 0 ? ` · TSS ~${Math.round(activity.tss)}` : ""}
       </p>
+      <UnplannedMatchControls activity={activity} workouts={workouts} />
     </article>
   );
 }
@@ -164,7 +163,13 @@ function RestHint() {
   );
 }
 
-function WeekDayColumn({ day }: { day: CalendarDay }) {
+function WeekDayColumn({
+  day,
+  workouts,
+}: {
+  day: CalendarDay;
+  workouts: CalendarWorkoutCard[];
+}) {
   return (
     <section
       className={cn(
@@ -173,9 +178,7 @@ function WeekDayColumn({ day }: { day: CalendarDay }) {
       )}
     >
       <h3 className="text-sm font-medium capitalize">
-        <Link href={dayHref(day.date)} className="hover:underline">
-          {formatDayHeading(day.date)}
-        </Link>
+        <span>{formatDayHeading(day.date)}</span>
       </h3>
       {day.workouts.length === 0 && day.unplannedActivities.length === 0 ? (
         <RestHint />
@@ -186,41 +189,8 @@ function WeekDayColumn({ day }: { day: CalendarDay }) {
       {day.unplannedActivities.map((activity) => (
         <UnplannedCard
           key={activity.id}
-          name={activity.name}
-          sport={activity.sport}
-          durationMin={activity.durationMin}
-          tss={activity.tss}
-        />
-      ))}
-    </section>
-  );
-}
-
-function DayBoard({ day }: { day: CalendarDay }) {
-  return (
-    <section
-      className={cn(
-        "flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:p-5",
-        day.isToday && "ring-2 ring-primary/40",
-      )}
-    >
-      <h3 className="text-lg font-semibold capitalize">
-        {formatFullDayHeading(day.date)}
-      </h3>
-      {day.workouts.length === 0 && day.unplannedActivities.length === 0 ? (
-        <RestHint />
-      ) : null}
-      {day.workouts.map((workout) => (
-        <WorkoutCard key={workout.id} workout={workout} size="full" />
-      ))}
-      {day.unplannedActivities.map((activity) => (
-        <UnplannedCard
-          key={activity.id}
-          name={activity.name}
-          sport={activity.sport}
-          durationMin={activity.durationMin}
-          tss={activity.tss}
-          size="full"
+          activity={activity}
+          workouts={workouts}
         />
       ))}
     </section>
@@ -232,7 +202,7 @@ function MonthCell({ day }: { day: CalendarDay }) {
   const overflow = day.workouts.length - 3;
   return (
     <Link
-      href={dayHref(day.date)}
+      href={weekHref(day.date)}
       className={cn(
         "flex min-h-11 flex-col gap-1 rounded-lg border border-border bg-card p-1 text-left hover:bg-muted/40 sm:min-h-24 sm:p-1.5",
         !day.inMonth && "opacity-40",
@@ -282,21 +252,13 @@ function MonthCell({ day }: { day: CalendarDay }) {
   );
 }
 
-function WeekAdaptCta({ data }: { data: CalendarData }) {
-  const programId = data.days.flatMap((day) => day.workouts).at(0)?.programId;
-  if (!programId) {
-    return null;
-  }
-  return (
-    <div className="flex justify-end">
-      <Button asChild size="sm" variant="outline">
-        <Link href={routes.program(programId)}>Adatta questa settimana</Link>
-      </Button>
-    </div>
-  );
-}
-
-function ExtraLoadBanner({ data }: { data: CalendarData }) {
+function ExtraLoadBanner({
+  data,
+  workouts,
+}: {
+  data: CalendarData;
+  workouts: CalendarWorkoutCard[];
+}) {
   const extras = data.days.flatMap((day) => day.unplannedActivities);
   const notable = extras.filter(
     (activity) =>
@@ -307,20 +269,44 @@ function ExtraLoadBanner({ data }: { data: CalendarData }) {
   if (notable.length === 0 || !data.hasActiveProgram) {
     return null;
   }
-  const programId = data.days.flatMap((day) => day.workouts).at(0)?.programId;
   const names = notable
     .map((row) => row.name ?? sportLabel(row.sport))
     .slice(0, 2)
     .join(", ");
+  const programId =
+    data.days.flatMap((day) => day.workouts).at(0)?.programId ??
+    data.activeProgramId;
+  const canMatch = notable.some((activity) =>
+    workouts.some(
+      (workout) =>
+        workout.sport === activity.sport &&
+        workout.status === WORKOUT_STATUS.planned &&
+        !workout.activity,
+    ),
+  );
   return (
     <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 px-4 py-3 text-sm">
       <p className="font-medium">Carico extra su Strava</p>
       <p className="mt-1 text-muted-foreground">
-        {names}. Vuoi adattare gli allenamenti rimasti questa settimana?
+        {names}. Vuoi adattare gli allenamenti rimasti, o era un allenamento di
+        un altro giorno?
       </p>
+      {canMatch ? (
+        <div className="mt-3 flex flex-col gap-3">
+          {notable.map((activity) => (
+            <UnplannedMatchControls
+              key={activity.id}
+              activity={activity}
+              workouts={workouts}
+            />
+          ))}
+        </div>
+      ) : null}
       {programId ? (
-        <Button asChild size="sm" variant="outline" className="mt-2">
-          <Link href={routes.program(programId)}>Apri il programma</Link>
+        <Button asChild size="sm" variant="outline" className="mt-3">
+          <Link href={routes.program(programId, { adapt: true })}>
+            Adatta il programma
+          </Link>
         </Button>
       ) : null}
     </div>
@@ -328,7 +314,7 @@ function ExtraLoadBanner({ data }: { data: CalendarData }) {
 }
 
 export function CalendarView({ data }: { data: CalendarData }) {
-  const day = data.view === "day" ? data.days[0] : undefined;
+  const unmatched = plannedUnmatched(data);
 
   return (
     <div className="flex flex-col gap-6">
@@ -338,9 +324,8 @@ export function CalendarView({ data }: { data: CalendarData }) {
         rangeStart={data.rangeStart}
         rangeEnd={data.rangeEnd}
       />
-      {data.view === "week" ? <ExtraLoadBanner data={data} /> : null}
-      {data.view === "week" && data.hasActiveProgram ? (
-        <WeekAdaptCta data={data} />
+      {data.view === "week" ? (
+        <ExtraLoadBanner data={data} workouts={unmatched} />
       ) : null}
       {!data.hasActiveProgram ? (
         <EmptyState
@@ -355,14 +340,14 @@ export function CalendarView({ data }: { data: CalendarData }) {
       ) : (
         <PlannedVsActualSummary totals={data.totals} />
       )}
-      {data.view === "day" && day ? (
-        <div className="mx-auto w-full max-w-xl">
-          <DayBoard day={day} />
-        </div>
-      ) : data.view === "week" ? (
+      {data.view === "week" ? (
         <div className="flex gap-3 overflow-x-auto pb-2 snap-x sm:grid sm:grid-cols-7 sm:overflow-visible sm:pb-0">
           {data.days.map((column) => (
-            <WeekDayColumn key={column.date} day={column} />
+            <WeekDayColumn
+              key={column.date}
+              day={column}
+              workouts={unmatched}
+            />
           ))}
         </div>
       ) : (

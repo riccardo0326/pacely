@@ -72,3 +72,13 @@ export async function getDashboardMetrics(): Promise<MetricsPanelData> {
     zones,
   };
 }
+
+export async function getLatestVdot(): Promise<number | null> {
+  const user = await requireUser();
+  const row = await prisma.performanceMetricSnapshot.findFirst({
+    where: { userId: user.id },
+    orderBy: { date: "desc" },
+    select: { vdot: true },
+  });
+  return row?.vdot ?? null;
+}

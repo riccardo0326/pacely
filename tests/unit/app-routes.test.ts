@@ -17,6 +17,7 @@ describe("app routes", () => {
     expect(routes.report("abc")).toBe("/reports/abc");
     expect(routes.notifications).toBe("/notifications");
     expect(routes.profile).toBe("/profile");
+    expect(routes.activities).toBe("/activities");
   });
 
   it("protects dashboard, programs, calendar, reports, notifications, and profile, not login or public home", () => {
@@ -33,6 +34,8 @@ describe("app routes", () => {
     expect(isProtectedAppPath("/notifications/foo")).toBe(true);
     expect(isProtectedAppPath("/profile")).toBe(true);
     expect(isProtectedAppPath("/profile/foo")).toBe(true);
+    expect(isProtectedAppPath("/activities")).toBe(true);
+    expect(isProtectedAppPath("/activities/foo")).toBe(true);
     expect(isProtectedAppPath("/feedback")).toBe(false);
     expect(isProtectedAppPath("/login")).toBe(false);
     expect(isProtectedAppPath("/")).toBe(false);
@@ -53,6 +56,7 @@ describe("app routes", () => {
   it("matches the Next.js proxy matcher prefixes", () => {
     expect(PROXY_MATCHER).toEqual([
       "/dashboard/:path*",
+      "/activities/:path*",
       "/programs/:path*",
       "/calendar/:path*",
       "/reports/:path*",

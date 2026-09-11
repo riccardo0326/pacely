@@ -19,6 +19,7 @@ export type Sport = (typeof SPORTS)[number];
 
 export const ACTIVITY_SPORTS = ["run", "swim", "ride", "other"] as const;
 export type ActivitySport = (typeof ACTIVITY_SPORTS)[number];
+export type ActivitySportFilter = ActivitySport | "all";
 
 export const SPORT_LABELS: Record<ActivitySport, string> = {
   run: "Corsa",
@@ -26,3 +27,12 @@ export const SPORT_LABELS: Record<ActivitySport, string> = {
   ride: "Ciclismo",
   other: "Extra",
 };
+
+export function parseActivitySportFilter(
+  value: string | undefined,
+): ActivitySportFilter {
+  if (value && (ACTIVITY_SPORTS as readonly string[]).includes(value)) {
+    return value as ActivitySport;
+  }
+  return "all";
+}

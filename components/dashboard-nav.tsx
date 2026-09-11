@@ -12,6 +12,7 @@ import { logout } from "@/server/actions/auth";
 
 const NAV = [
   { href: routes.dashboard, label: "Dashboard", match: "exact" as const },
+  { href: routes.activities, label: "Attività", match: "prefix" as const },
   { href: routes.calendar, label: "Calendario", match: "prefix" as const },
   { href: routes.programs, label: "Programmi", match: "prefix" as const },
   { href: routes.reports, label: "Report", match: "prefix" as const },

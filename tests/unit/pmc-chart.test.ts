@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   clientXToIndex,
+  clampPmcOffset,
+  formatPmcRangeLabel,
   pmcXTickIndexes,
   pmcYDomain,
   pmcYTicks,
+  slicePmcWindow,
 } from "@/lib/ui/pmc-chart";
 import { PROGRAM_STATUS_LABEL, sportLabel } from "@/lib/ui/theme";
 
@@ -31,6 +34,24 @@ describe("pmc chart helpers", () => {
         left: 36,
       }),
     ).toBe(1);
+  });
+
+  it("slices a window from the end and clamps pan offset", () => {
+    const series = Array.from({ length: 10 }, (_, index) => ({
+      date: `2026-01-${String(index + 1).padStart(2, "0")}`,
+    }));
+    expect(slicePmcWindow(series, 3, 0).map((row) => row.date)).toEqual([
+      "2026-01-08",
+      "2026-01-09",
+      "2026-01-10",
+    ]);
+    expect(slicePmcWindow(series, 3, 2).map((row) => row.date)).toEqual([
+      "2026-01-06",
+      "2026-01-07",
+      "2026-01-08",
+    ]);
+    expect(clampPmcOffset(10, 3, 99)).toBe(7);
+    expect(formatPmcRangeLabel(slicePmcWindow(series, 3, 0))).toContain("–");
   });
 });
 

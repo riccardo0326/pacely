@@ -12,11 +12,12 @@ import { utcToday } from "@/lib/metrics/dates";
 import { routes } from "@/lib/routes";
 import { getPendingRecalcProposalForProgram } from "@/server/actions/feedback";
 import { listRecentExtraLoad } from "@/server/actions/adapt-week";
+import { getLatestVdot } from "@/server/actions/metrics";
 import { getProgram } from "@/server/actions/programs";
 
 type ProgramDetailPageProps = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ generated?: string }>;
+  searchParams: Promise<{ generated?: string; adapt?: string }>;
 };
 
 export default async function ProgramDetailPage({
@@ -25,11 +26,12 @@ export default async function ProgramDetailPage({
 }: ProgramDetailPageProps) {
   await requireUser();
   const { id } = await params;
-  const { generated } = await searchParams;
-  const [program, proposal, extraLoad] = await Promise.all([
+  const { generated, adapt } = await searchParams;
+  const [program, proposal, extraLoad, vdot] = await Promise.all([
     getProgram(id),
     getPendingRecalcProposalForProgram(id),
     listRecentExtraLoad(),
+    getLatestVdot(),
   ]);
   if (!program) {
     notFound();
@@ -74,6 +76,8 @@ export default async function ProgramDetailPage({
         extraLoad={extraLoad}
         hasPendingProposal={proposal !== null}
         today={utcToday()}
+        vdot={vdot}
+        initialAdaptOpen={adapt === "1"}
       />
     </main>
   );

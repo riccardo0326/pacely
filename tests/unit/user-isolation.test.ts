@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   proposalFindFirst: vi.fn(),
   workoutFindFirst: vi.fn(),
   activityFindFirst: vi.fn(),
+  activityFindMany: vi.fn(),
+  activityCount: vi.fn(),
   profileFindUnique: vi.fn(),
   profileCreate: vi.fn(),
   profileUpsert: vi.fn(),
@@ -41,7 +43,11 @@ vi.mock("@/lib/prisma", () => ({
     notification: { findMany: mocks.notificationFindMany, count: vi.fn() },
     recalcProposal: { findFirst: mocks.proposalFindFirst },
     workout: { findFirst: mocks.workoutFindFirst, findMany: vi.fn() },
-    activity: { findFirst: mocks.activityFindFirst },
+    activity: {
+      findFirst: mocks.activityFindFirst,
+      findMany: mocks.activityFindMany,
+      count: mocks.activityCount,
+    },
     userProfile: {
       findUnique: mocks.profileFindUnique,
       create: mocks.profileCreate,
@@ -85,7 +91,8 @@ import {
 } from "@/server/actions/reports";
 import { listNotifications } from "@/server/actions/notifications";
 import { getPendingRecalcProposalForProgram } from "@/server/actions/feedback";
-import { skipWorkout } from "@/server/actions/calendar";
+import { linkWorkoutActivity, skipWorkout } from "@/server/actions/calendar";
+import { listActivities } from "@/server/actions/activities";
 import { deleteGear, getProfile } from "@/server/actions/profile";
 import { requestWeekAdapt } from "@/server/actions/adapt-week";
 
@@ -157,6 +164,32 @@ describe("per-user data isolation", () => {
     );
   });
 
+  it("links a Strava activity to a workout without requiring the same calendar day", async () => {
+    mocks.workoutFindFirst.mockResolvedValue({
+      id: "w-wed",
+      activityId: null,
+      week: { programId: "p1" },
+    });
+    mocks.activityFindFirst.mockResolvedValue({ id: "a-mon" });
+    mocks.transaction.mockImplementation(
+      async (fn: (tx: unknown) => unknown) => {
+        await fn({
+          workout: { updateMany: vi.fn(), update: vi.fn() },
+        });
+      },
+    );
+    const formData = new FormData();
+    formData.set("workoutId", "w-wed");
+    formData.set("activityId", "a-mon");
+    const result = await linkWorkoutActivity(formData);
+    expect(result).toEqual({ ok: true });
+    expect(mocks.activityFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "a-mon", userId: "user-a" },
+      }),
+    );
+  });
+
   it("refuses to skip another user's workout", async () => {
     mocks.workoutFindFirst.mockResolvedValue(null);
     const formData = new FormData();
@@ -224,6 +257,22 @@ describe("per-user data isolation", () => {
     expect(mocks.gearFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { userId: "user-a" },
+      }),
+    );
+  });
+
+  it("lists only the session user's activities", async () => {
+    mocks.activityCount.mockResolvedValue(0);
+    mocks.activityFindMany.mockResolvedValue([]);
+    await listActivities("run", "1");
+    expect(mocks.activityCount).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: "user-a", sport: "run" },
+      }),
+    );
+    expect(mocks.activityFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: "user-a", sport: "run" },
       }),
     );
   });
