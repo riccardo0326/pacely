@@ -99,4 +99,12 @@ describe("computeActivityTss", () => {
       ),
     ).toBe(0);
   });
+
+  it("estimates extra-load TSS for hikes with duration-only IF", () => {
+    const tss = computeActivityTss(
+      activity({ sport: "other", durationSec: 4 * 3600 }),
+      emptyThresholds,
+    );
+    expect(tss).toBeCloseTo(100, 5);
+  });
 });

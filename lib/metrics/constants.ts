@@ -33,8 +33,9 @@ export const LTHR_FROM_MAX_HR = 0.85;
 export const MAX_INTENSITY_FACTOR = 1.5;
 
 /** Duration-only IF when power, pace, HR, and RPE are all missing. */
-export const FALLBACK_IF: Record<"run" | "swim" | "ride", number> = {
+export const FALLBACK_IF: Record<"run" | "swim" | "ride" | "other", number> = {
   run: 0.8,
   ride: 0.75,
   swim: 0.75,
+  other: 0.5,
 };

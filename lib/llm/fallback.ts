@@ -252,3 +252,5 @@ function tsbSentence(tsb: number): string {
   }
   return "La forma è restata in equilibrio tra carico e recupero.";
 }
+
+export { fallbackAdaptWeek } from "@/lib/feedback/adapt-week";

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { RECALC_ACTION_LABEL } from "@/lib/feedback/labels";
+import { RECALC_ACTION_LABEL, RECALC_OP_LABEL } from "@/lib/feedback/labels";
+import type { RecalcOp } from "@/lib/feedback/constants";
 import { routes } from "@/lib/routes";
 import {
   approveRecalcProposal,
@@ -52,15 +53,24 @@ function WorkoutDiff({
     );
   }
   const nameChanged = workout.nameFrom !== workout.nameTo;
+  const opLabel =
+    workout.op && workout.op in RECALC_OP_LABEL
+      ? RECALC_OP_LABEL[workout.op as RecalcOp]
+      : null;
 
   return (
     <li className="text-sm">
       <span className="font-medium">
-        {nameChanged
-          ? `${workout.nameFrom} → ${workout.nameTo}`
-          : workout.nameFrom}
+        {workout.skipped
+          ? `Saltato: ${workout.nameFrom}`
+          : nameChanged
+            ? `${workout.nameFrom} → ${workout.nameTo}`
+            : workout.nameFrom}
       </span>
-      {bits.length > 0 ? (
+      {opLabel ? (
+        <span className="text-muted-foreground"> · {opLabel}</span>
+      ) : null}
+      {bits.length > 0 && !workout.skipped ? (
         <span className="text-muted-foreground"> · {bits.join(" · ")}</span>
       ) : null}
     </li>
@@ -99,7 +109,9 @@ export function RecalcProposalCard({
   return (
     <section className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-4">
       <p className="text-xs font-medium tracking-wide text-amber-800 uppercase dark:text-amber-300">
-        Proposta di ricalcolo
+        {proposal.source === "week_adapt"
+          ? "Adatta la settimana"
+          : "Proposta di ricalcolo"}
       </p>
       <h2 className="mt-1 font-medium">
         {RECALC_ACTION_LABEL[proposal.action]}
@@ -117,6 +129,14 @@ export function RecalcProposalCard({
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">{proposal.rationale}</p>
       <p className="mt-1 text-sm">{proposal.summary}</p>
+      {proposal.weekLoadFrom != null &&
+      proposal.weekLoadTo != null &&
+      proposal.weekLoadFrom !== proposal.weekLoadTo ? (
+        <p className="mt-1 text-sm text-muted-foreground">
+          TSS settimana {Math.round(proposal.weekLoadFrom)} →{" "}
+          {Math.round(proposal.weekLoadTo)}
+        </p>
+      ) : null}
       <p className="mt-2 text-xs text-muted-foreground">
         Le modifiche non vengono applicate finché non le approvi.
       </p>

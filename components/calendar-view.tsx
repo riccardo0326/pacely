@@ -125,11 +125,15 @@ function WorkoutCard({
 
 function UnplannedCard({
   name,
+  sport,
   durationMin,
+  tss,
   size = "compact",
 }: {
   name: string | null;
+  sport: string;
   durationMin: number;
+  tss?: number;
   size?: "compact" | "full";
 }) {
   return (
@@ -140,10 +144,13 @@ function UnplannedCard({
       )}
     >
       <p className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
-        Fuori piano
+        Fuori piano · {sportLabel(sport)}
       </p>
       <p className="text-sm">{name ?? "Attività Strava"}</p>
-      <p className="text-xs text-muted-foreground">{durationMin} min</p>
+      <p className="text-xs text-muted-foreground">
+        {durationMin} min
+        {tss != null && tss > 0 ? ` · TSS ~${Math.round(tss)}` : ""}
+      </p>
     </article>
   );
 }
@@ -180,7 +187,9 @@ function WeekDayColumn({ day }: { day: CalendarDay }) {
         <UnplannedCard
           key={activity.id}
           name={activity.name}
+          sport={activity.sport}
           durationMin={activity.durationMin}
+          tss={activity.tss}
         />
       ))}
     </section>
@@ -208,7 +217,9 @@ function DayBoard({ day }: { day: CalendarDay }) {
         <UnplannedCard
           key={activity.id}
           name={activity.name}
+          sport={activity.sport}
           durationMin={activity.durationMin}
+          tss={activity.tss}
           size="full"
         />
       ))}
@@ -271,6 +282,51 @@ function MonthCell({ day }: { day: CalendarDay }) {
   );
 }
 
+function WeekAdaptCta({ data }: { data: CalendarData }) {
+  const programId = data.days.flatMap((day) => day.workouts).at(0)?.programId;
+  if (!programId) {
+    return null;
+  }
+  return (
+    <div className="flex justify-end">
+      <Button asChild size="sm" variant="outline">
+        <Link href={routes.program(programId)}>Adatta questa settimana</Link>
+      </Button>
+    </div>
+  );
+}
+
+function ExtraLoadBanner({ data }: { data: CalendarData }) {
+  const extras = data.days.flatMap((day) => day.unplannedActivities);
+  const notable = extras.filter(
+    (activity) =>
+      activity.sport === "other" ||
+      activity.durationMin >= 90 ||
+      activity.tss >= 60,
+  );
+  if (notable.length === 0 || !data.hasActiveProgram) {
+    return null;
+  }
+  const programId = data.days.flatMap((day) => day.workouts).at(0)?.programId;
+  const names = notable
+    .map((row) => row.name ?? sportLabel(row.sport))
+    .slice(0, 2)
+    .join(", ");
+  return (
+    <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 px-4 py-3 text-sm">
+      <p className="font-medium">Carico extra su Strava</p>
+      <p className="mt-1 text-muted-foreground">
+        {names}. Vuoi adattare gli allenamenti rimasti questa settimana?
+      </p>
+      {programId ? (
+        <Button asChild size="sm" variant="outline" className="mt-2">
+          <Link href={routes.program(programId)}>Apri il programma</Link>
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
 export function CalendarView({ data }: { data: CalendarData }) {
   const day = data.view === "day" ? data.days[0] : undefined;
 
@@ -282,6 +338,10 @@ export function CalendarView({ data }: { data: CalendarData }) {
         rangeStart={data.rangeStart}
         rangeEnd={data.rangeEnd}
       />
+      {data.view === "week" ? <ExtraLoadBanner data={data} /> : null}
+      {data.view === "week" && data.hasActiveProgram ? (
+        <WeekAdaptCta data={data} />
+      ) : null}
       {!data.hasActiveProgram ? (
         <EmptyState
           title="Nessun programma attivo"

@@ -13,6 +13,7 @@ interface LLMProvider {
   generateProgram(input: ProgramGenerationInput): Promise<ProgramGenerationOutput>;
   analyzeFeedback(input: FeedbackInput): Promise<FeedbackAnalysisOutput>;
   analyzePerformance(input: PerformanceInput): Promise<PerformanceReportOutput>;
+  adaptWeek(input: AdaptWeekInput): Promise<AdaptWeekOutput>;
 }
 ```
 

@@ -87,6 +87,7 @@ import { listNotifications } from "@/server/actions/notifications";
 import { getPendingRecalcProposalForProgram } from "@/server/actions/feedback";
 import { skipWorkout } from "@/server/actions/calendar";
 import { deleteGear, getProfile } from "@/server/actions/profile";
+import { requestWeekAdapt } from "@/server/actions/adapt-week";
 
 describe("per-user data isolation", () => {
   beforeEach(() => {
@@ -171,6 +172,24 @@ describe("per-user data isolation", () => {
           id: "workout-of-user-b",
           week: { program: { userId: "user-a" } },
         },
+      }),
+    );
+  });
+
+  it("loads a week adapt only for the session user's program", async () => {
+    mocks.programFindFirst.mockResolvedValue(null);
+    const formData = new FormData();
+    formData.set("programId", "program-of-user-b");
+    formData.set("weekId", "week-of-user-b");
+    formData.set("situationText", "Malato, non posso fare qualità domani.");
+    const result = await requestWeekAdapt(formData);
+    expect(result).toEqual({
+      ok: false,
+      error: "Programma o settimana non trovati",
+    });
+    expect(mocks.programFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "program-of-user-b", userId: "user-a" },
       }),
     );
   });

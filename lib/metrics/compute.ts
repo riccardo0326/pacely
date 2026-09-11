@@ -10,7 +10,7 @@ import type {
   SportDayLoad,
 } from "@/lib/metrics/types";
 import { computeIntensityZones } from "@/lib/metrics/zones";
-import type { Sport } from "@/lib/strava/constants";
+import type { ActivitySport } from "@/lib/strava/constants";
 
 function emptyLoad(): SportDayLoad {
   return { tss: 0, durationSec: 0, activityCount: 0 };
@@ -18,7 +18,7 @@ function emptyLoad(): SportDayLoad {
 
 function addLoad(
   breakdown: SportBreakdown,
-  sport: Sport,
+  sport: ActivitySport,
   tss: number,
   durationSec: number,
 ) {

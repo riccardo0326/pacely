@@ -160,7 +160,27 @@ export function computeActivityTss(
       return computeFinite(runTss(activity, thresholds));
     case "swim":
       return computeFinite(swimTss(activity, thresholds));
+    case "other":
+      return computeFinite(otherTss(activity, thresholds));
   }
+}
+
+/**
+ * Unplanned extra load (hike, walk, gym): HR or RPE if present, else easy IF.
+ */
+function otherTss(
+  activity: ActivityMetricsInput,
+  thresholds: AthleteThresholds,
+): number {
+  const fromHr = hrIntensity(activity.averageHeartrate, thresholds.lthr);
+  if (fromHr !== null) {
+    return tssFromIf(activity.durationSec, fromHr);
+  }
+  const fromRpe = rpeIntensity(activity.perceivedExertion);
+  if (fromRpe !== null) {
+    return tssFromIf(activity.durationSec, fromRpe);
+  }
+  return tssFromIf(activity.durationSec, FALLBACK_IF.other);
 }
 
 function computeFinite(value: number): number {

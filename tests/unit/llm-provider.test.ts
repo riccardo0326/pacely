@@ -13,6 +13,8 @@ import {
   chatApiBody,
   jsonResponse,
   programInput,
+  validAdaptWeek,
+  adaptWeekInput,
   validFeedback,
   validPerformance,
   validProgram,
@@ -239,6 +241,41 @@ describe("LLMProvider validation and fallback", () => {
 
     expect(result.source).toBe("llm");
     expect(result.data.summary).toBe("Periodo solido");
+  });
+
+  it("returns a week-adapt plan when JSON matches the schema", async () => {
+    const completeJson = mockCompleteJson(async () => ({
+      content: JSON.stringify(validAdaptWeek),
+      model: "deepseek-chat",
+      usage: usageMock(),
+    }));
+    const logUsage = mockLogUsage();
+    const provider = createDeepSeekProvider({ completeJson, logUsage });
+
+    const result = await provider.adaptWeek(adaptWeekInput);
+
+    expect(result.source).toBe("llm");
+    expect(result.data.strategy).toBe("postpone_quality");
+    expect(logUsage.mock.calls[0]?.[0]).toMatchObject({
+      interactionType: "adapt_week",
+      usedFallback: false,
+    });
+  });
+
+  it("falls back for week adapt when the payload is invalid", async () => {
+    const completeJson = mockCompleteJson(async () => ({
+      content: "{}",
+      model: "deepseek-chat",
+      usage: usageMock(),
+    }));
+    const provider = createDeepSeekProvider({
+      completeJson,
+      logUsage: async () => {},
+    });
+
+    const result = await provider.adaptWeek(adaptWeekInput);
+    expect(result.source).toBe("fallback");
+    expect(result.data.workouts.length).toBeGreaterThan(0);
   });
 
   it("throws on invalid input instead of inventing a program", async () => {

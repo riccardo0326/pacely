@@ -10,4 +10,5 @@ export const sportBreakdownSchema = z.object({
   run: sportDayLoadSchema.optional(),
   swim: sportDayLoadSchema.optional(),
   ride: sportDayLoadSchema.optional(),
+  other: sportDayLoadSchema.optional(),
 });

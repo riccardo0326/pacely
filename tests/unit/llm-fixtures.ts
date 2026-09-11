@@ -1,4 +1,6 @@
 import type {
+  AdaptWeekInput,
+  AdaptWeekOutput,
   FeedbackAnalysisOutput,
   PerformanceReportOutput,
   ProgramGenerationInput,
@@ -76,6 +78,53 @@ export const validPerformance: PerformanceReportOutput = {
   strengths: ["CTL in crescita"],
   improvements: ["TSB ancora negativo"],
   suggestions: ["Mantieni un giorno di riposo extra"],
+};
+
+export const adaptWeekInput: AdaptWeekInput = {
+  userId: "user-1",
+  situationText: "Ieri trekking, lunedì non posso fare il tempo.",
+  situationTags: ["extra_load"],
+  remainingWorkouts: [
+    {
+      id: "w-key",
+      weekId: "week-1",
+      sport: "run",
+      name: "Tempo",
+      plannedDate: "2026-09-08",
+      dayOfWeek: 2,
+      durationMin: 50,
+      tss: 90,
+      status: "planned",
+      isKeySession: true,
+      blocks: [
+        { type: "warm-up", durationMin: 10, description: "Jog" },
+        { type: "main-set", durationMin: 30, description: "Tempo" },
+        { type: "cool-down", durationMin: 10, description: "Walk" },
+      ],
+    },
+  ],
+  completedThisWeek: [],
+  extraActivities: [],
+  currentMetrics: { tsb: -12 },
+  weekLoadTarget: 300,
+  remainingTss: 90,
+  availableRemainingSlots: [{ weekday: 2 }, { weekday: 4 }],
+  sportsIncluded: ["run"],
+  keyWorkoutId: "w-key",
+};
+
+export const validAdaptWeek: AdaptWeekOutput = {
+  rationale: "Lunedì diventa recupero, qualità spostata.",
+  strategy: "postpone_quality",
+  workouts: [
+    {
+      workoutId: "w-key",
+      op: "retype",
+      name: "Recupero · Tempo",
+      durationMin: 35,
+      tss: 50,
+    },
+  ],
 };
 
 export function chatApiBody(content: string, model = "deepseek-chat") {

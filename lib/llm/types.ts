@@ -1,5 +1,7 @@
 import type { LLMInteractionType, LLMProviderName } from "@/lib/llm/constants";
 import type {
+  AdaptWeekInput,
+  AdaptWeekOutput,
   FeedbackAnalysisInput,
   FeedbackAnalysisOutput,
   PerformanceAnalysisInput,
@@ -82,4 +84,5 @@ export interface LLMProvider {
   analyzePerformance(
     input: PerformanceAnalysisInput,
   ): Promise<LLMResult<PerformanceReportOutput>>;
+  adaptWeek(input: AdaptWeekInput): Promise<LLMResult<AdaptWeekOutput>>;
 }

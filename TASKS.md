@@ -181,6 +181,20 @@ Assunzioni Fase 11: `UserProfile` (1:1) e `Gear` (1:N) su `User`. UI in `compone
 
 ---
 
+## Fase 12 — Adatta la settimana (situation-based week adapt)
+
+- [x] Modello `RecalcProposal` esteso (`source`, `situationText`, `situationTags`) + patch workout con `op` skip/move/retype.
+- [x] Import attività Strava extra (hike/walk/workout/…) come sport `other`, con TSS stimato nel PMC e senza matching ai workout del piano.
+- [x] Metodo `LLMProvider.adaptWeek` (JSON Zod, retry, fallback algoritmico, quota, `LLMInteractionLog`).
+- [x] Server action `requestWeekAdapt`: testo libero + chip situazione (fatica, malattia, infortunio, impegno personale, extra load, …) → proposta sui workout **rimanenti** della settimana corrente.
+- [x] UI “Adatta questa settimana” nel dettaglio programma (e calendario) con preview before/after e approvazione esplicita.
+- [x] Banner se ieri c’è un carico extra Strava non pianificato.
+- [x] Test: repair (slot illegali, key session, malattia/infortunio, completed frozen), fallback, isolation `userId`.
+
+Assunzioni Fase 12: mai automatico; una proposta `pending` per programma; solo settimana corrente (da oggi in poi); completed/skipped intoccati; slot `availableSlots` sono vincoli duri; la key session si sposta o si ammorbidisce, si salta solo con tag malattia/infortunio. Chip: `tired`, `little_time`, `niggle_injury`, `illness`, `travel`, `extra_load`, `no_quality`, `personal`. Quota 5 `adapt_week`/utente/ora. Hike/Walk non matchano i workout (`other`). Costo LLM scenario beta aggiornato a ~$0.034/atleta/mese con 4 adapt/mese.
+
+---
+
 ## Backlog futuro (esplicitamente fuori scope MVP)
 
 Da non implementare ora — annotare qui eventuali idee emerse durante lo sviluppo, non realizzarle:
@@ -190,6 +204,7 @@ Da non implementare ora — annotare qui eventuali idee emerse durante lo svilup
 - [ ] Autenticazione email/password indipendente da Strava.
 - [ ] Feedback vocale con trascrizione automatica (Whisper o equivalente).
 - [ ] Ricalcolo del piano completamente automatico (senza approvazione utente).
+- [ ] Adatta settimana: apply parziale (checkbox per patch), ripple sulla settimana successiva, check-in pre-qualità.
 - [ ] Export/push programmi verso Strava.
 - [ ] Eval live qualità generazione LLM (script opzionale fuori CI, dopo repair deterministico).
 - [ ] Notifiche push native mobile / app mobile dedicata.

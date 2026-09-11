@@ -8,7 +8,7 @@ import {
 describe("estimateMonthlyLlmCost", () => {
   it("prices a realistic amateur month on DeepSeek under one dollar", () => {
     const estimate = estimateMonthlyLlmCost("deepseek");
-    expect(estimate.calls).toBe(20);
+    expect(estimate.calls).toBe(24);
     expect(estimate.totalUsd).toBeGreaterThan(0);
     expect(estimate.totalUsd).toBeLessThan(0.05);
     const types = estimate.breakdown.map((row) => row.interactionType);
@@ -16,6 +16,7 @@ describe("estimateMonthlyLlmCost", () => {
       LLM_INTERACTION_TYPE.generateProgram,
       LLM_INTERACTION_TYPE.analyzeFeedback,
       LLM_INTERACTION_TYPE.analyzePerformance,
+      LLM_INTERACTION_TYPE.adaptWeek,
     ]);
   });
 
@@ -28,5 +29,6 @@ describe("estimateMonthlyLlmCost", () => {
     expect(BETA_MONTHLY_USAGE.generate_program.count).toBe(2);
     expect(BETA_MONTHLY_USAGE.analyze_feedback.count).toBe(16);
     expect(BETA_MONTHLY_USAGE.analyze_performance.count).toBe(2);
+    expect(BETA_MONTHLY_USAGE.adapt_week.count).toBe(4);
   });
 });

@@ -37,6 +37,11 @@ export const BETA_MONTHLY_USAGE: MonthlyUsageScenario = {
     promptTokens: 3_000,
     completionTokens: 1_200,
   },
+  [LLM_INTERACTION_TYPE.adaptWeek]: {
+    count: 4,
+    promptTokens: 4_000,
+    completionTokens: 2_500,
+  },
 };
 
 export type MonthlyCostBreakdown = {

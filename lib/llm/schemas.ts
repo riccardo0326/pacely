@@ -176,3 +176,88 @@ export const performanceReportOutputSchema = z.object({
 export type PerformanceReportOutput = z.infer<
   typeof performanceReportOutputSchema
 >;
+
+export const situationTagSchema = z.enum([
+  "tired",
+  "little_time",
+  "niggle_injury",
+  "illness",
+  "travel",
+  "extra_load",
+  "no_quality",
+  "personal",
+]);
+export type SituationTagValue = z.infer<typeof situationTagSchema>;
+
+export const adaptWeekStrategySchema = z.enum([
+  "recover",
+  "reshape",
+  "postpone_quality",
+  "timebox",
+]);
+
+export const adaptWeekWorkoutInputSchema = z.object({
+  id: z.string().min(1),
+  weekId: z.string().min(1),
+  sport: sportSchema,
+  name: z.string().min(1),
+  plannedDate: z.string().min(1),
+  dayOfWeek: z.number().int().min(0).max(6),
+  durationMin: z.number().positive(),
+  tss: z.number().nonnegative(),
+  timeOfDay: z.string().optional(),
+  status: z.enum(["planned", "completed", "skipped"]),
+  isKeySession: z.boolean(),
+  blocks: z.array(workoutBlockSchema),
+});
+
+export const adaptWeekExtraActivitySchema = z.object({
+  name: z.string().nullable(),
+  sport: z.string().min(1),
+  startedAt: z.string().min(1),
+  durationMin: z.number().nonnegative(),
+  tssEstimate: z.number().nonnegative(),
+});
+
+export const adaptWeekInputSchema = z.object({
+  userId: z.string().min(1),
+  situationText: z.string().min(1),
+  situationTags: z.array(situationTagSchema),
+  timeCapMin: z.number().int().positive().max(240).optional(),
+  timeCapDate: z.string().optional(),
+  remainingWorkouts: z.array(adaptWeekWorkoutInputSchema).min(1),
+  completedThisWeek: z.array(adaptWeekWorkoutInputSchema),
+  extraActivities: z.array(adaptWeekExtraActivitySchema),
+  currentMetrics: currentMetricsSchema,
+  weekFocus: z.string().optional(),
+  weekLoadTarget: z.number().nonnegative(),
+  remainingTss: z.number().nonnegative(),
+  availableRemainingSlots: z.array(availableSlotSchema).min(1),
+  sportsIncluded: z.array(sportSchema).min(1).max(3),
+  goalDescription: z.string().optional(),
+  keyWorkoutId: z.string().optional(),
+});
+export type AdaptWeekInput = z.infer<typeof adaptWeekInputSchema>;
+
+export const adaptWeekLlmPatchSchema = z.object({
+  workoutId: z.string().min(1),
+  op: z.enum(["scale", "retype", "move", "skip", "swap"]),
+  name: z.string().min(1).max(200).optional(),
+  durationMin: z.number().int().positive().max(600).optional(),
+  tss: z.number().nonnegative().max(500).optional(),
+  dayOfWeek: z.number().int().min(0).max(6).optional(),
+  plannedDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  blocks: z.array(workoutBlockSchema).optional(),
+  swapWithWorkoutId: z.string().min(1).optional(),
+});
+export type AdaptWeekLlmPatch = z.infer<typeof adaptWeekLlmPatchSchema>;
+
+export const adaptWeekOutputSchema = z.object({
+  rationale: z.string().min(1).max(800),
+  strategy: adaptWeekStrategySchema,
+  workouts: z.array(adaptWeekLlmPatchSchema).min(1),
+});
+export type AdaptWeekOutput = z.infer<typeof adaptWeekOutputSchema>;

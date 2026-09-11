@@ -1,7 +1,7 @@
-import type { Sport } from "@/lib/strava/constants";
+import type { ActivitySport, Sport } from "@/lib/strava/constants";
 
 export type ActivityMetricsInput = {
-  sport: Sport;
+  sport: ActivitySport;
   startedAt: Date;
   durationSec: number;
   distanceM: number | null;
@@ -31,7 +31,7 @@ export type SportDayLoad = {
   activityCount: number;
 };
 
-export type SportBreakdown = Partial<Record<Sport, SportDayLoad>>;
+export type SportBreakdown = Partial<Record<ActivitySport, SportDayLoad>>;
 
 export type DailyLoad = {
   date: string;
