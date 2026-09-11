@@ -89,3 +89,38 @@ export function formatPmcDate(isoDate: string): string {
     month: "short",
   });
 }
+
+export const PMC_WINDOW_DAYS = [7, 30, 90] as const;
+export type PmcWindowDays = (typeof PMC_WINDOW_DAYS)[number];
+
+export function clampPmcOffset(
+  pointCount: number,
+  windowDays: number,
+  offsetFromEnd: number,
+): number {
+  const maxOffset = Math.max(0, pointCount - windowDays);
+  return Math.max(0, Math.min(Math.round(offsetFromEnd), maxOffset));
+}
+
+export function slicePmcWindow<T>(
+  points: T[],
+  windowDays: number,
+  offsetFromEnd = 0,
+): T[] {
+  if (points.length === 0) {
+    return points;
+  }
+  const offset = clampPmcOffset(points.length, windowDays, offsetFromEnd);
+  const end = points.length - offset;
+  const start = Math.max(0, end - windowDays);
+  return points.slice(start, end);
+}
+
+export function formatPmcRangeLabel(points: Array<{ date: string }>): string {
+  const first = points[0];
+  const last = points.at(-1);
+  if (!first || !last) {
+    return "";
+  }
+  return `${formatPmcDate(first.date)} – ${formatPmcDate(last.date)}`;
+}

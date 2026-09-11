@@ -4,15 +4,19 @@ import { MetricsPmcChart } from "@/components/metrics-pmc-chart";
 import { EmptyState } from "@/components/empty-state";
 import { formatPace } from "@/lib/metrics/format";
 import type { PmcPoint, SportZones } from "@/lib/metrics/types";
-import type { MetricTerm } from "@/lib/ui/metric-glossary";
+import { METRIC_GLOSSARY, type MetricTerm } from "@/lib/ui/metric-glossary";
 
 function MetricCard({ term, value }: { term: MetricTerm; value: string }) {
+  const entry = METRIC_GLOSSARY[term];
   return (
     <div className="rounded-lg border border-border bg-card px-3 py-3">
       <p className="text-xs tracking-wide text-muted-foreground uppercase">
         <MetricLabel term={term} />
       </p>
       <p className="mt-1 text-xl font-semibold tabular-nums">{value}</p>
+      <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+        {entry.title}
+      </p>
     </div>
   );
 }

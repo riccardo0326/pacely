@@ -5,7 +5,9 @@ import { useState } from "react";
 import { AdaptWeekSheet } from "@/components/adapt-week-sheet";
 import { Button } from "@/components/ui/button";
 import { WorkoutFeedbackForm } from "@/components/workout-feedback-form";
+import { pickAdaptableWeeks } from "@/lib/feedback/adapt-weeks";
 import { WORKOUT_STATUS } from "@/lib/matching/constants";
+import { blockRunPaceLabel } from "@/lib/metrics/pace-window";
 import type { ExtraLoadHint } from "@/server/actions/adapt-week";
 import {
   parseEditableBlocks,
@@ -39,8 +41,10 @@ const METRIC_OPTIONS = [
 
 function WorkoutEditor({
   workout,
+  vdot,
 }: {
   workout: ProgramDetail["weeks"][number]["workouts"][number];
+  vdot: number | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -117,13 +121,21 @@ function WorkoutEditor({
       </div>
 
       <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
-        {parseEditableBlocks(workout.blocks).map((block, index) => (
-          <li key={index}>
-            {block.type}: {block.durationMin} min — {block.description || "—"}
-            {block.zone ? ` · Z${block.zone}` : ""}
-            {block.metric ? ` · ${block.metric}` : ""}
-          </li>
-        ))}
+        {parseEditableBlocks(workout.blocks).map((block, index) => {
+          const pace = blockRunPaceLabel({
+            sport: workout.sport,
+            zone: block.zone,
+            vdot,
+          });
+          return (
+            <li key={index}>
+              {block.type}: {block.durationMin} min — {block.description || "—"}
+              {block.zone ? ` · Z${block.zone}` : ""}
+              {pace ? ` · ${pace}` : ""}
+              {block.metric ? ` · ${block.metric}` : ""}
+            </li>
+          );
+        })}
       </ul>
 
       <WorkoutFeedbackForm
@@ -335,61 +347,45 @@ export function ProgramTimeline({
   extraLoad = [],
   hasPendingProposal = false,
   today,
+  vdot = null,
+  initialAdaptOpen = false,
 }: {
   program: ProgramDetail;
   extraLoad?: ExtraLoadHint[];
   hasPendingProposal?: boolean;
   today: string;
+  vdot?: number | null;
+  initialAdaptOpen?: boolean;
 }) {
+  const adaptableWeeks = pickAdaptableWeeks(program.weeks, today);
+  const disabledReason = hasPendingProposal
+    ? "Approva o rifiuta la proposta in attesa."
+    : null;
+
   return (
     <div className="flex flex-col gap-8">
+      {program.status === "active" ? (
+        <AdaptWeekSheet
+          programId={program.id}
+          weeks={adaptableWeeks}
+          extraLoad={extraLoad}
+          disabledReason={disabledReason}
+          initialOpen={initialAdaptOpen}
+        />
+      ) : null}
       {program.weeks.map((week) => {
-        const remaining = week.workouts.filter(
-          (workout) =>
-            workout.status === WORKOUT_STATUS.planned &&
-            workout.plannedDate.slice(0, 10) >= today,
-        );
-        const inWindow = week.workouts.some(
-          (workout) =>
-            workout.plannedDate.slice(0, 10) >= today || remaining.length > 0,
-        );
-        const canShowAdapt =
-          program.status === "active" && remaining.length > 0 && inWindow;
-        let disabledReason: string | null = null;
-        if (program.status !== "active") {
-          disabledReason = "Disponibile solo sui programmi attivi.";
-        } else if (hasPendingProposal) {
-          disabledReason = "Approva o rifiuta la proposta in attesa.";
-        } else if (remaining.length === 0) {
-          disabledReason = null;
-        }
-
         return (
           <section key={week.id} className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-semibold">
-                  Settimana {week.number}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Target TSS {week.weekLoadTarget.toFixed(0)}
-                  {week.focus ? ` · ${week.focus}` : ""}
-                </p>
-              </div>
-              {canShowAdapt ? (
-                <AdaptWeekSheet
-                  programId={program.id}
-                  weekId={week.id}
-                  weekNumber={week.number}
-                  remainingCount={remaining.length}
-                  extraLoad={extraLoad}
-                  disabledReason={disabledReason}
-                />
-              ) : null}
+            <div>
+              <h2 className="text-xl font-semibold">Settimana {week.number}</h2>
+              <p className="text-sm text-muted-foreground">
+                Target TSS {week.weekLoadTarget.toFixed(0)}
+                {week.focus ? ` · ${week.focus}` : ""}
+              </p>
             </div>
             <div className="flex flex-col gap-3">
               {week.workouts.map((workout) => (
-                <WorkoutEditor key={workout.id} workout={workout} />
+                <WorkoutEditor key={workout.id} workout={workout} vdot={vdot} />
               ))}
             </div>
           </section>
