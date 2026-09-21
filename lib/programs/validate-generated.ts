@@ -14,7 +14,6 @@ export type GenerationIssue = {
     | "missing_week"
     | "missing_slot"
     | "extra_day"
-    | "time_mismatch"
     | "invalid_sport"
     | "forbidden_term";
   message: string;
@@ -52,16 +51,6 @@ export function validateGeneratedProgram(
           code: "missing_slot",
           message: `Settimana ${week.weekNumber}: manca ${WEEKDAY_NAMES[slot.weekday]}`,
         });
-      }
-      if (slot.timeOfDay) {
-        for (const workout of matches) {
-          if (workout.timeOfDay !== slot.timeOfDay) {
-            issues.push({
-              code: "time_mismatch",
-              message: `Settimana ${week.weekNumber}: orario ${workout.timeOfDay ?? "vuoto"} invece di ${slot.timeOfDay}`,
-            });
-          }
-        }
       }
     }
     for (const workout of week.workouts) {

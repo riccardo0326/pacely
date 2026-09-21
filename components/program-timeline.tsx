@@ -102,7 +102,6 @@ function WorkoutEditor({
           <h3 className="mt-1 font-medium">{workout.name}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             {workout.durationMin} min · TSS {workout.tss.toFixed(0)}
-            {workout.timeOfDay ? ` · ${workout.timeOfDay}` : ""}
             {" · "}
             {STATUS_LABEL[workout.status] ?? workout.status}
           </p>
@@ -159,7 +158,7 @@ function WorkoutEditor({
               className="rounded-lg border border-border bg-background px-3 py-2"
             />
           </label>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">Durata (min)</span>
               <input
@@ -180,15 +179,6 @@ function WorkoutEditor({
                 defaultValue={workout.tss}
                 min={0}
                 required
-                className="rounded-lg border border-border bg-background px-3 py-2"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium">Orario</span>
-              <input
-                name="timeOfDay"
-                type="time"
-                defaultValue={workout.timeOfDay ?? ""}
                 className="rounded-lg border border-border bg-background px-3 py-2"
               />
             </label>

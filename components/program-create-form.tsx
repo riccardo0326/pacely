@@ -27,7 +27,7 @@ const WEEKDAY_OPTIONS = [
   { value: 0, label: "Domenica" },
 ];
 
-type SlotRow = { weekday: number; timeOfDay: string };
+type SlotRow = { weekday: number };
 
 type ProgramCreateFormProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -47,9 +47,9 @@ export function ProgramCreateForm({
   const [goalDescription, setGoalDescription] = useState("");
   const [raceType, setRaceType] = useState("");
   const [slots, setSlots] = useState<SlotRow[]>([
-    { weekday: 1, timeOfDay: "07:00" },
-    { weekday: 3, timeOfDay: "07:00" },
-    { weekday: 5, timeOfDay: "07:00" },
+    { weekday: 1 },
+    { weekday: 3 },
+    { weekday: 5 },
   ]);
 
   function toggleSport(value: string) {
@@ -67,7 +67,7 @@ export function ProgramCreateForm({
   }
 
   function addSlot() {
-    setSlots((current) => [...current, { weekday: 1, timeOfDay: "" }]);
+    setSlots((current) => [...current, { weekday: 1 }]);
   }
 
   function removeSlot(index: number) {
@@ -257,24 +257,6 @@ export function ProgramCreateForm({
                     </option>
                   ))}
                 </select>
-              </label>
-              <label className="flex flex-col gap-1 text-sm">
-                <span>Orario (opz.)</span>
-                <input
-                  type="time"
-                  name="slotTime"
-                  value={slot.timeOfDay}
-                  onChange={(event) =>
-                    setSlots((current) =>
-                      current.map((row, i) =>
-                        i === index
-                          ? { ...row, timeOfDay: event.target.value }
-                          : row,
-                      ),
-                    )
-                  }
-                  className="rounded-lg border border-border bg-background px-3 py-2"
-                />
               </label>
               <Button
                 type="button"

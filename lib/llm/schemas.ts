@@ -23,7 +23,6 @@ export const weeklyHistorySummarySchema = z.object({
 
 export const availableSlotSchema = z.object({
   weekday: z.number().int().min(0).max(6),
-  timeOfDay: z.string().optional(),
 });
 
 export const goalInputSchema = z.object({
@@ -90,7 +89,6 @@ export const plannedWorkoutSchema = z.object({
   name: z.string().min(1),
   durationMin: z.number().positive(),
   tss: z.number().nonnegative(),
-  timeOfDay: z.string().optional(),
   blocks: z.array(workoutBlockSchema).min(1),
 });
 
@@ -205,7 +203,6 @@ export const adaptWeekWorkoutInputSchema = z.object({
   dayOfWeek: z.number().int().min(0).max(6),
   durationMin: z.number().positive(),
   tss: z.number().nonnegative(),
-  timeOfDay: z.string().optional(),
   status: z.enum(["planned", "completed", "skipped"]),
   isKeySession: z.boolean(),
   blocks: z.array(workoutBlockSchema),

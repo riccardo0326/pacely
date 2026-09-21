@@ -73,7 +73,6 @@ export type ProgramDetail = {
       name: string;
       durationMin: number;
       tss: number;
-      timeOfDay: string | null;
       blocks: unknown;
       status: string;
       feedback: FeedbackSummary | null;
@@ -117,7 +116,6 @@ function serializeProgram(program: ProgramWithDetails): ProgramDetail {
         name: workout.name,
         durationMin: workout.durationMin,
         tss: workout.tss,
-        timeOfDay: workout.timeOfDay,
         blocks: workout.blocks,
         status: workout.status,
         feedback: workout.feedback
@@ -227,7 +225,6 @@ async function buildGenerationInput(
     durationWeeks: form.durationWeeks,
     availableSlots: form.slots.map((slot) => ({
       weekday: slot.weekday,
-      timeOfDay: slot.timeOfDay || undefined,
     })),
     goal: {
       type: form.goalType,
@@ -573,7 +570,6 @@ export async function updateWorkout(
     name: formData.get("name"),
     durationMin: formData.get("durationMin"),
     tss: formData.get("tss"),
-    timeOfDay: formData.get("timeOfDay") || undefined,
     blocks,
   };
 
@@ -603,7 +599,6 @@ export async function updateWorkout(
       name: parsed.data.name,
       durationMin: parsed.data.durationMin,
       tss: parsed.data.tss,
-      timeOfDay: parsed.data.timeOfDay ?? null,
       blocks: parsed.data.blocks as Prisma.InputJsonValue,
     },
   });
@@ -626,10 +621,8 @@ export async function createProgramAndRedirect(
 
 function parseSlotsFromForm(formData: FormData) {
   const weekdays = formData.getAll("slotWeekday").map((value) => Number(value));
-  const times = formData.getAll("slotTime").map((value) => String(value));
-  return weekdays.map((weekday, index) => ({
+  return weekdays.map((weekday) => ({
     weekday,
-    timeOfDay: times[index] || undefined,
   }));
 }
 
@@ -641,10 +634,9 @@ function storedSlotsFromProgram(
     return [{ weekday: 1 }];
   }
   return parsed.map((slot) => {
-    const row = slot as { weekday?: number; timeOfDay?: string };
+    const row = slot as { weekday?: number };
     return {
       weekday: row.weekday ?? 1,
-      timeOfDay: row.timeOfDay,
     };
   });
 }

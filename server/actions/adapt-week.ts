@@ -222,7 +222,6 @@ export async function requestWeekAdapt(
     ? slotsParsed.data
     : remainingRows.map((workout) => ({
         weekday: workout.dayOfWeek,
-        timeOfDay: workout.timeOfDay ?? undefined,
       }));
   const availableRemainingSlots = slots.filter(
     (slot) =>
@@ -370,7 +369,6 @@ function toAdaptWorkout(
     dayOfWeek: number;
     durationMin: number;
     tss: number;
-    timeOfDay: string | null;
     status: string;
     blocks: unknown;
   },
@@ -392,7 +390,6 @@ function toAdaptWorkout(
     dayOfWeek: workout.dayOfWeek,
     durationMin: workout.durationMin,
     tss: workout.tss,
-    timeOfDay: workout.timeOfDay ?? undefined,
     status,
     isKeySession,
     blocks: parseBlocks(workout.blocks),

@@ -71,7 +71,6 @@ export function repairGeneratedProgram(
           ...match,
           sport,
           dayOfWeek: slotWorkout.dayOfWeek,
-          timeOfDay: slotWorkout.timeOfDay ?? match.timeOfDay,
           name: sanitizeName(match.name, sport, terms),
           blocks: match.blocks.map((block, blockIndex) => ({
             ...block,

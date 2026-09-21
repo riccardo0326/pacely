@@ -50,7 +50,6 @@ describe("workout block editor", () => {
       name: "Fondo",
       durationMin: 45,
       tss: 80,
-      timeOfDay: "07:00",
       blocks: toStoredWorkoutBlocks([
         {
           type: "main-set",

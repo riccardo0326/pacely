@@ -105,14 +105,27 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
     processMutate,
   ]);
 
+  const displayedActivities =
+    activeTab === "program"
+      ? (data.recentProgram ?? [])
+      : (data.recentExtra ?? []);
+
   return (
-    <section className="rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
-      <div className="flex items-start justify-between gap-4">
+    <section className="rounded-xl border border-border bg-card p-5 text-card-foreground shadow-xs">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">
-            Attività Strava
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold tracking-tight">
+              Attività Strava
+            </h2>
+            {isImporting ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                <Loader2 className="size-3 animate-spin" />
+                Import in corso
+              </span>
+            ) : null}
+          </div>
+          <p className="mt-0.5 text-xs text-muted-foreground">
             {isImporting
               ? "Stiamo importando il tuo storico..."
               : data.lastSyncAt
@@ -120,12 +133,25 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
                 : "Nessuna sincronizzazione ancora completata."}
           </p>
         </div>
-        {isImporting ? (
-          <Loader2
-            className="size-5 animate-spin text-muted-foreground"
-            aria-hidden
-          />
-        ) : null}
+
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="accent"
+            size="sm"
+            onClick={() => syncMutation.mutate()}
+            disabled={syncMutation.isPending || isImporting}
+            className="font-medium shadow-xs transition-transform active:scale-95"
+          >
+            <RefreshCw
+              className={cn(
+                "size-3.5",
+                syncMutation.isPending && "animate-spin",
+              )}
+            />
+            {syncMutation.isPending ? "Sincronizzo..." : "Sincronizza ora"}
+          </Button>
+        </div>
       </div>
 
       {isImporting ? (
@@ -189,35 +215,19 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
       ) : null}
 
       {job?.status === JOB_STATUS.done || data.lastSyncAt ? (
-        <div className="mt-4 flex flex-col gap-3 rounded-lg border border-border/60 bg-muted/20 p-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-muted-foreground">
-            <strong className="text-foreground">{data.activityCount}</strong>{" "}
-            attività importate (corsa, nuoto, ciclismo, extra).
-          </p>
-          <Button
-            type="button"
-            variant="accent"
-            size="lg"
-            className="h-10 px-5 text-sm font-semibold shadow-sm sm:w-auto"
-            onClick={() => syncMutation.mutate()}
-            disabled={syncMutation.isPending || isImporting}
-          >
-            <RefreshCw
-              className={cn(
-                "mr-2 size-4",
-                syncMutation.isPending && "animate-spin",
-              )}
-            />
-            {syncMutation.isPending ? "Sincronizzo..." : "Sincronizza ora"}
-          </Button>
-        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          <strong className="font-semibold text-foreground">
+            {data.activityCount}
+          </strong>{" "}
+          attività importate (corsa, nuoto, ciclismo, extra).
+        </p>
       ) : null}
 
       {data.activityCount > 0 ||
-      data.recentProgram.length > 0 ||
-      data.recentExtra.length > 0 ||
+      (data.recentProgram && data.recentProgram.length > 0) ||
+      (data.recentExtra && data.recentExtra.length > 0) ||
       data.recent.length > 0 ? (
-        <div className="mt-6 flex flex-col gap-3">
+        <div className="mt-4 flex flex-col gap-3">
           <div className="grid grid-cols-2 rounded-lg border border-border bg-muted/40 p-0.5 sm:inline-grid sm:w-auto">
             <button
               type="button"
@@ -225,7 +235,7 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
               className={cn(
                 "rounded-md px-3 py-1.5 text-center text-sm font-medium transition-colors",
                 activeTab === "program"
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-primary-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -237,7 +247,7 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
               className={cn(
                 "rounded-md px-3 py-1.5 text-center text-sm font-medium transition-colors",
                 activeTab === "extra"
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-primary-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -245,15 +255,9 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
             </button>
           </div>
 
-          {(activeTab === "program"
-            ? (data.recentProgram ?? [])
-            : (data.recentExtra ?? [])
-          ).length > 0 ? (
+          {displayedActivities.length > 0 ? (
             <ul className="divide-y divide-border text-sm">
-              {(activeTab === "program"
-                ? (data.recentProgram ?? [])
-                : (data.recentExtra ?? [])
-              ).map((activity) => (
+              {displayedActivities.map((activity) => (
                 <li key={activity.id}>
                   <a
                     href={stravaActivityUrl(activity.stravaActivityId)}

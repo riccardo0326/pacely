@@ -6,7 +6,6 @@ export type WorkoutTodayItem = {
   name: string;
   sport: string;
   durationMin: number;
-  timeOfDay?: string | null;
 };
 
 export type NotificationContent = {
@@ -28,9 +27,6 @@ function formatWorkoutLine(workout: WorkoutTodayItem): string {
     workout.name,
     `${workout.durationMin} min`,
   ];
-  if (workout.timeOfDay) {
-    parts.push(workout.timeOfDay);
-  }
   return parts.join(" · ");
 }
 

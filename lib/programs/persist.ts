@@ -23,7 +23,6 @@ export function formToAvailableSlots(form: CreateProgramForm) {
   return storedAvailableSlotsSchema.parse(
     form.slots.map((slot) => ({
       weekday: slot.weekday,
-      timeOfDay: slot.timeOfDay || undefined,
     })),
   );
 }
@@ -80,7 +79,7 @@ export function buildProgramCreateData(
       name: workout.name,
       durationMin: Math.round(workout.durationMin),
       tss: workout.tss,
-      timeOfDay: workout.timeOfDay ?? null,
+      timeOfDay: null,
       blocks: workout.blocks as Prisma.InputJsonValue,
       status: "planned",
     })),

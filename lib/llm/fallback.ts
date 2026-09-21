@@ -106,7 +106,6 @@ export function fallbackGenerateProgram(
           name: defaultWorkoutName(sport),
           durationMin,
           tss,
-          timeOfDay: slot.timeOfDay,
           blocks: simpleBlocks(durationMin, sport),
         };
       }),

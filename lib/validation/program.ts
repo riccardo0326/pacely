@@ -32,7 +32,6 @@ export const createProgramFormSchema = z
       .array(
         z.object({
           weekday: z.coerce.number().int().min(0).max(6),
-          timeOfDay: z.string().max(20).optional(),
         }),
       )
       .min(1)
@@ -73,7 +72,6 @@ export const updateWorkoutFormSchema = z.object({
   name: z.string().min(1).max(200),
   durationMin: z.coerce.number().int().positive().max(600),
   tss: z.coerce.number().nonnegative().max(500),
-  timeOfDay: z.string().max(20).optional(),
   blocks: z.array(workoutBlockSchema).min(1),
 });
 export type UpdateWorkoutForm = z.infer<typeof updateWorkoutFormSchema>;

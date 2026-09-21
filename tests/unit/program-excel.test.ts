@@ -33,7 +33,6 @@ const program: ProgramDetail = {
           name: "Fondo",
           durationMin: 45,
           tss: 100,
-          timeOfDay: "07:00",
           status: "planned",
           feedback: null,
           blocks: [

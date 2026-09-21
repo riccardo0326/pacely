@@ -72,7 +72,6 @@ describe("daily workout notifications (mocked push)", () => {
         name: "Fondo",
         sport: "run",
         durationMin: 50,
-        timeOfDay: null,
       },
     ];
 
@@ -130,7 +129,6 @@ describe("daily workout notifications (mocked push)", () => {
             name: "Fondo",
             sport: "run",
             durationMin: 50,
-            timeOfDay: null,
           },
         ],
       },
@@ -183,7 +181,6 @@ describe("daily workout notifications (mocked push)", () => {
             name: "Fondo",
             sport: "run",
             durationMin: 50,
-            timeOfDay: null,
           },
         ],
       },

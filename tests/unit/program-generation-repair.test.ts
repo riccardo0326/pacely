@@ -19,11 +19,7 @@ const ironmanInput: ProgramGenerationInput = {
   userId: "user-1",
   sports: ["run"],
   durationWeeks: 8,
-  availableSlots: [
-    { weekday: 1, timeOfDay: "07:00" },
-    { weekday: 3, timeOfDay: "07:00" },
-    { weekday: 5, timeOfDay: "07:00" },
-  ],
+  availableSlots: [{ weekday: 1 }, { weekday: 3 }, { weekday: 5 }],
   goal: {
     type: "generic",
     description: "Preparazione Mezzo Ironman",
@@ -35,14 +31,13 @@ const ironmanInput: ProgramGenerationInput = {
   aggregatedHistory: { weeklySummaries: [] },
 };
 
-function hillWorkout(dayOfWeek: number, timeOfDay: string) {
+function hillWorkout(dayOfWeek: number) {
   return {
     dayOfWeek,
     sport: "run" as const,
     name: "Corsa in salita",
     durationMin: 60,
     tss: 40,
-    timeOfDay,
     blocks: [
       {
         type: "warm-up" as const,
@@ -72,12 +67,7 @@ const ironmanHallucinated: ProgramGenerationOutput = {
     weekNumber,
     weekLoadTarget: 100,
     focus: "Corsa in salita",
-    workouts: [
-      hillWorkout(
-        weekNumber % 2 === 1 ? 0 : 1,
-        weekNumber % 2 === 1 ? "02:33" : "16:00",
-      ),
-    ],
+    workouts: [hillWorkout(weekNumber % 2 === 1 ? 0 : 1)],
   })),
 };
 
@@ -87,7 +77,6 @@ describe("validateGeneratedProgram", () => {
     const codes = new Set(issues.map((issue) => issue.code));
     expect(codes.has("missing_slot")).toBe(true);
     expect(codes.has("extra_day")).toBe(true);
-    expect(codes.has("time_mismatch")).toBe(true);
     expect(codes.has("forbidden_term")).toBe(true);
     expect(isGeneratedProgramValid(ironmanInput, ironmanHallucinated)).toBe(
       false,
@@ -96,7 +85,7 @@ describe("validateGeneratedProgram", () => {
 });
 
 describe("repairGeneratedProgram", () => {
-  it("forces Mon/Wed/Fri at 07:00 and strips hill-running language", () => {
+  it("forces Mon/Wed/Fri and strips hill-running language", () => {
     const repaired = repairGeneratedProgram(ironmanInput, ironmanHallucinated);
     expect(isGeneratedProgramValid(ironmanInput, repaired)).toBe(true);
     expect(repaired.weeks).toHaveLength(8);
@@ -104,14 +93,10 @@ describe("repairGeneratedProgram", () => {
       expect(week.workouts.map((workout) => workout.dayOfWeek).sort()).toEqual([
         1, 3, 5,
       ]);
-      expect(
-        week.workouts.every((workout) => workout.timeOfDay === "07:00"),
-      ).toBe(true);
       expect(week.workouts).toHaveLength(3);
     }
     const blob = JSON.stringify(repaired).toLowerCase();
     expect(blob).not.toContain("salita");
-    expect(blob).not.toContain("02:33");
     expect(repaired.summary).toBe(
       "Piano di 8 settimane (corsa) che rispetta i vincoli dichiarati.",
     );
@@ -142,7 +127,6 @@ describe("buildProgramUserPrompt", () => {
     expect(prompt).toContain("Lunedì");
     expect(prompt).toContain("Mercoledì");
     expect(prompt).toContain("Venerdì");
-    expect(prompt).toContain("07:00");
     expect(prompt).toContain("VIETATO");
     expect(prompt).toContain("salita");
     expect(prompt).not.toContain(ironmanInput.userId);
