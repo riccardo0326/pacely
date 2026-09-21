@@ -91,7 +91,6 @@ function WorkoutCard({
         <p className="flex items-center gap-1 text-xs font-medium">
           <SportIcon sport={workout.sport} className="size-3.5" />
           {sportLabel(workout.sport)}
-          {workout.timeOfDay ? ` · ${workout.timeOfDay}` : ""}
         </p>
         <WorkoutStatusBadge status={workout.status} />
       </div>

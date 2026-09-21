@@ -11,11 +11,7 @@ export const programInput: ProgramGenerationInput = {
   userId: "user-1",
   sports: ["run", "ride"],
   durationWeeks: 4,
-  availableSlots: [
-    { weekday: 1, timeOfDay: "07:00" },
-    { weekday: 3 },
-    { weekday: 5 },
-  ],
+  availableSlots: [{ weekday: 1 }, { weekday: 3 }, { weekday: 5 }],
   goal: { type: "generic", description: "Migliorare la base aerobica" },
   weeklyTssBudget: 300,
   currentMetrics: { ctl: 40, atl: 35, tsb: 5 },

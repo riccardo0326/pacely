@@ -17,7 +17,6 @@ export type PlannedWorkoutForNotify = {
   name: string;
   sport: string;
   durationMin: number;
-  timeOfDay: string | null;
 };
 
 export type DailyNotificationLookup = {
@@ -40,7 +39,6 @@ const prismaDailyLookup: DailyNotificationLookup = {
         name: true,
         sport: true,
         durationMin: true,
-        timeOfDay: true,
         week: { select: { program: { select: { userId: true } } } },
       },
       orderBy: { plannedDate: "asc" },
@@ -50,7 +48,6 @@ const prismaDailyLookup: DailyNotificationLookup = {
       name: row.name,
       sport: row.sport,
       durationMin: row.durationMin,
-      timeOfDay: row.timeOfDay,
     }));
   },
 };

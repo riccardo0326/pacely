@@ -13,12 +13,11 @@ describe("notification content", () => {
         name: "Fondo facile",
         sport: "run",
         durationMin: 45,
-        timeOfDay: "07:30",
       },
     ]);
 
     expect(content.title).toBe("Allenamento di oggi");
-    expect(content.body).toBe("Corsa · Fondo facile · 45 min · 07:30");
+    expect(content.body).toBe("Corsa · Fondo facile · 45 min");
     expect(content.href).toBe("/calendar");
   });
 

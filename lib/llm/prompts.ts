@@ -18,7 +18,6 @@ Il JSON deve avere questa forma:
           "name": string,
           "durationMin": number,
           "tss": number,
-          "timeOfDay": string opzionale,
           "blocks": [
             {
               "type": "warm-up" | "main-set" | "cool-down",
@@ -34,7 +33,7 @@ Il JSON deve avere questa forma:
   ]
 }
 Regole HARD:
-- Ogni settimana ha ESATTAMENTE un workout per ciascuno slot indicato (stesso dayOfWeek e timeOfDay). Non inventare altri giorni.
+- Ogni settimana ha ESATTAMENTE un workout per ciascuno slot indicato (stesso dayOfWeek). Non inventare altri giorni.
 - Usa SOLO gli sport richiesti e usali TUTTI nel corso del programma.
 - Rispetta il budget TSS settimanale (progressione ragionevole, scarico ogni 4 settimane).
 - Ogni workout ha almeno warm-up, main-set e cool-down.
@@ -54,7 +53,7 @@ export const WEEKDAY_PROMPT_NAMES = [
 export function buildProgramUserPrompt(input: {
   sports: Array<"run" | "swim" | "ride">;
   durationWeeks: number;
-  availableSlots: Array<{ weekday: number; timeOfDay?: string }>;
+  availableSlots: Array<{ weekday: number }>;
   goal: {
     type: string;
     description: string;
@@ -83,8 +82,7 @@ export function buildProgramUserPrompt(input: {
     .map((slot) => {
       const day =
         WEEKDAY_PROMPT_NAMES[slot.weekday] ?? `giorno ${slot.weekday}`;
-      const time = slot.timeOfDay ? ` alle ${slot.timeOfDay}` : "";
-      return `- ${day} (dayOfWeek=${slot.weekday})${time}`;
+      return `- ${day} (dayOfWeek=${slot.weekday})`;
     })
     .join("\n");
 
@@ -110,7 +108,7 @@ export function buildProgramUserPrompt(input: {
     `DURATA: ${input.durationWeeks} settimane (weekNumber da 1 a ${input.durationWeeks})`,
     `BUDGET TSS SETTIMANALE TARGET: ${input.weeklyTssBudget}`,
     `OBIETTIVO: ${goalBits}`,
-    `SLOT OBBLIGATORI (copia dayOfWeek e timeOfDay; una seduta per slot, ogni settimana):\n${slots}`,
+    `SLOT OBBLIGATORI (copia dayOfWeek; una seduta per slot, ogni settimana):\n${slots}`,
     forbidden,
     profileSection,
     `METRICHE ATLETA: ${JSON.stringify(input.currentMetrics)}`,
@@ -278,7 +276,7 @@ export function buildAdaptWeekUserPrompt(input: {
   weekFocus?: string;
   weekLoadTarget: number;
   remainingTss: number;
-  availableRemainingSlots: Array<{ weekday: number; timeOfDay?: string }>;
+  availableRemainingSlots: Array<{ weekday: number }>;
   sportsIncluded: string[];
   goalDescription?: string;
   keyWorkoutId?: string;
@@ -287,8 +285,7 @@ export function buildAdaptWeekUserPrompt(input: {
     .map((slot) => {
       const day =
         WEEKDAY_PROMPT_NAMES[slot.weekday] ?? `giorno ${slot.weekday}`;
-      const time = slot.timeOfDay ? ` alle ${slot.timeOfDay}` : "";
-      return `- ${day} (dayOfWeek=${slot.weekday})${time}`;
+      return `- ${day} (dayOfWeek=${slot.weekday})`;
     })
     .join("\n");
 

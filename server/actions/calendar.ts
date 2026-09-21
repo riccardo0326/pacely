@@ -79,7 +79,6 @@ export type CalendarWorkoutCard = {
   plannedDate: string;
   durationMin: number;
   tss: number;
-  timeOfDay: string | null;
   programId: string;
   programName: string;
   activity: CalendarActivityCard | null;
@@ -173,7 +172,7 @@ export async function getCalendarData(
           },
         },
       },
-      orderBy: [{ plannedDate: "asc" }, { timeOfDay: "asc" }],
+      orderBy: { plannedDate: "asc" },
     }),
     prisma.activity.findMany({
       where: {
@@ -244,7 +243,6 @@ export async function getCalendarData(
       plannedDate: dateKey,
       durationMin: workout.durationMin,
       tss: workout.tss,
-      timeOfDay: workout.timeOfDay,
       programId: workout.week.program.id,
       programName: workout.week.program.name,
       activity,

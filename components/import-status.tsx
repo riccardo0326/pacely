@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Loader2 } from "lucide-react";
+import { ArrowRight, ChevronRight, Loader2, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
 import { SportBadge } from "@/components/sport-badge";
@@ -11,6 +11,7 @@ import { JOB_STATUS } from "@/lib/strava/constants";
 import { formatActivityDistance } from "@/lib/strava/format";
 import { routes } from "@/lib/routes";
 import { stravaActivityUrl } from "@/lib/ui/theme";
+import { cn } from "@/lib/utils";
 import {
   getImportStatus,
   processImportChunk,
@@ -104,13 +105,21 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
   ]);
 
   return (
-    <section className="rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
-      <div className="flex items-start justify-between gap-4">
+    <section className="rounded-xl border border-border bg-card p-5 text-card-foreground shadow-xs">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">
-            Attività Strava
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold tracking-tight">
+              Attività Strava
+            </h2>
+            {isImporting ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                <Loader2 className="size-3 animate-spin" />
+                Import in corso
+              </span>
+            ) : null}
+          </div>
+          <p className="mt-0.5 text-xs text-muted-foreground">
             {isImporting
               ? "Stiamo importando il tuo storico..."
               : data.lastSyncAt
@@ -118,12 +127,25 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
                 : "Nessuna sincronizzazione ancora completata."}
           </p>
         </div>
-        {isImporting ? (
-          <Loader2
-            className="size-5 animate-spin text-muted-foreground"
-            aria-hidden
-          />
-        ) : null}
+
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="accent"
+            size="sm"
+            onClick={() => syncMutation.mutate()}
+            disabled={syncMutation.isPending || isImporting}
+            className="font-medium shadow-xs transition-transform active:scale-95"
+          >
+            <RefreshCw
+              className={cn(
+                "size-3.5",
+                syncMutation.isPending && "animate-spin",
+              )}
+            />
+            {syncMutation.isPending ? "Sincronizzo..." : "Sincronizza ora"}
+          </Button>
+        </div>
       </div>
 
       {isImporting ? (
@@ -187,30 +209,27 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
       ) : null}
 
       {job?.status === JOB_STATUS.done || data.lastSyncAt ? (
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <p className="text-sm">
-            <strong>{data.activityCount}</strong> attività importate (corsa,
-            nuoto, ciclismo, extra).
+        <div className="mt-4 flex items-center justify-between gap-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+          <p>
+            <strong className="font-semibold text-foreground">
+              {data.activityCount}
+            </strong>{" "}
+            attività importate (corsa, nuoto, ciclismo, extra)
           </p>
-          <Button
-            type="button"
-            variant="accent"
-            size="sm"
-            onClick={() => syncMutation.mutate()}
-            disabled={syncMutation.isPending || isImporting}
-          >
-            {syncMutation.isPending ? "Sincronizzo..." : "Sincronizza ora"}
-          </Button>
           {data.activityCount > 0 ? (
-            <Button asChild size="sm" variant="outline">
-              <Link href={routes.activities}>Vedi tutte</Link>
-            </Button>
+            <Link
+              href={routes.activities}
+              className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+            >
+              Vedi tutte
+              <ArrowRight className="size-3" />
+            </Link>
           ) : null}
         </div>
       ) : null}
 
       {data.recent.length > 0 ? (
-        <ul className="mt-4 divide-y divide-border text-sm">
+        <ul className="mt-3 divide-y divide-border text-sm">
           {data.recent.map((activity) => (
             <li key={activity.id}>
               <a

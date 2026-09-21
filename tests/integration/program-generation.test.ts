@@ -21,7 +21,7 @@ describe("program generation integration (mocked LLM)", () => {
       startDate: "2026-04-06",
       goalType: "generic",
       goalDescription: "Migliorare la base aerobica",
-      slots: [{ weekday: 1, timeOfDay: "07:00" }, { weekday: 3 }],
+      slots: [{ weekday: 1 }, { weekday: 3 }],
     });
     expect(parsed.success).toBe(true);
   });
@@ -49,11 +49,7 @@ describe("program generation integration (mocked LLM)", () => {
       raceType: "mezzo ironman",
       raceDistance: "70.3",
       raceDate: "2026-08-11",
-      slots: [
-        { weekday: 1, timeOfDay: "07:00" },
-        { weekday: 3, timeOfDay: "07:00" },
-        { weekday: 5, timeOfDay: "07:00" },
-      ],
+      slots: [{ weekday: 1 }, { weekday: 3 }, { weekday: 5 }],
     });
     expect(parsed.success).toBe(false);
   });
@@ -68,11 +64,7 @@ describe("program generation integration (mocked LLM)", () => {
       raceType: "mezzo ironman",
       raceDistance: "70.3",
       raceDate: "2026-11-08",
-      slots: [
-        { weekday: 1, timeOfDay: "07:00" },
-        { weekday: 3, timeOfDay: "07:00" },
-        { weekday: 5, timeOfDay: "07:00" },
-      ],
+      slots: [{ weekday: 1 }, { weekday: 3 }, { weekday: 5 }],
     });
     expect(parsed.success).toBe(true);
   });
@@ -115,7 +107,7 @@ describe("program generation integration (mocked LLM)", () => {
         startDate: "2026-04-06",
         goalType: "generic",
         goalDescription: "Migliorare la base aerobica",
-        slots: [{ weekday: 1, timeOfDay: "07:00" }, { weekday: 3 }],
+        slots: [{ weekday: 1 }, { weekday: 3 }],
       },
       result.data,
     );

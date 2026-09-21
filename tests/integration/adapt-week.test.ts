@@ -116,7 +116,6 @@ describe("requestWeekAdapt", () => {
               dayOfWeek: 2,
               durationMin: 50,
               tss: 100,
-              timeOfDay: null,
               status: "planned",
               blocks: [
                 { type: "warm-up", durationMin: 10, description: "Jog" },
@@ -133,7 +132,6 @@ describe("requestWeekAdapt", () => {
               dayOfWeek: 6,
               durationMin: 50,
               tss: 60,
-              timeOfDay: null,
               status: "planned",
               blocks: [
                 { type: "warm-up", durationMin: 10, description: "Jog" },

@@ -154,7 +154,7 @@ model Program {
   status          String           @default("active")
   startDate       DateTime
   constraints     String?
-  /// [{ weekday: 0-6, timeOfDay?: string }]
+  /// [{ weekday: 0-6 }]
   availableSlots  Json
   summary         String?
   goal            Goal?
