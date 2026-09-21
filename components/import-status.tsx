@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, ChevronRight, Loader2, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { SportBadge } from "@/components/sport-badge";
 import { Button } from "@/components/ui/button";
 import { USER_FACING_ERROR } from "@/lib/errors/user-facing";
@@ -37,6 +37,7 @@ function formatDay(iso: string): string {
 }
 
 export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
+  const [activeTab, setActiveTab] = useState<"program" | "extra">("program");
   const queryClient = useQueryClient();
   const statusQuery = useQuery({
     queryKey: ["import-status"],
@@ -243,20 +244,38 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
                     <span className="truncate font-medium">
                       {activity.name ?? "Attività"}
                     </span>
-                    <SportBadge sport={activity.sport} />
-                  </span>
-                  <span className="mt-0.5 block text-xs text-muted-foreground">
-                    {formatDay(activity.startedAt)}
-                  </span>
-                </span>
-                <span className="shrink-0 tabular-nums text-muted-foreground">
-                  {formatActivityDistance(activity.distanceM, activity.sport)}
-                </span>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-              </a>
-            </li>
-          ))}
-        </ul>
+                    <span className="shrink-0 tabular-nums text-muted-foreground">
+                      {formatActivityDistance(
+                        activity.distanceM,
+                        activity.sport,
+                      )}
+                    </span>
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+              {activeTab === "program"
+                ? data.hasActiveProgram
+                  ? "Nessuna attività del programma recente."
+                  : "Nessun programma attivo selezionato."
+                : "Nessuna attività fuori programma recente."}
+            </div>
+          )}
+
+          {data.activityCount > 0 ? (
+            <div className="border-t border-border/50 pt-3 text-center">
+              <Link
+                href={routes.activities}
+                className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline"
+              >
+                Vedi tutte le attività →
+              </Link>
+            </div>
+          ) : null}
+        </div>
       ) : null}
     </section>
   );

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { ActivateProgramButton } from "@/components/activate-program-button";
 import { DeleteProgramButton } from "@/components/delete-program-button";
 import { ExportProgramExcelButton } from "@/components/export-program-excel-button";
 import { PageHeader } from "@/components/page-header";
@@ -53,6 +54,9 @@ export default async function ProgramDetailPage({
         description={description}
         actions={
           <>
+            {program.status !== "active" ? (
+              <ActivateProgramButton programId={program.id} />
+            ) : null}
             <ExportProgramExcelButton program={program} />
             <RegenerateProgramButton programId={program.id} />
             <DeleteProgramButton programId={program.id} />

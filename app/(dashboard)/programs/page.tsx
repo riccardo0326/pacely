@@ -7,6 +7,7 @@ import { ProgramStatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/require-user";
 import { routes } from "@/lib/routes";
+import { cn } from "@/lib/utils";
 import { listPrograms } from "@/server/actions/programs";
 
 export default async function ProgramsPage() {
@@ -37,30 +38,38 @@ export default async function ProgramsPage() {
         />
       ) : (
         <ul className="flex flex-col gap-3">
-          {programs.map((program) => (
-            <li key={program.id}>
-              <Link
-                href={routes.program(program.id)}
-                className="group flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-muted/40"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <h2 className="font-medium">{program.name}</h2>
-                    <ProgramStatusBadge status={program.status} />
+          {programs.map((program) => {
+            const isActive = program.status === "active";
+            return (
+              <li key={program.id}>
+                <Link
+                  href={routes.program(program.id)}
+                  className={cn(
+                    "group flex items-center gap-3 rounded-xl border p-4 transition-colors hover:bg-muted/40",
+                    isActive
+                      ? "border-emerald-800 dark:border-emerald-300 bg-card shadow-sm"
+                      : "border-border bg-card",
+                  )}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <h2 className="font-medium">{program.name}</h2>
+                      <ProgramStatusBadge status={program.status} />
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      {program.sportsIncluded.map((sport) => (
+                        <SportBadge key={sport} sport={sport} />
+                      ))}
+                      <span className="text-sm text-muted-foreground">
+                        · {program.durationWeeks} settimane
+                      </span>
+                    </div>
                   </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    {program.sportsIncluded.map((sport) => (
-                      <SportBadge key={sport} sport={sport} />
-                    ))}
-                    <span className="text-sm text-muted-foreground">
-                      · {program.durationWeeks} settimane
-                    </span>
-                  </div>
-                </div>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-              </Link>
-            </li>
-          ))}
+                  <ChevronRight className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </main>
