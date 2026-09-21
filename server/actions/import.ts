@@ -16,6 +16,15 @@ import {
 } from "@/server/jobs/strava-backfill";
 import { pollRecentActivitiesForUser } from "@/server/jobs/strava-sync";
 
+export type RecentActivityItem = {
+  id: string;
+  stravaActivityId: string;
+  name: string | null;
+  sport: string;
+  startedAt: string;
+  distanceM: number | null;
+};
+
 export type ImportStatus = {
   job: {
     status: string;
@@ -25,18 +34,22 @@ export type ImportStatus = {
   activityCount: number;
   lastSyncAt: string | null;
   actionError: string | null;
-  recent: Array<{
-    id: string;
-    stravaActivityId: string;
-    name: string | null;
-    sport: string;
-    startedAt: string;
-    distanceM: number | null;
-  }>;
+  hasActiveProgram: boolean;
+  recent: RecentActivityItem[];
+  recentProgram: RecentActivityItem[];
+  recentExtra: RecentActivityItem[];
 };
 
 async function loadImportStatus(userId: string): Promise<ImportStatus> {
-  const [job, activityCount, connection, recent] = await Promise.all([
+  const [
+    job,
+    activityCount,
+    connection,
+    activeProgram,
+    recent,
+    recentProgram,
+    recentExtra,
+  ] = await Promise.all([
     prisma.job.findFirst({
       where: { userId, type: JOB_TYPE_STRAVA_BACKFILL },
       orderBy: { createdAt: "desc" },
@@ -47,8 +60,60 @@ async function loadImportStatus(userId: string): Promise<ImportStatus> {
       where: { userId },
       select: { lastSyncAt: true },
     }),
+    prisma.program.findFirst({
+      where: { userId, status: "active" },
+      select: { id: true },
+    }),
     prisma.activity.findMany({
       where: { userId },
+      orderBy: { startedAt: "desc" },
+      take: 7,
+      select: {
+        id: true,
+        stravaActivityId: true,
+        name: true,
+        sport: true,
+        startedAt: true,
+        distanceM: true,
+      },
+    }),
+    prisma.activity.findMany({
+      where: {
+        userId,
+        matchedWorkouts: {
+          some: {
+            week: {
+              program: {
+                status: "active",
+              },
+            },
+          },
+        },
+      },
+      orderBy: { startedAt: "desc" },
+      take: 7,
+      select: {
+        id: true,
+        stravaActivityId: true,
+        name: true,
+        sport: true,
+        startedAt: true,
+        distanceM: true,
+      },
+    }),
+    prisma.activity.findMany({
+      where: {
+        userId,
+        matchedWorkouts: {
+          none: {
+            week: {
+              program: {
+                status: "active",
+              },
+            },
+          },
+        },
+      },
       orderBy: { startedAt: "desc" },
       take: 7,
       select: {
@@ -69,19 +134,31 @@ async function loadImportStatus(userId: string): Promise<ImportStatus> {
     ? parsedProgress.data
     : defaultBackfillProgress();
 
+  const mapActivity = (activity: {
+    id: string;
+    stravaActivityId: string;
+    name: string | null;
+    sport: string;
+    startedAt: Date;
+    distanceM: number | null;
+  }): RecentActivityItem => ({
+    id: activity.id,
+    stravaActivityId: activity.stravaActivityId,
+    name: activity.name,
+    sport: activity.sport,
+    startedAt: activity.startedAt.toISOString(),
+    distanceM: activity.distanceM,
+  });
+
   return {
     job: job ? { status: job.status, progress, error: job.error } : null,
     activityCount,
     lastSyncAt: connection?.lastSyncAt?.toISOString() ?? null,
     actionError: null,
-    recent: recent.map((activity) => ({
-      id: activity.id,
-      stravaActivityId: activity.stravaActivityId,
-      name: activity.name,
-      sport: activity.sport,
-      startedAt: activity.startedAt.toISOString(),
-      distanceM: activity.distanceM,
-    })),
+    hasActiveProgram: Boolean(activeProgram),
+    recent: recent.map(mapActivity),
+    recentProgram: recentProgram.map(mapActivity),
+    recentExtra: recentExtra.map(mapActivity),
   };
 }
 

@@ -273,6 +273,11 @@ async function persistGeneratedProgram(
   );
 
   const created = await prisma.$transaction(async (tx) => {
+    await tx.program.updateMany({
+      where: { userId, status: "active" },
+      data: { status: "archived" },
+    });
+
     const savedProgram = await tx.program.create({
       data: program,
     });
@@ -497,6 +502,38 @@ export async function regenerateProgram(
     );
     return { ok: false, error: message };
   }
+}
+
+export async function activateProgram(
+  programId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await requireUser();
+  const existing = await prisma.program.findFirst({
+    where: { id: programId, userId: user.id },
+    select: { id: true },
+  });
+  if (!existing) {
+    return { ok: false, error: "Programma non trovato" };
+  }
+
+  await prisma.$transaction([
+    prisma.program.updateMany({
+      where: { userId: user.id, status: "active", id: { not: existing.id } },
+      data: { status: "archived" },
+    }),
+    prisma.program.update({
+      where: { id: existing.id },
+      data: { status: "active" },
+    }),
+  ]);
+
+  await tryMatchUserWorkouts(user.id);
+
+  revalidatePath(routes.programs);
+  revalidatePath(routes.program(programId));
+  revalidatePath(routes.calendar);
+  revalidatePath(routes.dashboard);
+  return { ok: true };
 }
 
 export async function deleteProgram(

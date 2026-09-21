@@ -1,9 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Loader2 } from "lucide-react";
+import { ChevronRight, Loader2, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { SportBadge } from "@/components/sport-badge";
 import { Button } from "@/components/ui/button";
 import { USER_FACING_ERROR } from "@/lib/errors/user-facing";
@@ -11,6 +11,7 @@ import { JOB_STATUS } from "@/lib/strava/constants";
 import { formatActivityDistance } from "@/lib/strava/format";
 import { routes } from "@/lib/routes";
 import { stravaActivityUrl } from "@/lib/ui/theme";
+import { cn } from "@/lib/utils";
 import {
   getImportStatus,
   processImportChunk,
@@ -36,6 +37,7 @@ function formatDay(iso: string): string {
 }
 
 export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
+  const [activeTab, setActiveTab] = useState<"program" | "extra">("program");
   const queryClient = useQueryClient();
   const statusQuery = useQuery({
     queryKey: ["import-status"],
@@ -187,57 +189,121 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
       ) : null}
 
       {job?.status === JOB_STATUS.done || data.lastSyncAt ? (
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <p className="text-sm">
-            <strong>{data.activityCount}</strong> attività importate (corsa,
-            nuoto, ciclismo, extra).
+        <div className="mt-4 flex flex-col gap-3 rounded-lg border border-border/60 bg-muted/20 p-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            <strong className="text-foreground">{data.activityCount}</strong>{" "}
+            attività importate (corsa, nuoto, ciclismo, extra).
           </p>
           <Button
             type="button"
             variant="accent"
-            size="sm"
+            size="lg"
+            className="h-10 px-5 text-sm font-semibold shadow-sm sm:w-auto"
             onClick={() => syncMutation.mutate()}
             disabled={syncMutation.isPending || isImporting}
           >
+            <RefreshCw
+              className={cn(
+                "mr-2 size-4",
+                syncMutation.isPending && "animate-spin",
+              )}
+            />
             {syncMutation.isPending ? "Sincronizzo..." : "Sincronizza ora"}
           </Button>
-          {data.activityCount > 0 ? (
-            <Button asChild size="sm" variant="outline">
-              <Link href={routes.activities}>Vedi tutte</Link>
-            </Button>
-          ) : null}
         </div>
       ) : null}
 
-      {data.recent.length > 0 ? (
-        <ul className="mt-4 divide-y divide-border text-sm">
-          {data.recent.map((activity) => (
-            <li key={activity.id}>
-              <a
-                href={stravaActivityUrl(activity.stravaActivityId)}
-                target="_blank"
-                rel="noreferrer"
-                className="group flex items-center gap-3 py-2.5 hover:bg-muted/40"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2">
-                    <span className="truncate font-medium">
-                      {activity.name ?? "Attività"}
+      {data.activityCount > 0 ||
+      data.recentProgram.length > 0 ||
+      data.recentExtra.length > 0 ||
+      data.recent.length > 0 ? (
+        <div className="mt-6 flex flex-col gap-3">
+          <div className="grid grid-cols-2 rounded-lg border border-border bg-muted/40 p-0.5 sm:inline-grid sm:w-auto">
+            <button
+              type="button"
+              onClick={() => setActiveTab("program")}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-center text-sm font-medium transition-colors",
+                activeTab === "program"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Programma
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("extra")}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-center text-sm font-medium transition-colors",
+                activeTab === "extra"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Fuori programma
+            </button>
+          </div>
+
+          {(activeTab === "program"
+            ? (data.recentProgram ?? [])
+            : (data.recentExtra ?? [])
+          ).length > 0 ? (
+            <ul className="divide-y divide-border text-sm">
+              {(activeTab === "program"
+                ? (data.recentProgram ?? [])
+                : (data.recentExtra ?? [])
+              ).map((activity) => (
+                <li key={activity.id}>
+                  <a
+                    href={stravaActivityUrl(activity.stravaActivityId)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group flex items-center gap-3 py-2.5 hover:bg-muted/40"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-2">
+                        <span className="truncate font-medium">
+                          {activity.name ?? "Attività"}
+                        </span>
+                        <SportBadge sport={activity.sport} />
+                      </span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        {formatDay(activity.startedAt)}
+                      </span>
                     </span>
-                    <SportBadge sport={activity.sport} />
-                  </span>
-                  <span className="mt-0.5 block text-xs text-muted-foreground">
-                    {formatDay(activity.startedAt)}
-                  </span>
-                </span>
-                <span className="shrink-0 tabular-nums text-muted-foreground">
-                  {formatActivityDistance(activity.distanceM, activity.sport)}
-                </span>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-              </a>
-            </li>
-          ))}
-        </ul>
+                    <span className="shrink-0 tabular-nums text-muted-foreground">
+                      {formatActivityDistance(
+                        activity.distanceM,
+                        activity.sport,
+                      )}
+                    </span>
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+              {activeTab === "program"
+                ? data.hasActiveProgram
+                  ? "Nessuna attività del programma recente."
+                  : "Nessun programma attivo selezionato."
+                : "Nessuna attività fuori programma recente."}
+            </div>
+          )}
+
+          {data.activityCount > 0 ? (
+            <div className="border-t border-border/50 pt-3 text-center">
+              <Link
+                href={routes.activities}
+                className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline"
+              >
+                Vedi tutte le attività →
+              </Link>
+            </div>
+          ) : null}
+        </div>
       ) : null}
     </section>
   );
