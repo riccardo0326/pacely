@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, ChevronRight, Loader2, RefreshCw } from "lucide-react";
+import { ChevronRight, Loader2, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { SportBadge } from "@/components/sport-badge";
@@ -104,6 +104,11 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
     processPending,
     processMutate,
   ]);
+
+  const displayedActivities =
+    activeTab === "program"
+      ? (data.recentProgram ?? [])
+      : (data.recentExtra ?? []);
 
   return (
     <section className="rounded-xl border border-border bg-card p-5 text-card-foreground shadow-xs">
@@ -210,39 +215,66 @@ export function ImportStatusCard({ initial }: { initial: ImportStatus }) {
       ) : null}
 
       {job?.status === JOB_STATUS.done || data.lastSyncAt ? (
-        <div className="mt-4 flex items-center justify-between gap-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
-          <p>
-            <strong className="font-semibold text-foreground">
-              {data.activityCount}
-            </strong>{" "}
-            attività importate (corsa, nuoto, ciclismo, extra)
-          </p>
-          {data.activityCount > 0 ? (
-            <Link
-              href={routes.activities}
-              className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
-            >
-              Vedi tutte
-              <ArrowRight className="size-3" />
-            </Link>
-          ) : null}
-        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          <strong className="font-semibold text-foreground">
+            {data.activityCount}
+          </strong>{" "}
+          attività importate (corsa, nuoto, ciclismo, extra).
+        </p>
       ) : null}
 
-      {data.recent.length > 0 ? (
-        <ul className="mt-3 divide-y divide-border text-sm">
-          {data.recent.map((activity) => (
-            <li key={activity.id}>
-              <a
-                href={stravaActivityUrl(activity.stravaActivityId)}
-                target="_blank"
-                rel="noreferrer"
-                className="group flex items-center gap-3 py-2.5 hover:bg-muted/40"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2">
-                    <span className="truncate font-medium">
-                      {activity.name ?? "Attività"}
+      {data.activityCount > 0 ||
+      (data.recentProgram && data.recentProgram.length > 0) ||
+      (data.recentExtra && data.recentExtra.length > 0) ||
+      data.recent.length > 0 ? (
+        <div className="mt-4 flex flex-col gap-3">
+          <div className="grid grid-cols-2 rounded-lg border border-border bg-muted/40 p-0.5 sm:inline-grid sm:w-auto">
+            <button
+              type="button"
+              onClick={() => setActiveTab("program")}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-center text-sm font-medium transition-colors",
+                activeTab === "program"
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Programma
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("extra")}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-center text-sm font-medium transition-colors",
+                activeTab === "extra"
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Fuori programma
+            </button>
+          </div>
+
+          {displayedActivities.length > 0 ? (
+            <ul className="divide-y divide-border text-sm">
+              {displayedActivities.map((activity) => (
+                <li key={activity.id}>
+                  <a
+                    href={stravaActivityUrl(activity.stravaActivityId)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group flex items-center gap-3 py-2.5 hover:bg-muted/40"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-2">
+                        <span className="truncate font-medium">
+                          {activity.name ?? "Attività"}
+                        </span>
+                        <SportBadge sport={activity.sport} />
+                      </span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        {formatDay(activity.startedAt)}
+                      </span>
                     </span>
                     <span className="shrink-0 tabular-nums text-muted-foreground">
                       {formatActivityDistance(
